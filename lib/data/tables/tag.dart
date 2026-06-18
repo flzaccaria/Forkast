@@ -15,4 +15,7 @@ class Tags extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{householdId, name}];
+
+  @override
+  String get tableName => 'tag';
 }

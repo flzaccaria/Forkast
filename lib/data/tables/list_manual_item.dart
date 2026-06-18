@@ -12,4 +12,7 @@ class ListManualItems extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'list_manual_item';
 }

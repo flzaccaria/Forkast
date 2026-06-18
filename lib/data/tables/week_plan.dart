@@ -13,4 +13,7 @@ class WeekPlans extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{householdId, year, week}];
+
+  @override
+  String get tableName => 'week_plan';
 }

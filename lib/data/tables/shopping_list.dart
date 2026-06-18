@@ -11,4 +11,7 @@ class ShoppingLists extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'shopping_list';
 }

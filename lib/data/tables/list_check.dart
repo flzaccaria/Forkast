@@ -11,4 +11,7 @@ class ListChecks extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'list_check';
 }

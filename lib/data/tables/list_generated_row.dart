@@ -12,4 +12,7 @@ class ListGeneratedRows extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'list_generated_row';
 }

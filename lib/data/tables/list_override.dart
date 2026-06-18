@@ -15,4 +15,7 @@ class ListOverrides extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{shoppingListId, ingredientId}];
+
+  @override
+  String get tableName => 'list_override';
 }

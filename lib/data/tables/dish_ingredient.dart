@@ -14,4 +14,7 @@ class DishIngredients extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{dishId, ingredientId}];
+
+  @override
+  String get tableName => 'dish_ingredient';
 }

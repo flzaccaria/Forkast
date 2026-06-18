@@ -11,4 +11,7 @@ class PlanDayDishes extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'plan_day_dish';
 }

@@ -12,4 +12,7 @@ class DishTags extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{dishId, tagId}];
+
+  @override
+  String get tableName => 'dish_tag';
 }

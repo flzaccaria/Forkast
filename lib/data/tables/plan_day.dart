@@ -14,4 +14,7 @@ class PlanDays extends Table {
 
   @override
   List<Set<Column>> get uniqueKeys => [{weekPlanId, dayOfWeek}];
+
+  @override
+  String get tableName => 'plan_day';
 }

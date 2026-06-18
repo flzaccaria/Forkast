@@ -11,4 +11,7 @@ class Households extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'household';
 }

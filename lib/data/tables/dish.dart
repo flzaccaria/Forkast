@@ -10,4 +10,7 @@ class Dishes extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+
+  @override
+  String get tableName => 'dish';
 }
