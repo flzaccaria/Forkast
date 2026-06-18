@@ -113,7 +113,8 @@ class _IngredientFormState extends State<_IngredientForm> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Errore: esiste già un ingrediente con questo nome?')),
+          const SnackBar(
+              content: Text('Errore: esiste già un ingrediente con questo nome?')),
         );
       }
     }
