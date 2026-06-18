@@ -109,6 +109,7 @@ Il secondo telefono entra nell'household del primo via **codice/QR generato dal 
 - Ordinamento lista per reparto: richiede un attributo `category` su `ingredient`, oggi assente.
 - Rimozione di un tag in uso: proteggere oppure "scollega dai piatti"? (coerente con FR-17)
 - Obbligatorietà della portata: attualmente facoltativa.
+- Autenticazione JWT legacy: sia Supabase che PowerSync la segnalano come deprecata. Valutare la migrazione al meccanismo sostitutivo prima del rilascio.
 
 ---
 
