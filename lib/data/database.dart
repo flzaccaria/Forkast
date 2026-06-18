@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:drift_sqlite_async/drift_sqlite_async.dart';
+import 'package:powersync/powersync.dart';
 
 import 'tables/household.dart';
 import 'tables/membership.dart';
@@ -41,18 +38,18 @@ part 'database.g.dart';
   ListChecks,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-
-  AppDatabase.forTesting(super.e);
+  /// drift opera sopra il database gestito da PowerSync: stesso file SQLite,
+  /// così le scritture locali finiscono nella coda di upload di PowerSync.
+  AppDatabase(PowerSyncDatabase db) : super(SqliteAsyncDriftConnection(db));
 
   @override
   int get schemaVersion => 1;
 
-  static LazyDatabase _openConnection() {
-    return LazyDatabase(() async {
-      final dbFolder = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dbFolder.path, 'forkast.sqlite'));
-      return NativeDatabase.createInBackground(file);
-    });
-  }
+  /// È PowerSync a creare e gestire lo schema (viste + trigger). drift non
+  /// deve creare né migrare tabelle: le strategie restano vuote.
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {},
+        onUpgrade: (m, from, to) async {},
+      );
 }

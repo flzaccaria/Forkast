@@ -1,0 +1,8 @@
+# Allinea la rappresentazione dei DateTime a quella di PowerSync:
+# i timestamp viaggiano come stringhe ISO-8601, non come interi unix.
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          store_date_time_values_as_text: true
