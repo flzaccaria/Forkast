@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_sqlite_async/drift_sqlite_async.dart';
-import 'package:powersync/powersync.dart';
+import 'package:powersync/powersync.dart' show PowerSyncDatabase;
 
 import 'tables/household.dart';
 import 'tables/membership.dart';
