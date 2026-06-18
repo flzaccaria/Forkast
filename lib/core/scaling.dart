@@ -1,5 +1,3 @@
-import 'dart:math';
-
 const _wholeUnits = {'pz', 'pezzo', 'pezzi', 'fetta', 'fette', 'spicchio', 'spicchi'};
 
 double scaleQty({required double qtyBase4, required int guests}) {
