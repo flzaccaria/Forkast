@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:powersync/powersync.dart';
+import 'package:powersync/powersync.dart' show PowerSyncDatabase;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
