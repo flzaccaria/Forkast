@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('Dish')
 class Dishes extends Table {
   TextColumn get id => text()();
   TextColumn get householdId => text()();
