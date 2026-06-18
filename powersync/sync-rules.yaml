@@ -1,0 +1,71 @@
+# PowerSync Sync Rules — bucket per household
+# Ogni device riceve solo i dati del proprio household.
+# pairing_code è escluso: gestito server-side via edge function.
+
+bucket_definitions:
+  by_household:
+    parameters:
+      - SELECT m.household_id AS household_id
+        FROM membership m
+        WHERE m.device_id = token_parameters.user_id
+
+    data:
+      - SELECT id, name, default_guests, week_start_day, auto_regen, created_at, updated_at
+        FROM household
+        WHERE id = bucket_parameters.household_id
+
+      - SELECT id, household_id, device_id, role, joined_at, updated_at
+        FROM membership
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, household_id, name, unit, is_qb, created_at, updated_at
+        FROM ingredient
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, household_id, name, "group", color, sort_order, created_at, updated_at
+        FROM tag
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, household_id, name, created_at, updated_at
+        FROM dish
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, dish_id, tag_id, household_id, created_at
+        FROM dish_tag
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, dish_id, ingredient_id, household_id, qty_base4, created_at, updated_at
+        FROM dish_ingredient
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, household_id, year, week, created_at, updated_at
+        FROM week_plan
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, week_plan_id, household_id, day_of_week, guests, created_at, updated_at
+        FROM plan_day
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, plan_day_id, dish_id, household_id, sort_order, created_at
+        FROM plan_day_dish
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, household_id, week_plan_id, generated_at, plan_hash, created_at, updated_at
+        FROM shopping_list
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, shopping_list_id, ingredient_id, household_id, qty, unit, is_qb, created_at
+        FROM list_generated_row
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, shopping_list_id, ingredient_id, household_id, qty_override, removed, created_at, updated_at
+        FROM list_override
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, shopping_list_id, household_id, name, qty, unit, created_at, updated_at
+        FROM list_manual_item
+        WHERE household_id = bucket_parameters.household_id
+
+      - SELECT id, shopping_list_id, ingredient_id, manual_item_id, household_id, checked, updated_at
+        FROM list_check
+        WHERE household_id = bucket_parameters.household_id
