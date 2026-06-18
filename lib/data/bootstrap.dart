@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -32,6 +33,9 @@ Future<String> ensureHousehold(AppDatabase db, String deviceId) async {
       db.households,
       HouseholdsCompanion.insert(
         id: householdId,
+        defaultGuests: const Value(4),
+        weekStartDay: const Value(0),
+        autoRegen: const Value(false),
         createdAt: now,
         updatedAt: now,
       ),
@@ -42,6 +46,7 @@ Future<String> ensureHousehold(AppDatabase db, String deviceId) async {
         id: _uuid.v4(),
         householdId: householdId,
         deviceId: deviceId,
+        role: const Value('member'),
         joinedAt: now,
         updatedAt: now,
       ),
