@@ -1,16 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:powersync/powersync.dart' show PowerSyncDatabase;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'data/bootstrap.dart';
 import 'data/database.dart';
+import 'data/open_database.dart';
 import 'data/powersync_connector.dart';
-import 'data/powersync_schema.dart';
 import 'ui/app_scope.dart';
 import 'ui/app_shell.dart';
 
@@ -73,7 +70,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       publishableKey: AppConfig.supabaseAnonKey,
     );
 
-    final powerSyncDb = await _openPowerSyncDatabase();
+    final powerSyncDb = await openPowerSyncDatabase();
     final db = AppDatabase(powerSyncDb);
 
     final deviceId = await ensureAnonAuth();
@@ -82,14 +79,6 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     unawaited(powerSyncDb.connect(connector: SupabaseConnector()));
 
     return _Bootstrapped(db, householdId);
-  }
-
-  Future<PowerSyncDatabase> _openPowerSyncDatabase() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final path = p.join(dir.path, 'forkast.db');
-    final db = PowerSyncDatabase(schema: forkastSchema, path: path);
-    await db.initialize();
-    return db;
   }
 
   @override

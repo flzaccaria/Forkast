@@ -24,7 +24,7 @@ The app is used **at the supermarket, offline**. It must be **local-first**: alw
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
-| Client | **Flutter** + **drift** (local SQLite) | Single iOS/Android codebase. Web excluded. |
+| Client | **Flutter** + **drift** (local SQLite) | iOS, Android, and Web. |
 | Backend | **Supabase** (Postgres), **EU region** | Relational: needed for catalog integrity. |
 | Sync | **PowerSync** | Replicates Postgres ↔ local SQLite; offline upload queue. |
 | Auth (phase 1) | Supabase **anonymous sign-in** per device | No account/email for now. |
@@ -93,7 +93,7 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 - Don't sync the generated rows as if they were primary data: derive them.
 - Don't tie data to a single device: always to the household.
 - No analytics with personal data; no email/PII in this phase.
-- Don't introduce a web client (it would overturn the Flutter choice).
+- Web target is supported. Database opening uses conditional imports (`open_database_native.dart` / `open_database_web.dart`) to avoid `dart:ffi` on the web.
 
 ---
 
