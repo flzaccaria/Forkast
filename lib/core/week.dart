@@ -22,7 +22,10 @@ DateTime dateOfIsoWeek(int year, int week, int weekday) {
   // Il 4 gennaio cade sempre nella settimana ISO 1.
   final jan4 = DateTime.utc(year, 1, 4);
   final mondayOfWeek1 = jan4.subtract(Duration(days: jan4.weekday - 1));
-  return mondayOfWeek1.add(Duration(days: (week - 1) * 7 + (weekday - 1)));
+  final result = mondayOfWeek1.add(Duration(days: (week - 1) * 7 + (weekday - 1)));
+  // Aritmetica in UTC per evitare gli scostamenti da ora legale, ma si
+  // restituisce una data locale (mezzanotte) coerente con l'uso nella UI.
+  return DateTime(result.year, result.month, result.day);
 }
 
 /// I 7 giorni della settimana (valori `weekday` 1..7) ordinati secondo il
