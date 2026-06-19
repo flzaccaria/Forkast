@@ -87,7 +87,13 @@ class _DishesScreenState extends State<DishesScreen> {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, i) => ListTile(
                     title: Text(dishes[i].name),
-                    onTap: () {},
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            DishEditorScreen(dishId: dishes[i].id),
+                      ),
+                    ),
                   ),
                 );
               },

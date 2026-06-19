@@ -7,10 +7,13 @@ import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 import '../settings/ingredient_form.dart';
 
-/// Editor di un nuovo piatto: nome + righe ingrediente in base 4 (FR-2).
+/// Editor di un piatto: nome + righe ingrediente in base 4 (FR-2) + tag (FR-14).
 /// Per gli ingredienti "quanto basta" la quantità non è richiesta (FR-6).
+/// Con [dishId] valorizzato lavora in modifica, precaricando i dati esistenti.
 class DishEditorScreen extends StatefulWidget {
-  const DishEditorScreen({super.key});
+  const DishEditorScreen({super.key, this.dishId});
+
+  final String? dishId;
 
   @override
   State<DishEditorScreen> createState() => _DishEditorScreenState();
@@ -26,6 +29,10 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   String? _portataId;
   final _attributeIds = <String>{};
   bool _saving = false;
+  bool _loading = false;
+  bool _loaded = false;
+
+  bool get _isEditing => widget.dishId != null;
 
   @override
   void didChangeDependencies() {
@@ -34,6 +41,45 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     _dishRepo = DishRepository(scope.database, scope.householdId);
     _ingredientRepo = IngredientRepository(scope.database, scope.householdId);
     _tagRepo = TagRepository(scope.database, scope.householdId);
+    if (_isEditing && !_loaded) {
+      _loaded = true;
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final dishId = widget.dishId!;
+    final dish = await _dishRepo.getDish(dishId);
+    final rows = await _dishRepo.getIngredients(dishId);
+    final catalog = {for (final i in await _ingredientRepo.watchAll().first) i.id: i};
+    final tags = await _tagRepo.watchDishTags(dishId).first;
+    if (!mounted) return;
+    setState(() {
+      _nameController.text = dish?.name ?? '';
+      for (final r in rows) {
+        final ing = catalog[r.ingredientId];
+        if (ing == null) continue; // ingrediente rimosso dal catalogo
+        _rows.add(_IngredientRow(
+          ingredient: ing,
+          qtyController: TextEditingController(
+            text: r.qtyBase4 == null
+                ? ''
+                : (r.qtyBase4 == r.qtyBase4!.roundToDouble()
+                    ? r.qtyBase4!.toInt().toString()
+                    : r.qtyBase4!.toString()),
+          ),
+        ));
+      }
+      for (final t in tags) {
+        if (t.tagGroup == TagGroup.portata) {
+          _portataId = t.id;
+        } else {
+          _attributeIds.add(t.id);
+        }
+      }
+      _loading = false;
+    });
   }
 
   @override
@@ -111,7 +157,13 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
 
     setState(() => _saving = true);
     try {
-      await _dishRepo.create(name: name, ingredients: drafts, tagIds: tagIds);
+      if (_isEditing) {
+        await _dishRepo.update(widget.dishId!,
+            name: name, ingredients: drafts, tagIds: tagIds);
+      } else {
+        await _dishRepo.create(
+            name: name, ingredients: drafts, tagIds: tagIds);
+      }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -123,12 +175,60 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminare il piatto?'),
+        content: const Text(
+            'Verrà rimosso dal catalogo e da tutte le serate in cui è '
+            'pianificato. Le liste già generate si aggiornano alla prossima '
+            'rigenerazione.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annulla'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Elimina'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    setState(() => _saving = true);
+    try {
+      await _dishRepo.delete(widget.dishId!);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Errore nell\'eliminazione del piatto')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Modifica piatto')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuovo piatto'),
+        title: Text(_isEditing ? 'Modifica piatto' : 'Nuovo piatto'),
         actions: [
+          if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _saving ? null : _delete,
+              tooltip: 'Elimina',
+            ),
           TextButton(
             onPressed: _saving ? null : _save,
             child: const Text('Salva'),

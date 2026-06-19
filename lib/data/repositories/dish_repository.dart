@@ -50,6 +50,19 @@ class DishRepository {
         .watch();
   }
 
+  /// Lettura una-tantum del piatto (per precaricare l'editor).
+  Future<Dish?> getDish(String dishId) {
+    return (_db.select(_db.dishes)..where((d) => d.id.equals(dishId)))
+        .getSingleOrNull();
+  }
+
+  /// Lettura una-tantum delle righe ingrediente (per precaricare l'editor).
+  Future<List<DishIngredient>> getIngredients(String dishId) {
+    return (_db.select(_db.dishIngredients)
+          ..where((di) => di.dishId.equals(dishId)))
+        .get();
+  }
+
   /// Crea un piatto con le sue righe ingrediente e i tag in un'unica
   /// transazione. `tagIds` raccoglie portata (al più una) e attributi (FR-14).
   Future<String> create({
@@ -101,5 +114,71 @@ class DishRepository {
     });
 
     return dishId;
+  }
+
+  /// Aggiorna un piatto esistente: nome, righe ingrediente e tag vengono
+  /// riscritti integralmente in un'unica transazione. Gli ID delle righe sono
+  /// rigenerati (lo strato lista è uno snapshot derivato, si rigenera).
+  Future<void> update(
+    String dishId, {
+    required String name,
+    required List<DishIngredientDraft> ingredients,
+    List<String> tagIds = const [],
+  }) async {
+    final now = DateTime.now().toUtc();
+    await _db.transaction(() async {
+      await (_db.update(_db.dishes)..where((d) => d.id.equals(dishId))).write(
+          DishesCompanion(name: Value(name), updatedAt: Value(now)));
+      await (_db.delete(_db.dishIngredients)
+            ..where((di) => di.dishId.equals(dishId)))
+          .go();
+      await (_db.delete(_db.dishTags)..where((dt) => dt.dishId.equals(dishId)))
+          .go();
+      await _db.batch((b) {
+        for (final ing in ingredients) {
+          b.insert(
+            _db.dishIngredients,
+            DishIngredientsCompanion.insert(
+              id: _uuid.v4(),
+              dishId: dishId,
+              ingredientId: ing.ingredientId,
+              householdId: _householdId,
+              qtyBase4: Value(ing.qtyBase4),
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+        }
+        for (final tagId in tagIds) {
+          b.insert(
+            _db.dishTags,
+            DishTagsCompanion.insert(
+              id: _uuid.v4(),
+              dishId: dishId,
+              tagId: tagId,
+              householdId: _householdId,
+              createdAt: now,
+            ),
+          );
+        }
+      });
+    });
+  }
+
+  /// Elimina un piatto e i suoi collegamenti: righe ingrediente, tag e
+  /// assegnazioni al piano (plan_day_dish). Lo strato lista è derivato e si
+  /// rigenera, quindi non va toccato qui.
+  Future<void> delete(String dishId) async {
+    await _db.transaction(() async {
+      await (_db.delete(_db.dishIngredients)
+            ..where((di) => di.dishId.equals(dishId)))
+          .go();
+      await (_db.delete(_db.dishTags)..where((dt) => dt.dishId.equals(dishId)))
+          .go();
+      await (_db.delete(_db.planDayDishes)
+            ..where((p) => p.dishId.equals(dishId)))
+          .go();
+      await (_db.delete(_db.dishes)..where((d) => d.id.equals(dishId))).go();
+    });
   }
 }
