@@ -1,0 +1,40 @@
+name: Deploy web to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # permette anche il lancio manuale dalla tab Actions
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # version: "3.x.x"   # opzionale: pinna la stessa versione che usi in locale (flutter --version)
+
+      - name: Dipendenze
+        run: flutter pub get
+
+      - name: Genera i worker PowerSync per il web
+        run: dart run powersync:setup_web
+
+      - name: Build web
+        run: |
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
+
+      - name: Deploy su Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/web --project-name=forkast
