@@ -87,7 +87,7 @@ void main() {
           ..where((h) => h.id.equals(householdId)))
         .getSingle();
     expect(household.defaultGuests, 4);
-    expect(household.weekStartDay, 0);
+    expect(household.weekStartDay, 1);
     expect(household.autoRegen, false);
 
     final membership = await (db.select(db.memberships)

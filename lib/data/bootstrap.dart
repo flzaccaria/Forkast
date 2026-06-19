@@ -34,7 +34,7 @@ Future<String> ensureHousehold(AppDatabase db, String deviceId) async {
       HouseholdsCompanion.insert(
         id: householdId,
         defaultGuests: const Value(4),
-        weekStartDay: const Value(0),
+        weekStartDay: const Value(1), // 1 = lunedì (DateTime.weekday)
         autoRegen: const Value(false),
         createdAt: now,
         updatedAt: now,
