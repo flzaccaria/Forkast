@@ -3,27 +3,33 @@ import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
 
-/// Bottom sheet per creare una nuova voce di catalogo (FR-4, 5, 6).
-/// Riusabile sia dalla gestione ingredienti sia dall'editor piatto
-/// ("crea nuovo" al volo). Restituisce l'[Ingredient] creato, o null se
-/// l'utente annulla.
+/// Bottom sheet per creare o modificare una voce di catalogo (FR-4, 5, 6, 16).
+/// Riusabile dalla gestione ingredienti e dall'editor piatto ("crea nuovo" al
+/// volo). In modifica, se l'ingrediente è già usato in un piatto l'unità è
+/// bloccata (FR-16). Restituisce l'[Ingredient] salvato, o null se annullato.
 Future<Ingredient?> showIngredientForm(
   BuildContext context, {
   required IngredientRepository repo,
   String? initialName,
+  Ingredient? existing,
 }) {
   return showModalBottomSheet<Ingredient>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _IngredientForm(repo: repo, initialName: initialName),
+    builder: (_) => _IngredientForm(
+      repo: repo,
+      initialName: initialName,
+      existing: existing,
+    ),
   );
 }
 
 class _IngredientForm extends StatefulWidget {
-  const _IngredientForm({required this.repo, this.initialName});
+  const _IngredientForm({required this.repo, this.initialName, this.existing});
 
   final IngredientRepository repo;
   final String? initialName;
+  final Ingredient? existing;
 
   @override
   State<_IngredientForm> createState() => _IngredientFormState();
@@ -31,11 +37,30 @@ class _IngredientForm extends StatefulWidget {
 
 class _IngredientFormState extends State<_IngredientForm> {
   final _formKey = GlobalKey<FormState>();
-  late final _nameController =
-      TextEditingController(text: widget.initialName ?? '');
-  final _unitController = TextEditingController();
-  bool _isQb = false;
+  late final _nameController = TextEditingController(
+      text: widget.existing?.name ?? widget.initialName ?? '');
+  late final _unitController = TextEditingController(
+      text: widget.existing != null && !widget.existing!.isQb
+          ? widget.existing!.unit
+          : '');
+  late bool _isQb = widget.existing?.isQb ?? false;
   bool _saving = false;
+
+  /// In creazione l'unità è sempre modificabile; in modifica è bloccata se
+  /// l'ingrediente è già usato (FR-16). Risolto in initState.
+  bool _unitLocked = false;
+
+  bool get _isEditing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      widget.repo.isUnitLocked(widget.existing!.id).then((locked) {
+        if (mounted) setState(() => _unitLocked = locked);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -48,13 +73,22 @@ class _IngredientFormState extends State<_IngredientForm> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      final created = await widget.repo.create(
-        name: _nameController.text.trim(),
-        // Per i "quanto basta" l'unità non è rilevante: la normalizziamo.
-        unit: _isQb ? 'q.b.' : _unitController.text.trim(),
-        isQb: _isQb,
-      );
-      if (mounted) Navigator.of(context).pop(created);
+      final name = _nameController.text.trim();
+      final unit = _isQb ? 'q.b.' : _unitController.text.trim();
+      if (_isEditing) {
+        await widget.repo.update(
+          widget.existing!.id,
+          name: name,
+          // L'unità è ignorata dal repository quando è bloccata (FR-16).
+          unit: unit,
+          isQb: _unitLocked ? null : _isQb,
+        );
+        if (mounted) Navigator.of(context).pop(widget.existing);
+      } else {
+        final created =
+            await widget.repo.create(name: name, unit: unit, isQb: _isQb);
+        if (mounted) Navigator.of(context).pop(created);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
@@ -70,6 +104,7 @@ class _IngredientFormState extends State<_IngredientForm> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final unitEnabled = !_isQb && !_unitLocked;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
       child: Form(
@@ -78,7 +113,7 @@ class _IngredientFormState extends State<_IngredientForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Nuovo ingrediente',
+            Text(_isEditing ? 'Modifica ingrediente' : 'Nuovo ingrediente',
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
@@ -91,12 +126,15 @@ class _IngredientFormState extends State<_IngredientForm> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _unitController,
-              enabled: !_isQb,
-              decoration: const InputDecoration(
+              enabled: unitEnabled,
+              decoration: InputDecoration(
                 labelText: 'Unità (es. g, ml, pz)',
+                helperText: _unitLocked
+                    ? 'Bloccata: l\'ingrediente è già usato in un piatto'
+                    : null,
               ),
               validator: (v) {
-                if (_isQb) return null;
+                if (_isQb || _unitLocked) return null;
                 return (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null;
               },
             ),
@@ -105,7 +143,7 @@ class _IngredientFormState extends State<_IngredientForm> {
               title: const Text('Quanto basta'),
               subtitle: const Text('Senza quantità, non riscalato'),
               value: _isQb,
-              onChanged: (v) => setState(() => _isQb = v),
+              onChanged: _unitLocked ? null : (v) => setState(() => _isQb = v),
             ),
             const SizedBox(height: 8),
             FilledButton(

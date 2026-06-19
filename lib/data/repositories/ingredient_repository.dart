@@ -52,4 +52,120 @@ class IngredientRepository {
       updatedAt: now,
     );
   }
+
+  /// Numero di piatti che usano l'ingrediente. Base per FR-16/17.
+  Future<int> usageCount(String ingredientId) async {
+    final count = _db.dishIngredients.id.count();
+    final query = _db.selectOnly(_db.dishIngredients)
+      ..addColumns([count])
+      ..where(_db.dishIngredients.ingredientId.equals(ingredientId));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  /// Nomi dei piatti in cui l'ingrediente è usato (FR-17: "mostra dove").
+  Future<List<String>> dishesUsing(String ingredientId) async {
+    final di = _db.dishIngredients;
+    final dish = _db.dishes;
+    final query = _db.select(di).join([
+      innerJoin(dish, dish.id.equalsExp(di.dishId)),
+    ])
+      ..where(di.ingredientId.equals(ingredientId))
+      ..orderBy([OrderingTerm(expression: dish.name)]);
+    final rows = await query.get();
+    return rows.map((r) => r.readTable(dish).name).toList();
+  }
+
+  /// Aggiorna nome e — solo se non ancora in uso — unità (FR-16). L'unità
+  /// passata viene ignorata quando l'ingrediente è già usato in un piatto.
+  Future<void> update(
+    String ingredientId, {
+    required String name,
+    String? unit,
+    bool? isQb,
+  }) async {
+    final locked = await usageCount(ingredientId) > 0;
+    final patch = IngredientsCompanion(
+      name: Value(name),
+      updatedAt: Value(DateTime.now().toUtc()),
+    );
+    final withUnit = (locked || unit == null)
+        ? patch
+        : patch.copyWith(unit: Value(unit));
+    final withQb = (locked || isQb == null)
+        ? withUnit
+        : withUnit.copyWith(isQb: Value(isQb));
+    await (_db.update(_db.ingredients)
+          ..where((i) => i.id.equals(ingredientId)))
+        .write(withQb);
+  }
+
+  /// L'unità è bloccata quando l'ingrediente è usato (FR-16).
+  Future<bool> isUnitLocked(String ingredientId) async =>
+      await usageCount(ingredientId) > 0;
+
+  /// Elimina un ingrediente solo se non è usato in alcun piatto (FR-17).
+  /// Restituisce false se è ancora in uso.
+  Future<bool> deleteIfUnused(String ingredientId) async {
+    if (await usageCount(ingredientId) > 0) return false;
+    await (_db.delete(_db.ingredients)..where((i) => i.id.equals(ingredientId)))
+        .go();
+    return true;
+  }
+
+  /// Unisce il doppione `sourceId` in `targetId` (FR-18). Consentito solo a
+  /// parità di unità di misura. Ogni riga di piatto che usa la sorgente viene
+  /// ripuntata sul target; se il piatto usa già il target, le quantità si
+  /// sommano e la riga sorgente è eliminata. Infine la sorgente è rimossa dal
+  /// catalogo. Restituisce false se le unità differiscono.
+  Future<bool> merge({required String sourceId, required String targetId}) async {
+    if (sourceId == targetId) return true;
+    final source = await (_db.select(_db.ingredients)
+          ..where((i) => i.id.equals(sourceId)))
+        .getSingleOrNull();
+    final target = await (_db.select(_db.ingredients)
+          ..where((i) => i.id.equals(targetId)))
+        .getSingleOrNull();
+    if (source == null || target == null) return false;
+    if (source.unit != target.unit || source.isQb != target.isQb) return false;
+
+    await _db.transaction(() async {
+      final sourceRows = await (_db.select(_db.dishIngredients)
+            ..where((di) => di.ingredientId.equals(sourceId)))
+          .get();
+      for (final row in sourceRows) {
+        final existing = await (_db.select(_db.dishIngredients)
+              ..where((di) =>
+                  di.dishId.equals(row.dishId) &
+                  di.ingredientId.equals(targetId)))
+            .getSingleOrNull();
+        if (existing == null) {
+          await (_db.update(_db.dishIngredients)
+                ..where((di) => di.id.equals(row.id)))
+              .write(DishIngredientsCompanion(
+            ingredientId: Value(targetId),
+            qtyBase4: Value(source.isQb ? null : row.qtyBase4),
+            updatedAt: Value(DateTime.now().toUtc()),
+          ));
+        } else {
+          // Il piatto usa già il target: somma le quantità (q.b. resta null).
+          final merged = source.isQb
+              ? null
+              : (existing.qtyBase4 ?? 0) + (row.qtyBase4 ?? 0);
+          await (_db.update(_db.dishIngredients)
+                ..where((di) => di.id.equals(existing.id)))
+              .write(DishIngredientsCompanion(
+            qtyBase4: Value(merged),
+            updatedAt: Value(DateTime.now().toUtc()),
+          ));
+          await (_db.delete(_db.dishIngredients)
+                ..where((di) => di.id.equals(row.id)))
+              .go();
+        }
+      }
+      await (_db.delete(_db.ingredients)..where((i) => i.id.equals(sourceId)))
+          .go();
+    });
+    return true;
+  }
 }
