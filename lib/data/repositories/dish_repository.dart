@@ -25,13 +25,20 @@ class DishRepository {
 
   static const _uuid = Uuid();
 
-  /// Catalogo piatti ordinato per nome, opzionalmente filtrato per testo (FR-15).
-  Stream<List<Dish>> watchAll({String query = ''}) {
+  /// Catalogo piatti ordinato per nome, filtrabile per testo e per tag (FR-15).
+  /// `tagId`, se presente, limita ai piatti che hanno quel tag assegnato.
+  Stream<List<Dish>> watchAll({String query = '', String? tagId}) {
     final q = _db.select(_db.dishes)
       ..where((d) => d.householdId.equals(_householdId))
       ..orderBy([(d) => OrderingTerm(expression: d.name)]);
     if (query.trim().isNotEmpty) {
       q.where((d) => d.name.lower().contains(query.trim().toLowerCase()));
+    }
+    if (tagId != null) {
+      final tagged = _db.selectOnly(_db.dishTags)
+        ..addColumns([_db.dishTags.dishId])
+        ..where(_db.dishTags.tagId.equals(tagId));
+      q.where((d) => d.id.isInQuery(tagged));
     }
     return q.watch();
   }
@@ -43,10 +50,12 @@ class DishRepository {
         .watch();
   }
 
-  /// Crea un piatto con le sue righe ingrediente in un'unica transazione.
+  /// Crea un piatto con le sue righe ingrediente e i tag in un'unica
+  /// transazione. `tagIds` raccoglie portata (al più una) e attributi (FR-14).
   Future<String> create({
     required String name,
     required List<DishIngredientDraft> ingredients,
+    List<String> tagIds = const [],
   }) async {
     final now = DateTime.now().toUtc();
     final dishId = _uuid.v4();
@@ -73,6 +82,18 @@ class DishRepository {
               qtyBase4: Value(ing.qtyBase4),
               createdAt: now,
               updatedAt: now,
+            ),
+          );
+        }
+        for (final tagId in tagIds) {
+          b.insert(
+            _db.dishTags,
+            DishTagsCompanion.insert(
+              id: _uuid.v4(),
+              dishId: dishId,
+              tagId: tagId,
+              householdId: _householdId,
+              createdAt: now,
             ),
           );
         }

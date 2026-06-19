@@ -5,6 +5,7 @@ import '../../data/database.dart';
 import '../../data/repositories/household_repository.dart';
 import '../app_scope.dart';
 import 'ingredients_screen.dart';
+import 'tags_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -113,6 +114,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const IngredientsScreen()),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.label_outline),
+                title: const Text('Tag dei piatti'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TagsScreen()),
                 ),
               ),
             ],

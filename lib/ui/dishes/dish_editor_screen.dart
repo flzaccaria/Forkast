@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/ingredient_repository.dart';
+import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 import '../settings/ingredient_form.dart';
 
@@ -18,9 +19,12 @@ class DishEditorScreen extends StatefulWidget {
 class _DishEditorScreenState extends State<DishEditorScreen> {
   late final DishRepository _dishRepo;
   late final IngredientRepository _ingredientRepo;
+  late final TagRepository _tagRepo;
 
   final _nameController = TextEditingController();
   final _rows = <_IngredientRow>[];
+  String? _portataId;
+  final _attributeIds = <String>{};
   bool _saving = false;
 
   @override
@@ -29,6 +33,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     final scope = AppScope.of(context);
     _dishRepo = DishRepository(scope.database, scope.householdId);
     _ingredientRepo = IngredientRepository(scope.database, scope.householdId);
+    _tagRepo = TagRepository(scope.database, scope.householdId);
   }
 
   @override
@@ -99,9 +104,14 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       }
     }
 
+    final tagIds = <String>[
+      if (_portataId != null) _portataId!,
+      ..._attributeIds,
+    ];
+
     setState(() => _saving = true);
     try {
-      await _dishRepo.create(name: name, ingredients: drafts);
+      await _dishRepo.create(name: name, ingredients: drafts, tagIds: tagIds);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -132,6 +142,20 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Nome del piatto'),
             textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 24),
+          _TagSection(
+            tagRepo: _tagRepo,
+            portataId: _portataId,
+            attributeIds: _attributeIds,
+            onPortataChanged: (id) => setState(() => _portataId = id),
+            onAttributeToggled: (id, selected) => setState(() {
+              if (selected) {
+                _attributeIds.add(id);
+              } else {
+                _attributeIds.remove(id);
+              }
+            }),
           ),
           const SizedBox(height: 24),
           Row(
@@ -199,6 +223,92 @@ class _IngredientRow {
 
   final Ingredient ingredient;
   final TextEditingController qtyController;
+}
+
+/// Selezione dei tag del piatto (FR-14): una portata (scelta singola,
+/// facoltativa) e più attributi. Il vocabolario è curato nelle impostazioni;
+/// qui si seleziona soltanto.
+class _TagSection extends StatelessWidget {
+  const _TagSection({
+    required this.tagRepo,
+    required this.portataId,
+    required this.attributeIds,
+    required this.onPortataChanged,
+    required this.onAttributeToggled,
+  });
+
+  final TagRepository tagRepo;
+  final String? portataId;
+  final Set<String> attributeIds;
+  final ValueChanged<String?> onPortataChanged;
+  final void Function(String id, bool selected) onAttributeToggled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Portata', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        StreamBuilder<List<Tag>>(
+          stream: tagRepo.watchByGroup(TagGroup.portata),
+          builder: (context, snapshot) {
+            final tags = snapshot.data ?? const [];
+            if (tags.isEmpty) {
+              return const _NoTagsHint();
+            }
+            return Wrap(
+              spacing: 8,
+              children: [
+                for (final tag in tags)
+                  ChoiceChip(
+                    label: Text(tag.name),
+                    selected: portataId == tag.id,
+                    onSelected: (sel) =>
+                        onPortataChanged(sel ? tag.id : null),
+                  ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        Text('Attributi', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        StreamBuilder<List<Tag>>(
+          stream: tagRepo.watchByGroup(TagGroup.attributo),
+          builder: (context, snapshot) {
+            final tags = snapshot.data ?? const [];
+            if (tags.isEmpty) {
+              return const _NoTagsHint();
+            }
+            return Wrap(
+              spacing: 8,
+              children: [
+                for (final tag in tags)
+                  FilterChip(
+                    label: Text(tag.name),
+                    selected: attributeIds.contains(tag.id),
+                    onSelected: (sel) => onAttributeToggled(tag.id, sel),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _NoTagsHint extends StatelessWidget {
+  const _NoTagsHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Nessun tag definito. Aggiungili in Impostazioni → Tag dei piatti.',
+      style: Theme.of(context).textTheme.bodySmall,
+    );
+  }
 }
 
 /// Selettore ingrediente dal catalogo condiviso (FR-3, 4, 5). In cima offre
