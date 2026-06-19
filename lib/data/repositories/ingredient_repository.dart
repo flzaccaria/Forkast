@@ -85,19 +85,17 @@ class IngredientRepository {
     bool? isQb,
   }) async {
     final locked = await usageCount(ingredientId) > 0;
+    // L'unità (e il flag q.b., che ne è il corrispettivo) restano immutabili
+    // una volta che l'ingrediente è in uso (FR-16).
     final patch = IngredientsCompanion(
       name: Value(name),
+      unit: (locked || unit == null) ? const Value.absent() : Value(unit),
+      isQb: (locked || isQb == null) ? const Value.absent() : Value(isQb),
       updatedAt: Value(DateTime.now().toUtc()),
     );
-    final withUnit = (locked || unit == null)
-        ? patch
-        : patch.copyWith(unit: Value(unit));
-    final withQb = (locked || isQb == null)
-        ? withUnit
-        : withUnit.copyWith(isQb: Value(isQb));
     await (_db.update(_db.ingredients)
           ..where((i) => i.id.equals(ingredientId)))
-        .write(withQb);
+        .write(patch);
   }
 
   /// L'unità è bloccata quando l'ingrediente è usato (FR-16).
