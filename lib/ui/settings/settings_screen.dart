@@ -45,16 +45,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _editWeekStart(int current) async {
     final value = await showDialog<int>(
       context: context,
-      builder: (_) => SimpleDialog(
+      builder: (ctx) => SimpleDialog(
         title: const Text('Inizio settimana'),
         children: [
-          for (final wd in orderedWeekdays(1))
-            RadioListTile<int>(
-              value: wd,
-              groupValue: current,
-              title: Text(_weekdayNames[wd]!),
-              onChanged: (v) => Navigator.of(context).pop(v),
+          RadioGroup<int>(
+            groupValue: current,
+            onChanged: (v) => Navigator.of(ctx).pop(v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final wd in orderedWeekdays(1))
+                  RadioListTile<int>(
+                    value: wd,
+                    title: Text(_weekdayNames[wd]!),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
