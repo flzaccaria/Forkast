@@ -42,6 +42,12 @@ class AppDatabase extends _$AppDatabase {
   /// così le scritture locali finiscono nella coda di upload di PowerSync.
   AppDatabase(PowerSyncDatabase db) : super(SqliteAsyncDriftConnection(db));
 
+  /// Costruttore per i test: opera su una connessione qualsiasi (es. un
+  /// database in-memory). Permette di replicare lo schema "stile PowerSync"
+  /// (senza i DEFAULT di drift) e verificare che gli insert settino sempre
+  /// i valori espliciti. Non usare in produzione.
+  AppDatabase.forTesting(super.connection);
+
   @override
   int get schemaVersion => 1;
 
