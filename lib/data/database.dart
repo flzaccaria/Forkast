@@ -40,13 +40,19 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   /// drift opera sopra il database gestito da PowerSync: stesso file SQLite,
   /// così le scritture locali finiscono nella coda di upload di PowerSync.
-  AppDatabase(PowerSyncDatabase db) : super(SqliteAsyncDriftConnection(db));
+  AppDatabase(PowerSyncDatabase db)
+      : powerSync = db,
+        super(SqliteAsyncDriftConnection(db));
 
   /// Costruttore per i test: opera su una connessione qualsiasi (es. un
   /// database in-memory). Permette di replicare lo schema "stile PowerSync"
   /// (senza i DEFAULT di drift) e verificare che gli insert settino sempre
   /// i valori espliciti. Non usare in produzione.
-  AppDatabase.forTesting(super.connection);
+  AppDatabase.forTesting(super.connection) : powerSync = null;
+
+  /// Istanza PowerSync sottostante, per osservarne lo stato di sincronizzazione.
+  /// Null nei test, dove non c'è sync.
+  final PowerSyncDatabase? powerSync;
 
   @override
   int get schemaVersion => 1;
