@@ -56,6 +56,10 @@ class _BootstrapGate extends StatefulWidget {
 class _BootstrapGateState extends State<_BootstrapGate> {
   late final Future<_Bootstrapped> _future = _bootstrap();
 
+  /// Household attivo sovrascritto a runtime (es. dopo l'abbinamento). Quando
+  /// null si usa quello determinato al bootstrap.
+  String? _householdOverride;
+
   Future<_Bootstrapped> _bootstrap() async {
     if (!AppConfig.isConfigured) {
       throw StateError(
@@ -117,7 +121,9 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         final data = snapshot.data!;
         return AppScope(
           database: data.database,
-          householdId: data.householdId,
+          householdId: _householdOverride ?? data.householdId,
+          onHouseholdChanged: (id) =>
+              setState(() => _householdOverride = id),
           child: MaterialApp(
             title: 'Forkast',
             theme: _theme,

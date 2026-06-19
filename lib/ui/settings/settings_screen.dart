@@ -5,6 +5,7 @@ import '../../data/database.dart';
 import '../../data/repositories/household_repository.dart';
 import '../app_scope.dart';
 import 'ingredients_screen.dart';
+import 'pairing_screen.dart';
 import 'tags_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -129,6 +130,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const TagsScreen()),
+                ),
+              ),
+              const _SectionHeader('Dispositivi'),
+              ListTile(
+                leading: const Icon(Icons.devices),
+                title: const Text('Abbina un dispositivo'),
+                subtitle: const Text('Condividi i dati con un secondo telefono'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PairingScreen()),
                 ),
               ),
             ],
