@@ -1,13 +1,9 @@
-import 'package:powersync/powersync.dart'
-    show PowerSyncDatabase, WebSqliteOpenFactory;
+import 'package:powersync/powersync.dart' show PowerSyncDatabase;
 
 import 'powersync_schema.dart';
 
 Future<PowerSyncDatabase> openPowerSyncDatabase() async {
-  final db = PowerSyncDatabase.withFactory(
-    WebSqliteOpenFactory(path: 'forkast.db'),
-    schema: forkastSchema,
-  );
+  final db = PowerSyncDatabase(schema: forkastSchema, path: 'forkast.db');
   await db.initialize();
   return db;
 }
