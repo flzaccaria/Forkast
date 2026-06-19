@@ -91,7 +91,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   Future<void> _merge(Ingredient source) async {
-    // Solo doppioni con la stessa unità e stesso tipo q.b. (FR-18).
+    // Only duplicates with the same unit and same q.b. type (FR-18).
     final all = await _repo.watchAll().first;
     final candidates = all
         .where((i) =>

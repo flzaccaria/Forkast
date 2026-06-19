@@ -1,11 +1,11 @@
 import 'scaling.dart';
 
-/// Generazione della lista della spesa dal piano: riscalo (FR-11) e
-/// aggregazione (FR-12). Modulo puro e deterministico, isolato e testato
-/// (§5 ADR): nessun accesso a DB o stato.
+/// Shopping list generation from the plan: rescaling (FR-11) and
+/// aggregation (FR-12). Pure, deterministic module, isolated and tested
+/// (§5 ADR): no DB or state access.
 
-/// Una riga grezza in ingresso: un ingrediente di un piatto assegnato a una
-/// serata, con i commensali di quella serata.
+/// A raw input line: an ingredient of a dish assigned to an evening,
+/// with the guests for that evening.
 class ListLineInput {
   ListLineInput({
     required this.ingredientId,
@@ -19,12 +19,12 @@ class ListLineInput {
   final String unit;
   final bool isQb;
 
-  /// Quantità per 4 persone; ignorata (e tipicamente null) per i "quanto basta".
+  /// Quantity for 4 people; ignored (and typically null) for "q.b." items.
   final double? qtyBase4;
   final int guests;
 }
 
-/// Una riga aggregata della lista generata.
+/// An aggregated row of the generated list.
 class GeneratedListRow {
   GeneratedListRow({
     required this.ingredientId,
@@ -37,14 +37,14 @@ class GeneratedListRow {
   final String unit;
   final bool isQb;
 
-  /// Quantità finale aggregata e arrotondata; null per i "quanto basta".
+  /// Final aggregated and rounded quantity; null for "q.b." items.
   final double? qty;
 }
 
-/// Aggrega le righe per voce di catalogo (FR-12). Per ogni ingrediente
-/// non-"quanto basta" somma le quantità riscalate (FR-11) e applica una sola
-/// volta la regola di arrotondamento sul totale. I "quanto basta" compaiono
-/// una sola volta, senza quantità, indipendentemente da piatti e commensali.
+/// Aggregates rows by catalog item (FR-12). For each non-"q.b."
+/// ingredient it sums the rescaled quantities (FR-11) and applies the
+/// rounding rule once on the total. "q.b." items appear
+/// once, without a quantity, regardless of dishes and guests.
 List<GeneratedListRow> aggregateList(List<ListLineInput> lines) {
   final sums = <String, double>{};
   final units = <String, String>{};
@@ -79,10 +79,10 @@ List<GeneratedListRow> aggregateList(List<ListLineInput> lines) {
   return rows;
 }
 
-/// Impronta deterministica del piano d'origine (CLAUDE.md, FR-21). Riflette
-/// tutto ciò che influenza la lista generata — serate, commensali e contenuto
-/// dei piatti — così che la lista risulti "divergente" quando, e solo quando,
-/// il risultato cambierebbe. Indipendente dall'ordine delle righe.
+/// Deterministic fingerprint of the source plan (CLAUDE.md, FR-21). Reflects
+/// everything that affects the generated list — evenings, guests and dish
+/// content — so that the list is considered "divergent" when, and only when,
+/// the result would change. Independent of row order.
 String planHash(List<ListLineInput> lines) {
   final canon = lines
       .map((l) =>
@@ -92,10 +92,10 @@ String planHash(List<ListLineInput> lines) {
   return _fnv1a64(canon.join(';'));
 }
 
-/// FNV-1a 64-bit su una stringa: deterministico su ogni piattaforma (a
-/// differenza di String.hashCode), adatto al confronto tra dispositivi.
+/// FNV-1a 64-bit over a string: deterministic on every platform (unlike
+/// String.hashCode), suitable for cross-device comparison.
 String _fnv1a64(String s) {
-  // Aritmetica a 64 bit via BigInt per evitare differenze tra VM e web.
+  // 64-bit arithmetic via BigInt to avoid differences between VM and web.
   final mask = (BigInt.one << 64) - BigInt.one;
   var hash = BigInt.parse('14695981039346656037');
   final prime = BigInt.parse('1099511628211');

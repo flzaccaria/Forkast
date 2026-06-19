@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/ingredient_repository.dart';
 
-/// Regole di gestione del catalogo ingredienti (FR-16/17/18) su schema
-/// "stile PowerSync" (senza DEFAULT).
+/// Management rules for the ingredient catalog (FR-16/17/18) on a
+/// "PowerSync-style" schema (without DEFAULT).
 void main() {
   late AppDatabase db;
   late IngredientRepository repo;
@@ -48,15 +48,15 @@ void main() {
         ));
   }
 
-  group('FR-16 unità bloccata dopo l\'uso', () {
-    test('l\'unità è modificabile finché non è usato', () async {
+  group('FR-16 unit locked after use', () {
+    test('the unit is modifiable until it is used', () async {
       final ing = await repo.create(name: 'Latte', unit: 'ml');
       await repo.update(ing.id, name: 'Latte', unit: 'l');
       final updated = await repo.watchAll().first;
       expect(updated.single.unit, 'l');
     });
 
-    test('l\'unità non cambia più dopo l\'uso in un piatto', () async {
+    test('the unit no longer changes after use in a dish', () async {
       final ing = await repo.create(name: 'Latte', unit: 'ml');
       await seedDish('d1');
       await use('d1', ing.id, 200);
@@ -64,13 +64,13 @@ void main() {
       expect(await repo.isUnitLocked(ing.id), true);
       await repo.update(ing.id, name: 'Latte intero', unit: 'l');
       final updated = await repo.watchAll().first;
-      expect(updated.single.name, 'Latte intero'); // nome sì
-      expect(updated.single.unit, 'ml'); // unità no
+      expect(updated.single.name, 'Latte intero'); // name yes
+      expect(updated.single.unit, 'ml'); // unit no
     });
   });
 
-  group('FR-17 eliminazione protetta', () {
-    test('non eliminabile se in uso, eliminabile dopo la rimozione', () async {
+  group('FR-17 protected deletion', () {
+    test('not deletable if in use, deletable after removal', () async {
       final ing = await repo.create(name: 'Carne', unit: 'g');
       await seedDish('d1');
       await use('d1', ing.id, 600);
@@ -87,15 +87,15 @@ void main() {
     });
   });
 
-  group('reparto (category)', () {
-    test('si salva alla creazione e si legge', () async {
+  group('department (category)', () {
+    test('is saved at creation and read back', () async {
       final ing =
           await repo.create(name: 'Mele', unit: 'g', category: 'Ortofrutta');
       expect(ing.category, 'Ortofrutta');
       expect((await repo.watchAll().first).single.category, 'Ortofrutta');
     });
 
-    test('è sempre modificabile, anche se l\'unità è bloccata', () async {
+    test('is always modifiable, even if the unit is locked', () async {
       final ing = await repo.create(name: 'Latte', unit: 'ml');
       await seedDish('d1');
       await use('d1', ing.id, 200);
@@ -105,21 +105,21 @@ void main() {
           name: 'Latte', category: const Value('Latticini e uova'));
       expect((await repo.watchAll().first).single.category, 'Latticini e uova');
 
-      // Si può anche azzerare ("Senza reparto").
+      // It can also be cleared ("No department").
       await repo.update(ing.id, name: 'Latte', category: const Value(null));
       expect((await repo.watchAll().first).single.category, isNull);
     });
   });
 
-  group('FR-18 unione doppioni', () {
-    test('unisce solo a parità di unità', () async {
+  group('FR-18 merge duplicates', () {
+    test('merges only with matching units', () async {
       final a = await repo.create(name: 'Pomodori', unit: 'g');
       final b = await repo.create(name: 'Pomodoro', unit: 'pz');
       expect(await repo.merge(sourceId: a.id, targetId: b.id), false);
       expect((await repo.watchAll().first).length, 2);
     });
 
-    test('ripunta le righe dei piatti sul target', () async {
+    test('repoints the dish rows to the target', () async {
       final a = await repo.create(name: 'Pomodori', unit: 'g');
       final b = await repo.create(name: 'Pomodoro', unit: 'g');
       await seedDish('d1');
@@ -127,14 +127,14 @@ void main() {
 
       expect(await repo.merge(sourceId: a.id, targetId: b.id), true);
       expect((await repo.watchAll().first).single.id, b.id);
-      // La riga del piatto ora punta al target con la stessa quantità.
+      // The dish row now points to the target with the same quantity.
       expect(await repo.usageCount(b.id), 1);
       final rows = await db.select(db.dishIngredients).get();
       expect(rows.single.ingredientId, b.id);
       expect(rows.single.qtyBase4, 300);
     });
 
-    test('somma le quantità quando un piatto usa già il target', () async {
+    test('sums the quantities when a dish already uses the target', () async {
       final a = await repo.create(name: 'Pomodori', unit: 'g');
       final b = await repo.create(name: 'Pomodoro', unit: 'g');
       await seedDish('d1');

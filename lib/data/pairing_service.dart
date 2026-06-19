@@ -1,24 +1,23 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Abbinamento dei dispositivi (ADR-006). Incapsula le chiamate alle funzioni
-/// Postgres `SECURITY DEFINER` (vedi 00002_pairing.sql), le uniche autorizzate
-/// a scrivere una membership in un household di cui il dispositivo non fa
-/// ancora parte. Richiede rete: è una configurazione una-tantum, non una
-/// operazione offline-first.
+/// Device pairing (ADR-006). Wraps the calls to the Postgres
+/// `SECURITY DEFINER` functions (see 00002_pairing.sql), the only ones allowed
+/// to write a membership into a household the device is not yet part of.
+/// Requires network: it is a one-time setup, not an offline-first operation.
 class PairingService {
   PairingService(this._client);
 
   final SupabaseClient _client;
 
-  /// Dispositivo che invita: genera un codice a 6 cifre, valido ~10 minuti.
+  /// Inviting device: generates a 6-digit code, valid for ~10 minutes.
   Future<String> createCode() async {
     final res = await _client.rpc('create_pairing_code');
     return res as String;
   }
 
-  /// Secondo dispositivo: consuma il codice ed entra nell'household di chi ha
-  /// invitato. Ritorna l'`household_id` adottato. Lancia [PairingException]
-  /// con un motivo leggibile in caso di errore.
+  /// Second device: redeems the code and joins the inviter's household.
+  /// Returns the adopted `household_id`. Throws [PairingException] with a
+  /// readable reason on error.
   Future<String> redeemCode(String code) async {
     try {
       final res = await _client.rpc(
@@ -31,19 +30,19 @@ class PairingService {
     }
   }
 
-  // Predisposizione email (fase futura, ADR-006): quando l'identità anonima
-  // sarà promossa ad account reale, l'invito via email riuserà lo stesso
-  // meccanismo server-side di aggiunta membership (una funzione gemella di
-  // redeem_pairing_code che risolve il device dall'email invece che dal codice).
-  // Non implementato in questa fase per non introdurre PII (ADR-008).
+  // Email seam (future phase, ADR-006): when the anonymous identity is
+  // promoted to a real account, the email invite will reuse the same
+  // server-side membership-adding mechanism (a twin function of
+  // redeem_pairing_code that resolves the device from the email instead of the code).
+  // Not implemented in this phase to avoid introducing PII (ADR-008).
   // Future<void> inviteByEmail(String email) { ... }
 
-  /// Normalizza l'input dell'utente: rimuove spazi e trattini.
+  /// Normalizes the user's input: removes spaces and dashes.
   static String normalizeCode(String raw) =>
       raw.replaceAll(RegExp(r'[\s-]'), '').trim();
 }
 
-/// Errore di abbinamento con messaggio già localizzato per la UI.
+/// Pairing error with a message already localized for the UI.
 class PairingException implements Exception {
   PairingException(this.message);
 

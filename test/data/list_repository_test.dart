@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/list_repository.dart';
 
-/// Flusso lista a due strati (FR-10/11/12/13/21) su schema "stile PowerSync"
-/// (tabelle senza DEFAULT), che intercetta anche i default drift non applicati
+/// Two-layer list flow (FR-10/11/12/13/21) on a "PowerSync-style" schema
+/// (tables without DEFAULT), which also catches the unapplied drift defaults
 /// (is_qb, removed, checked).
 void main() {
   late AppDatabase db;
@@ -105,7 +105,7 @@ void main() {
         ));
   }
 
-  /// Crea una serata con un piatto e i suoi ingredienti.
+  /// Creates an evening with a dish and its ingredients.
   Future<void> seedDinner({
     required int dayOfWeek,
     required int guests,
@@ -139,7 +139,7 @@ void main() {
         ));
   }
 
-  test('generate riscala e aggrega, salva snapshot e hash', () async {
+  test('generate rescales and aggregates, saves snapshot and hash', () async {
     await seedIngredient('carne', 'Carne');
     await seedIngredient('sale', 'Sale', isQb: true);
     await seedDinner(dayOfWeek: 1, guests: 6, dishId: 'd1'); // x1.5
@@ -161,7 +161,7 @@ void main() {
     expect(sale.displayQty, isNull);
   });
 
-  test('override: modifica, rimozione e ripristino', () async {
+  test('override: modification, removal and restore', () async {
     await seedIngredient('carne', 'Carne');
     await seedDinner(dayOfWeek: 1, guests: 4, dishId: 'd1');
     await seedDishIngredient('d1', 'carne', 600);
@@ -183,7 +183,7 @@ void main() {
     expect(item.displayQty, 600);
   });
 
-  test('voci manuali: aggiunta e rimozione', () async {
+  test('manual items: addition and removal', () async {
     await seedIngredient('carne', 'Carne');
     await seedDinner(dayOfWeek: 1, guests: 4, dishId: 'd1');
     await seedDishIngredient('d1', 'carne', 600);
@@ -198,7 +198,7 @@ void main() {
     expect(manual, isEmpty);
   });
 
-  test('le spunte persistono attraverso la rigenerazione (FR-21)', () async {
+  test('checks persist across regeneration (FR-21)', () async {
     await seedIngredient('carne', 'Carne');
     await seedDinner(dayOfWeek: 1, guests: 4, dishId: 'd1');
     await seedDishIngredient('d1', 'carne', 600);
@@ -207,7 +207,7 @@ void main() {
     await repo.setIngredientChecked(listId, 'carne', true);
     expect((await repo.watchGeneratedItems(listId).first).single.checked, true);
 
-    // Rigenera: lo snapshot si ricrea, la spunta resta.
+    // Regenerate: the snapshot is recreated, the check remains.
     await repo.generate(weekPlanId);
     expect((await repo.watchGeneratedItems(listId).first).single.checked, true);
 
@@ -216,14 +216,14 @@ void main() {
         (await repo.watchGeneratedItems(listId).first).single.checked, false);
   });
 
-  test('currentPlanHash diverge quando cambia il piano', () async {
+  test('currentPlanHash diverges when the plan changes', () async {
     await seedIngredient('carne', 'Carne');
     await seedDinner(dayOfWeek: 1, guests: 4, dishId: 'd1');
     await seedDishIngredient('d1', 'carne', 600);
     await repo.generate(weekPlanId);
     final list = await repo.watchList(weekPlanId).first;
 
-    // Cambia i commensali della serata.
+    // Change the guests of the evening.
     await (db.update(db.planDays)..where((d) => d.id.equals('pd-1')))
         .write(const PlanDaysCompanion(guests: Value(8)));
 

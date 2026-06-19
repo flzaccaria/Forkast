@@ -1,129 +1,129 @@
-# CLAUDE.md — App Menu Settimanale & Lista della Spesa
+# CLAUDE.md — Weekly Menu & Shopping List App
 
-> File di contesto per Claude Code. Letto a ogni sessione. Mantienilo conciso e aggiornato.
-> Fonti di verità complete: `Requisiti_Funzionali_v0.3.docx`, `Mappa_Flussi_e_Schermate_v1.0.docx`, `ADR_Architettura_v1.0.docx`.
-> Se una richiesta contraddice questo file o un ADR, **fermati e segnalalo** invece di decidere in autonomia.
-
----
-
-## Cos'è il progetto
-
-App mobile (iPhone + Android) per una coppia/famiglia: pianificare il menu delle **cene** della settimana e generare la **lista della spesa** con le quantità proporzionate ai commensali.
-
-Ambito di questa fase: uso privato e familiare, **solo cene**, **due dispositivi**. Niente web. Account, inviti e condivisione formale sono rimandati ma l'architettura non deve precluderli.
+> Context file for Claude Code. Read at every session. Keep it concise and up to date.
+> Complete sources of truth: `Requisiti_Funzionali_v0.3.docx`, `Mappa_Flussi_e_Schermate_v1.0.docx`, `ADR_Architettura_v1.0.docx`.
+> If a request contradicts this file or an ADR, **stop and flag it** instead of deciding on your own.
 
 ---
 
-## Vincolo guida (non negoziabile)
+## What the project is
 
-L'app si usa **al supermercato, offline**. Deve essere **local-first**: leggere/scrivere sempre sul database locale (istantaneo) e sincronizzare in background quando c'è rete. Mai bloccare la UI in attesa del server.
+A mobile app (iPhone + Android) for a couple/family: plan the week's **dinner** menu and generate the **shopping list** with quantities proportional to the number of guests.
+
+Scope of this phase: private, family use, **dinners only**, **two devices**. No web. Accounts, invites, and formal sharing are deferred, but the architecture must not preclude them.
 
 ---
 
-## Stack tecnico
+## Guiding constraint (non-negotiable)
 
-| Livello | Scelta | Note |
+The app is used **at the supermarket, offline**. It must be **local-first**: always read/write to the local database (instant) and sync in the background when there is network. Never block the UI waiting for the server.
+
+---
+
+## Tech stack
+
+| Layer | Choice | Notes |
 | --- | --- | --- |
-| Client | **Flutter** + **drift** (SQLite locale) | Codebase unico iOS/Android. Web escluso. |
-| Backend | **Supabase** (Postgres), **region EU** | Relazionale: serve all'integrità del catalogo. |
-| Sync | **PowerSync** | Replica Postgres ↔ SQLite locale; coda di upload offline. |
-| Auth (fase 1) | Supabase **anonymous sign-in** per dispositivo | Nessun account/email ora. |
+| Client | **Flutter** + **drift** (local SQLite) | Single iOS/Android codebase. Web excluded. |
+| Backend | **Supabase** (Postgres), **EU region** | Relational: needed for catalog integrity. |
+| Sync | **PowerSync** | Replicates Postgres ↔ local SQLite; offline upload queue. |
+| Auth (phase 1) | Supabase **anonymous sign-in** per device | No account/email for now. |
 
-Setup iniziale obbligatorio (ADR-002, ADR-008):
-- Creare il progetto Supabase in **region EU** dal giorno zero.
-- Configurare il WAL per progetti piccoli (es. `max_wal_size` più basso) per evitare il gonfiamento del disco su istanze inattive.
-
----
-
-## Principi architetturali (gli ADR in pillole)
-
-1. **Local-first** (ADR-001). SQLite sul dispositivo = fonte di verità per la UI. Il backend è hub di sync e archivio durevole, non intermediario di ogni lettura.
-2. **Sincronizza gli input, deriva gli output** (ADR-004). NON sincronizzare ciò che è calcolabile. La lista generata è funzione di (piano + piatti + catalogo).
-3. **Conflitti: semplici** (ADR-003). Last-write-wins per campo + **UUID generati dal client** su ogni insert + flag idempotenti. **Niente CRDT.**
-4. **Household come aggregate root** (ADR-005). Ogni entità porta un `household_id`. È anche la chiave del bucket di sync PowerSync e il futuro confine di autorizzazione.
-5. **Privacy by design** (ADR-008). Data minimization, nessuna analytics con dati personali, dati in EU.
+Mandatory initial setup (ADR-002, ADR-008):
+- Create the Supabase project in the **EU region** from day zero.
+- Configure the WAL for small projects (e.g. lower `max_wal_size`) to avoid disk bloat on idle instances.
 
 ---
 
-## Modello dati (spina dorsale)
+## Architectural principles (the ADRs in a nutshell)
 
-Ogni tabella porta `household_id`. Ogni insert usa un **UUID generato dal client**.
-
-- `household` — contenitore di tutti i dati.
-- `membership` — lega un dispositivo (domani un utente) a un household. Base del pairing.
-- `ingredient` — catalogo condiviso. Possiede `unit` e il flag `is_qb` ("quanto basta").
-- `tag` — gruppo `portata` (singola) o `attributo` (multiplo), con colore e ordine.
-- `dish` + `dish_tag` — piatto riutilizzabile; una portata, più attributi.
-- `dish_ingredient` — riga ingrediente del piatto, `qty_base4` (ignorata per gli `is_qb`).
-- `week_plan` → `plan_day` (con `commensali` della serata) → `plan_day_dish`.
-- `shopping_list` — contesto snapshot: settimana, `generated_at`, **impronta/hash del piano d'origine**.
-- `list_generated_row` — riga derivata dello snapshot (ingrediente, qty riscalata, unità).
-- `list_override` — modifica reversibile di una riga generata, agganciata all'`ingredient_id`.
-- `list_manual_item` — voce aggiunta a mano (ID proprio), additiva e persistente.
-- `list_check` — spunta idempotente per (lista, ingrediente); persiste tra rigenerazioni.
+1. **Local-first** (ADR-001). SQLite on the device = source of truth for the UI. The backend is a sync hub and durable archive, not an intermediary for every read.
+2. **Sync the inputs, derive the outputs** (ADR-004). Do NOT sync what is computable. The generated list is a function of (plan + dishes + catalog).
+3. **Conflicts: simple** (ADR-003). Last-write-wins per field + **client-generated UUIDs** on every insert + idempotent flags. **No CRDT.**
+4. **Household as the aggregate root** (ADR-005). Every entity carries a `household_id`. It is also the key of the PowerSync sync bucket and the future authorization boundary.
+5. **Privacy by design** (ADR-008). Data minimization, no analytics with personal data, data in the EU.
 
 ---
 
-## Invarianti e regole da rispettare nel codice
+## Data model (the backbone)
 
-- **Quantità in base 4** (FR-2). I piatti definiscono le quantità per 4 persone.
-- **Riscalo** (FR-11): `qty_finale = qty_base4 × (commensali ÷ 4)`, escluso `is_qb`.
-- **Aggregazione** (FR-12): somma per voce di catalogo; coerente perché una voce ha un'unica unità.
-- **Regola di arrotondamento UNICA**, in un **modulo condiviso e testato** (§5 ADR). Es. prodotti a pezzo intero → arrotonda per eccesso. Deve essere deterministica.
-- **Unità bloccata** (FR-16): non modificabile dopo che l'ingrediente è usato in ≥1 piatto. Enforcement **nella UI** (l'azione vietata non è nemmeno mostrata) + riconciliazione in sync.
-- **Eliminazione protetta** (FR-17): ingrediente in uso non eliminabile; mostrare dove è usato.
-- **Unione doppioni** (FR-18): solo a parità di unità.
-- **Lista a due strati** (FR-21): generato (snapshot ricreabile) + manuale/override/spunte (persistenti). Override reversibile via "ripristina".
-- **Rigenerazione NON automatica di default** (FR-21): quando il piano diverge dall'impronta salvata sullo snapshot, mostrare l'avviso "Aggiorna"; l'utente decide quando. Opzione per la rigenerazione automatica nelle impostazioni.
+Every table carries a `household_id`. Every insert uses a **client-generated UUID**.
 
-> Nota offline-first: le invarianti cross-device sono **best-effort** (UI + riconciliazione), non transazioni globali. È un limite accettato (§6 ADR). Non promettere garanzie transazionali tra dispositivi.
-
----
-
-## Da fare / da NON fare
-
-**FAI**
-- Scrivi sempre prima in locale, poi lascia sincronizzare PowerSync.
-- Filtra ogni query per `household_id`; imposta le regole di accesso (RLS) di conseguenza.
-- Isola riscalo + arrotondamento in un modulo puro e testato.
-- Genera lo snapshot lista su azione esplicita dell'utente, salvando l'hash del piano.
-
-**NON FARE**
-- Niente CRDT / Automerge / Yjs.
-- Non sincronizzare le righe generate come se fossero dati primari: derivale.
-- Non legare i dati al singolo dispositivo: sempre all'household.
-- Niente analytics con dati personali; nessuna email/PII in questa fase.
-- Non introdurre un client web (ribalterebbe la scelta Flutter).
+- `household` — container for all data.
+- `membership` — links a device (tomorrow a user) to a household. Basis for pairing.
+- `ingredient` — shared catalog. Owns `unit` and the `is_qb` flag ("to taste").
+- `tag` — `portata` (course, single) or `attributo` (attribute, multiple) group, with color and order.
+- `dish` + `dish_tag` — reusable dish; one course, multiple attributes.
+- `dish_ingredient` — ingredient row of the dish, `qty_base4` (ignored for `is_qb`).
+- `week_plan` → `plan_day` (with the evening's `guests`) → `plan_day_dish`.
+- `shopping_list` — snapshot context: week, `generated_at`, **fingerprint/hash of the source plan**.
+- `list_generated_row` — derived snapshot row (ingredient, rescaled qty, unit).
+- `list_override` — reversible modification of a generated row, tied to the `ingredient_id`.
+- `list_manual_item` — manually added item (own ID), additive and persistent.
+- `list_check` — idempotent check for (list, ingredient); persists across regenerations.
 
 ---
 
-## Pairing dei dispositivi (l'unico "auth-lite" da costruire ora) — FATTO
+## Invariants and rules to respect in the code
 
-Il secondo telefono entra nell'household del primo via **codice numerico a 6 cifre generato dal primo**, con identità anonima per dispositivo + riga di `membership`. Domani l'identità anonima si promuove ad account reale (email) senza ristrutturare nulla (ADR-006).
+- **Quantities in base 4** (FR-2). Dishes define quantities for 4 people.
+- **Rescaling** (FR-11): `qty_finale = qty_base4 × (commensali ÷ 4)`, excluding `is_qb`.
+- **Aggregation** (FR-12): sum per catalog item; consistent because an item has a single unit.
+- **A SINGLE rounding rule**, in a **shared and tested module** (§5 ADR). E.g. whole-piece products → round up. It must be deterministic.
+- **Unit locked** (FR-16): not editable once the ingredient is used in ≥1 dish. Enforced **in the UI** (the forbidden action isn't even shown) + reconciliation in sync.
+- **Protected deletion** (FR-17): an ingredient in use cannot be deleted; show where it is used.
+- **Merging duplicates** (FR-18): only when units match.
+- **Two-layer list** (FR-21): generated (recreatable snapshot) + manual/override/checks (persistent). Override reversible via "restore".
+- **Regeneration NOT automatic by default** (FR-21): when the plan diverges from the fingerprint saved on the snapshot, show the "Update" warning; the user decides when. Option for automatic regeneration in settings.
 
-Implementazione:
-- Funzioni Postgres `SECURITY DEFINER` (`supabase/migrations/00002_pairing.sql`): `create_pairing_code()` e `redeem_pairing_code(p_code)`. Incapsulano l'unica scrittura privilegiata che le RLS bloccherebbero (un device che non è ancora membro). `pairing_code` resta server-side, esclusa da PowerSync.
-- Modello join: il secondo telefono **adotta l'household di chi invita** e abbandona il proprio (vuoto) del bootstrap; bloccato se ha già dati propri.
-- Client: `lib/data/pairing_service.dart` (wrapper `rpc()`), `PairingScreen` (mostra/inserisci codice), `householdId` commutabile a runtime via `AppScope.onHouseholdChanged`.
-- **Email predisposta**: seam documentato in `PairingService` per innestare l'invito-via-email quando l'identità anonima diventerà account reale, senza ristrutturare.
-- QR-scan: scartato di proposito (due telefoni vicini, digitare 6 cifre è più rapido).
-
----
-
-## Punti aperti (segnalare, non decidere da soli)
-
-- Nessuno al momento.
-
-### Risolti
-- "Copia settimana precedente" su settimana non vuota (FR-19): l'utente sceglie **sostituisci o aggiungi** al momento della copia.
-- Rimozione di un tag in uso (FR-14): **protetta** (bloccata se in uso, mostra il conteggio), coerente con FR-17.
-- Autenticazione JWT legacy: guida alla migrazione HS256→ES256/JWKS in `docs/auth_jwt_migration.md`. Solo configurazione dashboard, nessuna modifica al codice.
-- Ordinamento lista per reparto: **lista fissa** di reparti in `lib/core/reparto.dart`, campo nullable `ingredient.category` (migration `00003`); la lista della spesa si raggruppa per reparto nell'ordine del percorso in negozio.
-- Obbligatorietà della portata: **resta facoltativa** (scelta di prodotto). Si può salvare un piatto senza portata.
+> Offline-first note: cross-device invariants are **best-effort** (UI + reconciliation), not global transactions. This is an accepted limitation (§6 ADR). Do not promise transactional guarantees across devices.
 
 ---
 
-## Comandi (da completare a setup avvenuto)
+## Do / DON'T
+
+**DO**
+- Always write locally first, then let PowerSync sync.
+- Filter every query by `household_id`; set the access rules (RLS) accordingly.
+- Isolate rescaling + rounding in a pure, tested module.
+- Generate the list snapshot on an explicit user action, saving the plan hash.
+
+**DON'T**
+- No CRDT / Automerge / Yjs.
+- Don't sync the generated rows as if they were primary data: derive them.
+- Don't tie data to a single device: always to the household.
+- No analytics with personal data; no email/PII in this phase.
+- Don't introduce a web client (it would overturn the Flutter choice).
+
+---
+
+## Device pairing (the only "auth-lite" to build now) — DONE
+
+The second phone joins the first's household via a **6-digit numeric code generated by the first**, with an anonymous identity per device + a `membership` row. Tomorrow the anonymous identity is promoted to a real account (email) without restructuring anything (ADR-006).
+
+Implementation:
+- Postgres `SECURITY DEFINER` functions (`supabase/migrations/00002_pairing.sql`): `create_pairing_code()` and `redeem_pairing_code(p_code)`. They encapsulate the only privileged write that RLS would block (a device that is not yet a member). `pairing_code` stays server-side, excluded from PowerSync.
+- Join model: the second phone **adopts the inviter's household** and abandons its own (empty) bootstrap one; blocked if it already has its own data.
+- Client: `lib/data/pairing_service.dart` (`rpc()` wrapper), `PairingScreen` (show/enter code), `householdId` switchable at runtime via `AppScope.onHouseholdChanged`.
+- **Email ready**: seam documented in `PairingService` to graft in email invites when the anonymous identity becomes a real account, without restructuring.
+- QR-scan: deliberately discarded (two phones nearby, typing 6 digits is faster).
+
+---
+
+## Open points (flag, don't decide on your own)
+
+- None at the moment.
+
+### Resolved
+- "Copy previous week" onto a non-empty week (FR-19): the user chooses **replace or add** at copy time.
+- Removing a tag in use (FR-14): **protected** (blocked if in use, shows the count), consistent with FR-17.
+- Legacy JWT authentication: HS256→ES256/JWKS migration guide in `docs/auth_jwt_migration.md`. Dashboard configuration only, no code changes.
+- Ordering the list by aisle: **fixed list** of aisles in `lib/core/reparto.dart`, nullable `ingredient.category` field (migration `00003`); the shopping list is grouped by aisle in the order of the in-store route.
+- Whether the course is mandatory: **stays optional** (product decision). A dish can be saved without a course.
+
+---
+
+## Commands (to complete once setup is done)
 
 ```bash
 flutter pub get          # dipendenze

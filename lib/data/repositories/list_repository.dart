@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/list_generation.dart';
 import '../database.dart';
 
-/// Riga visualizzata dello strato generato, con override e spunta applicati.
+/// Displayed row of the generated layer, with override and check applied.
 class GeneratedItemView {
   GeneratedItemView({
     required this.ingredientId,
@@ -30,11 +30,11 @@ class GeneratedItemView {
   final bool hasOverride;
   final bool checked;
 
-  /// Quantità mostrata: l'override prevale sul valore generato.
+  /// Displayed quantity: the override takes precedence over the generated value.
   double? get displayQty => hasOverride ? overrideQty : generatedQty;
 }
 
-/// Voce manuale visualizzata, con spunta applicata.
+/// Displayed manual item, with check applied.
 class ManualItemView {
   ManualItemView({
     required this.id,
@@ -51,9 +51,9 @@ class ManualItemView {
   final bool checked;
 }
 
-/// Lista della spesa a due strati (FR-13/21): snapshot generato dal piano
-/// (ricreabile) + override/voci manuali/spunte (persistenti). Tutto filtrato
-/// per household (ADR-005), UUID client-side, scritture local-first.
+/// Two-layer shopping list (FR-13/21): snapshot generated from the plan
+/// (recreatable) + overrides/manual items/checks (persistent). All filtered
+/// by household (ADR-005), client-side UUIDs, local-first writes.
 class ListRepository {
   ListRepository(this._db, this._householdId);
 
@@ -62,8 +62,8 @@ class ListRepository {
 
   static const _uuid = Uuid();
 
-  /// Impostazione di rigenerazione automatica della lista (FR-21), predefinita
-  /// off: di norma è l'utente a decidere quando aggiornare.
+  /// Automatic list regeneration setting (FR-21), default off: normally it is
+  /// the user who decides when to update.
   Future<bool> autoRegen() async {
     final household = await (_db.select(_db.households)
           ..where((h) => h.id.equals(_householdId)))
@@ -79,7 +79,7 @@ class ListRepository {
         .watchSingleOrNull();
   }
 
-  // --- Generazione snapshot (FR-10/11/12) -----------------------------------
+  // --- Snapshot generation (FR-10/11/12) ------------------------------------
 
   Future<List<ListLineInput>> _gatherLines(String weekPlanId) async {
     final rows = await _db.customSelect(
@@ -110,14 +110,14 @@ class ListRepository {
         .toList();
   }
 
-  /// Impronta corrente del piano, per rilevare la divergenza (FR-21).
+  /// Current plan fingerprint, to detect divergence (FR-21).
   Future<String> currentPlanHash(String weekPlanId) async {
     return planHash(await _gatherLines(weekPlanId));
   }
 
-  /// Genera (o rigenera) lo snapshot su azione esplicita dell'utente,
-  /// salvando l'hash del piano. Sostituisce le righe generate; override, voci
-  /// manuali e spunte restano (FR-21).
+  /// Generates (or regenerates) the snapshot on an explicit user action,
+  /// saving the plan hash. Replaces the generated rows; overrides, manual
+  /// items and checks remain (FR-21).
   Future<String> generate(String weekPlanId) async {
     final lines = await _gatherLines(weekPlanId);
     final rows = aggregateList(lines);
@@ -180,7 +180,7 @@ class ListRepository {
     return listId;
   }
 
-  // --- Lettura combinata dei due strati -------------------------------------
+  // --- Combined reading of the two layers -----------------------------------
 
   Stream<List<GeneratedItemView>> watchGeneratedItems(String listId) {
     return _db.customSelect(
@@ -246,7 +246,7 @@ class ListRepository {
     });
   }
 
-  // --- Override su righe generate (FR-13/21) --------------------------------
+  // --- Overrides on generated rows (FR-13/21) -------------------------------
 
   Future<void> _upsertOverride(
     String listId,
@@ -291,7 +291,7 @@ class ListRepository {
   Future<void> removeGeneratedRow(String listId, String ingredientId) =>
       _upsertOverride(listId, ingredientId, qtyOverride: null, removed: true);
 
-  /// Ripristina una riga generata al valore calcolato, eliminando l'override.
+  /// Restores a generated row to its computed value, deleting the override.
   Future<void> restoreGeneratedRow(String listId, String ingredientId) {
     return (_db.delete(_db.listOverrides)
           ..where((o) =>
@@ -300,7 +300,7 @@ class ListRepository {
         .go();
   }
 
-  // --- Voci manuali (FR-13) -------------------------------------------------
+  // --- Manual items (FR-13) -------------------------------------------------
 
   Future<void> addManualItem(
     String listId, {
@@ -336,7 +336,7 @@ class ListRepository {
     });
   }
 
-  // --- Spunte di acquisto, idempotenti e persistenti (FR-21) ----------------
+  // --- Purchase checks, idempotent and persistent (FR-21) -------------------
 
   Future<void> setIngredientChecked(
       String listId, String ingredientId, bool checked) async {

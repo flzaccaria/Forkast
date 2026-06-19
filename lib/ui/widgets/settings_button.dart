@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../settings/settings_screen.dart';
 
-/// Pulsante Impostazioni condiviso dalle AppBar delle tre sezioni.
+/// Settings button shared by the AppBars of the three sections.
 class SettingsButton extends StatelessWidget {
   const SettingsButton({super.key});
 

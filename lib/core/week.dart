@@ -1,6 +1,6 @@
-// Calcolo settimane ISO-8601, modulo puro e testabile.
+// ISO-8601 week calculation, pure and testable module.
 
-/// Numero di settimana ISO-8601 (1..53) della data.
+/// ISO-8601 week number (1..53) of the date.
 int isoWeekNumber(DateTime date) {
   final d = DateTime.utc(date.year, date.month, date.day);
   final thursday = d.add(Duration(days: 4 - d.weekday));
@@ -9,29 +9,28 @@ int isoWeekNumber(DateTime date) {
   return (diff / 7).floor() + 1;
 }
 
-/// Anno ISO-8601 della data (può differire dall'anno civile a cavallo di
-/// dicembre/gennaio).
+/// ISO-8601 year of the date (may differ from the calendar year around the
+/// December/January boundary).
 int isoWeekYear(DateTime date) {
   final d = DateTime.utc(date.year, date.month, date.day);
   final thursday = d.add(Duration(days: 4 - d.weekday));
   return thursday.year;
 }
 
-/// Data del giorno `weekday` (1=lun..7=dom) nella settimana ISO (anno, week).
+/// Date of the day `weekday` (1=Mon..7=Sun) in the ISO week (year, week).
 DateTime dateOfIsoWeek(int year, int week, int weekday) {
-  // Il 4 gennaio cade sempre nella settimana ISO 1.
+  // January 4 always falls in ISO week 1.
   final jan4 = DateTime.utc(year, 1, 4);
   final mondayOfWeek1 = jan4.subtract(Duration(days: jan4.weekday - 1));
   final result = mondayOfWeek1.add(Duration(days: (week - 1) * 7 + (weekday - 1)));
-  // Aritmetica in UTC per evitare gli scostamenti da ora legale, ma si
-  // restituisce una data locale (mezzanotte) coerente con l'uso nella UI.
+  // UTC arithmetic to avoid daylight-saving offsets, but returns a local
+  // date (midnight) consistent with usage in the UI.
   return DateTime(result.year, result.month, result.day);
 }
 
-/// I 7 giorni della settimana (valori `weekday` 1..7) ordinati secondo il
-/// giorno di inizio settimana. `weekStartDay` segue la convenzione
-/// `DateTime.weekday`: 1 = lunedì (default), 7 = domenica. Valori fuori range
-/// ricadono su lunedì.
+/// The 7 days of the week (`weekday` values 1..7) ordered according to the
+/// week start day. `weekStartDay` follows the `DateTime.weekday` convention:
+/// 1 = Monday (default), 7 = Sunday. Out-of-range values fall back to Monday.
 List<int> orderedWeekdays(int weekStartDay) {
   final start = (weekStartDay >= 1 && weekStartDay <= 7) ? weekStartDay : 1;
   return List.generate(7, (i) => ((start - 1 + i) % 7) + 1);

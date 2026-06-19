@@ -18,18 +18,18 @@ ListLineInput line({
 
 void main() {
   group('aggregateList', () {
-    test('a 4 commensali la quantità base 4 resta invariata', () {
+    test('at 4 guests the base-4 quantity stays unchanged', () {
       final rows = aggregateList([line(id: 'a', qtyBase4: 600, guests: 4)]);
       expect(rows.single.qty, 600);
       expect(rows.single.isQb, false);
     });
 
-    test('riscala in base ai commensali (6 -> x1.5)', () {
+    test('rescales based on guests (6 -> x1.5)', () {
       final rows = aggregateList([line(id: 'a', qtyBase4: 600, guests: 6)]);
       expect(rows.single.qty, 900);
     });
 
-    test('aggrega lo stesso ingrediente da più piatti/giorni (FR-12)', () {
+    test('aggregates the same ingredient across multiple dishes/days (FR-12)', () {
       final rows = aggregateList([
         line(id: 'a', qtyBase4: 600, guests: 4), // 600
         line(id: 'a', qtyBase4: 200, guests: 8), // 400
@@ -38,8 +38,8 @@ void main() {
       expect(rows.single.qty, 1000);
     });
 
-    test('arrotonda una sola volta sul totale aggregato', () {
-      // unità "pz" -> arrotonda per eccesso all'intero. 1.5 + 1.5 = 3.0
+    test('rounds only once on the aggregated total', () {
+      // unit "pz" -> rounds up to the whole number. 1.5 + 1.5 = 3.0
       final rows = aggregateList([
         line(id: 'p', unit: 'pz', qtyBase4: 1, guests: 6), // 1.5
         line(id: 'p', unit: 'pz', qtyBase4: 1, guests: 6), // 1.5
@@ -47,7 +47,7 @@ void main() {
       expect(rows.single.qty, 3);
     });
 
-    test('i "quanto basta" compaiono una volta senza quantità', () {
+    test('"to taste" items appear once without a quantity', () {
       final rows = aggregateList([
         line(id: 'sale', isQb: true, guests: 4),
         line(id: 'sale', isQb: true, guests: 12),
@@ -56,13 +56,13 @@ void main() {
       expect(rows.single.qty, isNull);
     });
 
-    test('lista vuota produce nessuna riga', () {
+    test('empty list produces no rows', () {
       expect(aggregateList([]), isEmpty);
     });
   });
 
   group('planHash', () {
-    test('è indipendente dall\'ordine delle righe', () {
+    test('is independent of the order of the rows', () {
       final a = planHash([
         line(id: 'a', qtyBase4: 100, guests: 4),
         line(id: 'b', qtyBase4: 200, guests: 6),
@@ -74,19 +74,19 @@ void main() {
       expect(a, b);
     });
 
-    test('cambia se cambiano i commensali', () {
+    test('changes if the guests change', () {
       final a = planHash([line(id: 'a', qtyBase4: 100, guests: 4)]);
       final b = planHash([line(id: 'a', qtyBase4: 100, guests: 6)]);
       expect(a, isNot(b));
     });
 
-    test('cambia se cambia la quantità base di un piatto', () {
+    test('changes if the base quantity of a dish changes', () {
       final a = planHash([line(id: 'a', qtyBase4: 100, guests: 4)]);
       final b = planHash([line(id: 'a', qtyBase4: 150, guests: 4)]);
       expect(a, isNot(b));
     });
 
-    test('è deterministico e a 16 cifre esadecimali', () {
+    test('is deterministic and 16 hexadecimal digits', () {
       final h = planHash([line(id: 'a', qtyBase4: 100, guests: 4)]);
       expect(h, planHash([line(id: 'a', qtyBase4: 100, guests: 4)]));
       expect(h, matches(RegExp(r'^[0-9a-f]{16}$')));

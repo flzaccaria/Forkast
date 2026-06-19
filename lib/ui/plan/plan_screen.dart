@@ -7,8 +7,8 @@ import '../app_scope.dart';
 import '../widgets/settings_button.dart';
 import 'day_screen.dart';
 
-/// Piano settimanale (FR-7): una settimana di cene navigabile, con conteggio
-/// piatti e commensali per giorno. Toccando un giorno si apre "Cena del giorno".
+/// Weekly plan (FR-7): a navigable week of dinners, with dish and guest
+/// counts per day. Tapping a day opens "Dinner of the day".
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
 
@@ -20,7 +20,7 @@ class _PlanScreenState extends State<PlanScreen> {
   late final PlanRepository _repo;
   int _weekStartDay = DateTime.monday;
 
-  /// Una data qualsiasi all'interno della settimana mostrata.
+  /// Any date within the displayed week.
   DateTime _reference = DateTime.now();
 
   static const _monthNames = [
@@ -66,7 +66,7 @@ class _PlanScreenState extends State<PlanScreen> {
       return;
     }
 
-    // Punto aperto §8: se la destinazione non è vuota, chiediamo all'utente.
+    // Open point §8: if the destination is not empty, ask the user.
     var replace = false;
     if (await _repo.hasPlannedDishes(_year, _week)) {
       if (!mounted) return;

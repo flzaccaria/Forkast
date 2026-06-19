@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/main.dart';
 
 void main() {
-  testWidgets('Senza configurazione, il gate mostra la schermata di errore',
+  testWidgets('Without configuration, the gate shows the error screen',
       (tester) async {
-    // In test AppConfig non è configurato: il bootstrap fallisce in modo
-    // controllato e il gate mostra "Errore di avvio" invece di crashare.
+    // In tests AppConfig is not configured: the bootstrap fails in a
+    // controlled way and the gate shows "Errore di avvio" instead of crashing.
     await tester.pumpWidget(const ForkastApp());
     await tester.pump();
 

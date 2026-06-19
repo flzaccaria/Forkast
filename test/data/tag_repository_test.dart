@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/tag_repository.dart';
 
-/// Sistema tag (FR-14/15) su schema "stile PowerSync" (senza DEFAULT), per
-/// intercettare i default drift non applicati (tag.sort_order).
+/// Tag system (FR-14/15) on a "PowerSync-style" schema (without DEFAULT), to
+/// catch unapplied drift defaults (tag.sort_order).
 void main() {
   late AppDatabase db;
   late TagRepository repo;
@@ -39,7 +39,7 @@ void main() {
         ));
   }
 
-  test('crea tag per gruppo e li elenca separati', () async {
+  test('creates tags by group and lists them separately', () async {
     await repo.create(name: 'Primo', group: TagGroup.portata);
     await repo.create(name: 'Secondo', group: TagGroup.portata);
     await repo.create(name: 'Veloce', group: TagGroup.attributo);
@@ -50,7 +50,7 @@ void main() {
     expect(attributi.map((t) => t.name), ['Veloce']);
   });
 
-  test('portata è a scelta singola: sostituisce la precedente', () async {
+  test('course is single-choice: replaces the previous one', () async {
     await seedDish('d1');
     final primo = await repo.create(name: 'Primo', group: TagGroup.portata);
     final secondo = await repo.create(name: 'Secondo', group: TagGroup.portata);
@@ -65,7 +65,7 @@ void main() {
     expect(await repo.watchDishTags('d1').first, isEmpty);
   });
 
-  test('attributi multipli: imposta e sostituisce l\'insieme', () async {
+  test('multiple attributes: sets and replaces the set', () async {
     await seedDish('d1');
     final a = await repo.create(name: 'Veloce', group: TagGroup.attributo);
     final b = await repo.create(name: 'Pesce', group: TagGroup.attributo);
@@ -80,7 +80,7 @@ void main() {
     expect(ids, {c.id});
   });
 
-  test('portata e attributi convivono e si gestiscono indipendentemente',
+  test('course and attributes coexist and are managed independently',
       () async {
     await seedDish('d1');
     final primo = await repo.create(name: 'Primo', group: TagGroup.portata);
@@ -90,13 +90,13 @@ void main() {
     await repo.setDishAttributes('d1', {veloce.id});
     expect((await repo.watchDishTags('d1').first).length, 2);
 
-    // Cambiare gli attributi non tocca la portata.
+    // Changing the attributes does not touch the course.
     await repo.setDishAttributes('d1', {});
     final remaining = await repo.watchDishTags('d1').first;
     expect(remaining.single.id, primo.id);
   });
 
-  test('eliminazione protetta quando il tag è in uso', () async {
+  test('protected deletion when the tag is in use', () async {
     await seedDish('d1');
     final t = await repo.create(name: 'Primo', group: TagGroup.portata);
     await repo.setDishPortata('d1', t.id);

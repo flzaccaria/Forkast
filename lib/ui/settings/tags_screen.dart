@@ -4,8 +4,8 @@ import '../../data/database.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 
-/// Gestione del vocabolario curato dei tag (FR-14): portate e attributi.
-/// L'eliminazione è protetta quando il tag è in uso (coerente con FR-17).
+/// Management of the curated tag vocabulary (FR-14): portate and attributes.
+/// Deletion is protected when the tag is in use (consistent with FR-17).
 class TagsScreen extends StatefulWidget {
   const TagsScreen({super.key});
 

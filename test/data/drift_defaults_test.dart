@@ -5,25 +5,25 @@ import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/dish_repository.dart';
 import 'package:forkast/data/repositories/ingredient_repository.dart';
 
-/// Test di regressione per la classe di bug "default drift non applicati".
+/// Regression test for the "unapplied drift defaults" class of bug.
 ///
-/// In produzione è PowerSync a creare lo schema SQLite, NON drift: i
-/// `withDefault(...)` definiti nelle tabelle drift non finiscono mai nel DB.
-/// Se un insert si affida al default invece di passare il valore esplicito,
-/// la colonna resta NULL e drift crasha nel mapping ("Null check operator
+/// In production it is PowerSync that creates the SQLite schema, NOT drift: the
+/// `withDefault(...)` defined in the drift tables never end up in the DB.
+/// If an insert relies on the default instead of passing the explicit value,
+/// the column stays NULL and drift crashes in the mapping ("Null check operator
 /// used on a null value").
 ///
-/// Qui replichiamo quella condizione: creiamo le tabelle SENZA clausole
-/// DEFAULT (come fa PowerSync) e verifichiamo che gli insert reali
-/// (bootstrap + repository) producano righe leggibili senza NULL.
+/// Here we replicate that condition: we create the tables WITHOUT DEFAULT
+/// clauses (as PowerSync does) and verify that the real inserts
+/// (bootstrap + repository) produce readable rows without NULL.
 void main() {
   late AppDatabase db;
 
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    // Schema "stile PowerSync": nessun DEFAULT, nessun NOT NULL sui campi
-    // non-id. Se il codice si affidasse ai default di drift, le colonne
-    // resterebbero NULL e la lettura fallirebbe.
+    // "PowerSync-style" schema: no DEFAULT, no NOT NULL on the non-id
+    // fields. If the code relied on drift defaults, the columns
+    // would stay NULL and the read would fail.
     await db.customStatement('''
       CREATE TABLE household (
         id TEXT PRIMARY KEY,
@@ -78,11 +78,11 @@ void main() {
     await db.close();
   });
 
-  test('ensureHousehold crea household + membership leggibili (default valorizzati)',
+  test('ensureHousehold creates readable household + membership (defaults populated)',
       () async {
     final householdId = await ensureHousehold(db, 'device-A');
 
-    // La lettura non deve crashare: i campi con default sono valorizzati.
+    // The read must not crash: the fields with defaults are populated.
     final household = await (db.select(db.households)
           ..where((h) => h.id.equals(householdId)))
         .getSingle();
@@ -97,7 +97,7 @@ void main() {
     expect(membership.householdId, householdId);
   });
 
-  test('ensureHousehold è idempotente per lo stesso device', () async {
+  test('ensureHousehold is idempotent for the same device', () async {
     final first = await ensureHousehold(db, 'device-B');
     final second = await ensureHousehold(db, 'device-B');
     expect(first, second);
@@ -108,7 +108,7 @@ void main() {
     expect(count.read<int>('c'), 1);
   });
 
-  test('IngredientRepository.create produce righe leggibili (is_qb valorizzato)',
+  test('IngredientRepository.create produces readable rows (is_qb populated)',
       () async {
     final householdId = await ensureHousehold(db, 'device-C');
     final repo = IngredientRepository(db, householdId);
@@ -124,7 +124,7 @@ void main() {
     expect(pasta.isQb, false);
   });
 
-  test('DishRepository.create salva piatto e righe ingrediente', () async {
+  test('DishRepository.create saves dish and ingredient rows', () async {
     final householdId = await ensureHousehold(db, 'device-D');
     final ingredientRepo = IngredientRepository(db, householdId);
     final dishRepo = DishRepository(db, householdId);

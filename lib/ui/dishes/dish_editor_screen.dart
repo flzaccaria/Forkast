@@ -7,9 +7,9 @@ import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 import '../settings/ingredient_form.dart';
 
-/// Editor di un piatto: nome + righe ingrediente in base 4 (FR-2) + tag (FR-14).
-/// Per gli ingredienti "quanto basta" la quantità non è richiesta (FR-6).
-/// Con [dishId] valorizzato lavora in modifica, precaricando i dati esistenti.
+/// Dish editor: name + ingredient rows in base 4 (FR-2) + tags (FR-14).
+/// For "quanto basta" ingredients the quantity is not required (FR-6).
+/// When [dishId] is set it works in edit mode, preloading the existing data.
 class DishEditorScreen extends StatefulWidget {
   const DishEditorScreen({super.key, this.dishId});
 
@@ -59,7 +59,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       _nameController.text = dish?.name ?? '';
       for (final r in rows) {
         final ing = catalog[r.ingredientId];
-        if (ing == null) continue; // ingrediente rimosso dal catalogo
+        if (ing == null) continue; // ingredient removed from the catalog
         _rows.add(_IngredientRow(
           ingredient: ing,
           qtyController: TextEditingController(
@@ -325,9 +325,9 @@ class _IngredientRow {
   final TextEditingController qtyController;
 }
 
-/// Selezione dei tag del piatto (FR-14): una portata (scelta singola,
-/// facoltativa) e più attributi. Il vocabolario è curato nelle impostazioni;
-/// qui si seleziona soltanto.
+/// Dish tag selection (FR-14): one portata (single choice, optional) and
+/// multiple attributes. The vocabulary is curated in the settings; here it is
+/// only selected.
 class _TagSection extends StatelessWidget {
   const _TagSection({
     required this.tagRepo,
@@ -411,9 +411,9 @@ class _NoTagsHint extends StatelessWidget {
   }
 }
 
-/// Selettore ingrediente dal catalogo condiviso (FR-3, 4, 5). In cima offre
-/// "Crea nuovo ingrediente" per aggiungere una voce al volo (FR-4, 5, 6) senza
-/// uscire dall'editor; la voce creata viene selezionata immediatamente.
+/// Ingredient picker from the shared catalog (FR-3, 4, 5). At the top it offers
+/// "Crea nuovo ingrediente" to add an entry on the fly (FR-4, 5, 6) without
+/// leaving the editor; the created entry is selected immediately.
 class _IngredientPicker extends StatelessWidget {
   const _IngredientPicker({required this.ingredients, required this.repo});
 

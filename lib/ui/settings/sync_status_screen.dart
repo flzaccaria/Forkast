@@ -3,8 +3,8 @@ import 'package:powersync/powersync.dart';
 
 import '../app_scope.dart';
 
-/// Stato della sincronizzazione tra dispositivi (mappa schermate / ADR-001).
-/// Local-first: la UI non dipende mai dalla rete, questo è solo informativo.
+/// Sync status between devices (screen map / ADR-001).
+/// Local-first: the UI never depends on the network, this is informational only.
 class SyncStatusScreen extends StatelessWidget {
   const SyncStatusScreen({super.key});
 

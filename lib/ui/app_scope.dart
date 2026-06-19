@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../data/database.dart';
 
-/// Rende il database (e l'household corrente) disponibili all'albero dei widget.
+/// Makes the database (and the current household) available to the widget tree.
 class AppScope extends InheritedWidget {
   const AppScope({
     super.key,
@@ -15,9 +15,9 @@ class AppScope extends InheritedWidget {
   final AppDatabase database;
   final String householdId;
 
-  /// Cambia l'household attivo del dispositivo (es. dopo l'abbinamento a un
-  /// altro telefono): l'albero si ricostruisce con i repository del nuovo
-  /// household. Null finché il cambio non è supportato dal contesto.
+  /// Changes the device's active household (e.g. after pairing with another
+  /// phone): the tree rebuilds with the new household's repositories.
+  /// Null until the change is supported by the context.
   final ValueChanged<String>? onHouseholdChanged;
 
   static AppScope of(BuildContext context) {

@@ -1,6 +1,6 @@
 # PowerSync Sync Rules / Sync Streams — bucket per household
-# Ogni device riceve solo i dati del proprio household.
-# pairing_code è escluso: gestito server-side via edge function.
+# Each device receives only the data of its own household.
+# pairing_code is excluded: handled server-side via an edge function.
 
 bucket_definitions:
   by_household:

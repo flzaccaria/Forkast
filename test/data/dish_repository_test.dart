@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/dish_repository.dart';
 
-/// Creazione, modifica ed eliminazione dei piatti su schema "stile PowerSync"
-/// (senza DEFAULT).
+/// Creation, modification and deletion of dishes on a "PowerSync-style" schema
+/// (without DEFAULT).
 void main() {
   late AppDatabase db;
   late DishRepository repo;
@@ -71,7 +71,7 @@ void main() {
     return id;
   }
 
-  test('create salva nome, ingredienti e tag', () async {
+  test('create saves name, ingredients and tags', () async {
     await seedIngredient('carne');
     await seedTag('primo', 'portata');
     final id = await repo.create(
@@ -83,7 +83,7 @@ void main() {
     expect((await repo.getIngredients(id)).single.qtyBase4, 600);
   });
 
-  test('update riscrive nome, ingredienti e tag', () async {
+  test('update rewrites name, ingredients and tags', () async {
     await seedIngredient('carne');
     await seedIngredient('sale', isQb: true);
     await seedTag('primo', 'portata');
@@ -110,10 +110,10 @@ void main() {
     expect(ings.firstWhere((i) => i.ingredientId == 'carne').qtyBase4, 500);
 
     final tags = await db.select(db.dishTags).get();
-    expect(tags.single.tagId, 'secondo'); // sostituito, non accumulato
+    expect(tags.single.tagId, 'secondo'); // replaced, not accumulated
   });
 
-  test('delete rimuove piatto, righe, tag e assegnazioni al piano', () async {
+  test('delete removes dish, rows, tags and plan assignments', () async {
     await seedIngredient('carne');
     await seedTag('primo', 'portata');
     final id = await repo.create(
@@ -121,7 +121,7 @@ void main() {
       ingredients: [DishIngredientDraft(ingredientId: 'carne', qtyBase4: 600)],
       tagIds: ['primo'],
     );
-    // Assegna il piatto a una serata.
+    // Assign the dish to an evening.
     final now = DateTime.now().toUtc();
     await db.into(db.weekPlans).insert(WeekPlansCompanion.insert(
         id: 'wp', householdId: householdId, year: 2026, week: 25,

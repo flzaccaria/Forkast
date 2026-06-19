@@ -8,9 +8,9 @@ import '../../data/repositories/plan_repository.dart';
 import '../app_scope.dart';
 import '../widgets/settings_button.dart';
 
-/// Lista della spesa (FR-10/11/12/13/21) per la settimana corrente. Strato
-/// generato dal piano + voci manuali e spunte persistenti. La rigenerazione
-/// non è automatica di default: quando il piano diverge, si mostra "Aggiorna".
+/// Shopping list (FR-10/11/12/13/21) for the current week. Layer generated
+/// from the plan + manual items and persistent checks. Regeneration is not
+/// automatic by default: when the plan diverges, "Aggiorna" is shown.
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
 
@@ -157,7 +157,7 @@ class _ListContentState extends State<_ListContent> {
   Future<void> _checkDivergence() async {
     final current = await widget.repo.currentPlanHash(widget.weekPlanId);
     final diverged = current != widget.list.planHash;
-    // Rigenerazione automatica opzionale (FR-21).
+    // Optional automatic regeneration (FR-21).
     if (diverged && await widget.repo.autoRegen()) {
       widget.onRegenerate();
       return;
@@ -277,10 +277,10 @@ class _GeneratedSection extends StatelessWidget {
             ),
           );
         }
-        // Raggruppa per reparto seguendo l'ordine del percorso in negozio
-        // (lista fissa in core/reparto.dart); gli ingredienti senza reparto
-        // finiscono in coda. Dentro ogni reparto resta l'ordine per nome
-        // garantito dalla query.
+        // Group by department following the in-store route order
+        // (fixed list in core/reparto.dart); ingredients without a department
+        // go at the end. Within each department, the by-name order
+        // guaranteed by the query is preserved.
         final entries = _groupByReparto(items);
         return SliverList.builder(
           itemCount: entries.length,
@@ -326,8 +326,8 @@ class _GeneratedSection extends StatelessWidget {
     );
   }
 
-  /// Trasforma la lista piatta in una sequenza di intestazioni di reparto +
-  /// righe, ordinata per percorso in negozio.
+  /// Transforms the flat list into a sequence of department headers +
+  /// rows, ordered by the in-store route.
   List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items) {
     final sorted = [...items]..sort((a, b) {
         final byReparto = repartoSortIndex(a.category)

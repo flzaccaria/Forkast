@@ -2,9 +2,9 @@ import 'package:drift/drift.dart';
 
 import '../database.dart';
 
-/// Impostazioni globali dell'household (FR-8/20/21): commensali predefiniti,
-/// giorno di inizio settimana e rigenerazione automatica della lista.
-/// Sempre filtrato per household (ADR-005), scritture local-first.
+/// Global household settings (FR-8/20/21): default guests, week start day,
+/// and automatic list regeneration.
+/// Always filtered by household (ADR-005), local-first writes.
 class HouseholdRepository {
   HouseholdRepository(this._db, this._householdId);
 
@@ -23,18 +23,18 @@ class HouseholdRepository {
         .getSingle();
   }
 
-  /// Commensali predefiniti per le nuove serate (FR-8). Minimo 1.
+  /// Default guests for new evenings (FR-8). Minimum 1.
   Future<void> setDefaultGuests(int guests) {
     return _write(HouseholdsCompanion(defaultGuests: Value(guests.clamp(1, 99))));
   }
 
-  /// Giorno di inizio settimana (FR-20), convenzione `DateTime.weekday`
-  /// (1 = lunedì … 7 = domenica).
+  /// Week start day (FR-20), `DateTime.weekday` convention
+  /// (1 = Monday … 7 = Sunday).
   Future<void> setWeekStartDay(int weekday) {
     return _write(HouseholdsCompanion(weekStartDay: Value(weekday)));
   }
 
-  /// Rigenerazione automatica della lista quando il piano diverge (FR-21).
+  /// Automatic list regeneration when the plan diverges (FR-21).
   Future<void> setAutoRegen(bool value) {
     return _write(HouseholdsCompanion(autoRegen: Value(value)));
   }

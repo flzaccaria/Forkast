@@ -5,10 +5,10 @@ import '../../core/reparto.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
 
-/// Bottom sheet per creare o modificare una voce di catalogo (FR-4, 5, 6, 16).
-/// Riusabile dalla gestione ingredienti e dall'editor piatto ("crea nuovo" al
-/// volo). In modifica, se l'ingrediente è già usato in un piatto l'unità è
-/// bloccata (FR-16). Restituisce l'[Ingredient] salvato, o null se annullato.
+/// Bottom sheet to create or edit a catalog entry (FR-4, 5, 6, 16).
+/// Reusable from the ingredient management and the dish editor ("create new"
+/// on the fly). In edit mode, if the ingredient is already used in a dish the
+/// unit is locked (FR-16). Returns the saved [Ingredient], or null if cancelled.
 Future<Ingredient?> showIngredientForm(
   BuildContext context, {
   required IngredientRepository repo,
@@ -49,8 +49,8 @@ class _IngredientFormState extends State<_IngredientForm> {
   late String? _category = widget.existing?.category;
   bool _saving = false;
 
-  /// In creazione l'unità è sempre modificabile; in modifica è bloccata se
-  /// l'ingrediente è già usato (FR-16). Risolto in initState.
+  /// On creation the unit is always editable; in edit mode it is locked if
+  /// the ingredient is already used (FR-16). Resolved in initState.
   bool _unitLocked = false;
 
   bool get _isEditing => widget.existing != null;
@@ -82,7 +82,7 @@ class _IngredientFormState extends State<_IngredientForm> {
         await widget.repo.update(
           widget.existing!.id,
           name: name,
-          // L'unità è ignorata dal repository quando è bloccata (FR-16).
+          // The unit is ignored by the repository when locked (FR-16).
           unit: unit,
           isQb: _unitLocked ? null : _isQb,
           category: Value(_category),

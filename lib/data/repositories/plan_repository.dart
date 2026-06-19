@@ -3,7 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
-/// Riepilogo di una serata per la vista settimanale.
+/// Summary of an evening for the weekly view.
 class DayOverview {
   DayOverview({
     required this.planDayId,
@@ -16,7 +16,7 @@ class DayOverview {
   final int dishCount;
 }
 
-/// Un piatto assegnato a una serata, con il nome risolto dal catalogo.
+/// A dish assigned to an evening, with the name resolved from the catalog.
 class PlanDishEntry {
   PlanDishEntry({
     required this.planDayDishId,
@@ -29,12 +29,11 @@ class PlanDishEntry {
   final String dishName;
 }
 
-/// Pianificazione settimanale (FR-7/8/9). Tutto filtrato per household
-/// (ADR-005), UUID client-side (ADR-003), scritture local-first.
+/// Weekly planning (FR-7/8/9). All filtered by household (ADR-005),
+/// client-side UUIDs (ADR-003), local-first writes.
 ///
-/// I `week_plan` e i `plan_day` sono creati pigramente: una settimana o una
-/// serata vuota non genera righe finché l'utente non assegna commensali o
-/// piatti.
+/// `week_plan` and `plan_day` are created lazily: an empty week or evening
+/// does not generate rows until the user assigns guests or dishes.
 class PlanRepository {
   PlanRepository(this._db, this._householdId);
 
@@ -43,7 +42,7 @@ class PlanRepository {
 
   static const _uuid = Uuid();
 
-  /// Valore predefinito di commensali per l'household (FR-8).
+  /// Default guests for the household (FR-8).
   Future<int> defaultGuests() async {
     final household = await (_db.select(_db.households)
           ..where((h) => h.id.equals(_householdId)))
@@ -51,8 +50,8 @@ class PlanRepository {
     return household.defaultGuests;
   }
 
-  /// Giorno di inizio settimana configurato (FR-20), convenzione
-  /// `DateTime.weekday` (1 = lunedì … 7 = domenica).
+  /// Configured week start day (FR-20), `DateTime.weekday` convention
+  /// (1 = Monday … 7 = Sunday).
   Future<int> weekStartDay() async {
     final household = await (_db.select(_db.households)
           ..where((h) => h.id.equals(_householdId)))
@@ -69,8 +68,8 @@ class PlanRepository {
         .watchSingleOrNull();
   }
 
-  /// Riepilogo per giorno (commensali + numero piatti) della settimana,
-  /// indicizzato per `dayOfWeek`. Reattivo a modifiche su serate e piatti.
+  /// Per-day summary (guests + dish count) of the week, indexed by
+  /// `dayOfWeek`. Reactive to changes on evenings and dishes.
   Stream<Map<int, DayOverview>> watchWeekOverview(String weekPlanId) {
     return _db
         .customSelect(
@@ -98,7 +97,7 @@ class PlanRepository {
     });
   }
 
-  /// Piatti di una serata, ordinati, con il nome del piatto.
+  /// Dishes of an evening, ordered, with the dish name.
   Stream<List<PlanDishEntry>> watchDayDishes(String planDayId) {
     final pdd = _db.planDayDishes;
     final dish = _db.dishes;
@@ -144,9 +143,9 @@ class PlanRepository {
     return id;
   }
 
-  /// Garantisce l'esistenza della serata (year/week/dayOfWeek), creando al
-  /// volo week_plan e plan_day. I commensali di una serata nuova partono dal
-  /// default dell'household (FR-8), poi sono sovrascrivibili.
+  /// Ensures the evening exists (year/week/dayOfWeek), creating week_plan and
+  /// plan_day on the fly. A new evening's guests start from the household
+  /// default (FR-8), then can be overridden.
   Future<PlanDay> ensurePlanDay(int year, int week, int dayOfWeek) async {
     final weekPlanId = await _ensureWeekPlan(year, week);
     final existing = await (_db.select(_db.planDays)
@@ -180,7 +179,7 @@ class PlanRepository {
     return day;
   }
 
-  /// Imposta i commensali della serata (FR-8). Vale per tutti i piatti.
+  /// Sets the evening's guests (FR-8). Applies to all dishes.
   Future<void> setGuests(String planDayId, int guests) {
     return (_db.update(_db.planDays)..where((d) => d.id.equals(planDayId)))
         .write(PlanDaysCompanion(
@@ -189,8 +188,8 @@ class PlanRepository {
     ));
   }
 
-  /// Assegna i piatti selezionati alla serata, evitando i duplicati già
-  /// presenti. Lo stesso piatto può stare in giorni diversi (FR-9).
+  /// Assigns the selected dishes to the evening, avoiding already-present
+  /// duplicates. The same dish can appear on different days (FR-9).
   Future<void> addDishes(String planDayId, List<String> dishIds) async {
     if (dishIds.isEmpty) return;
     final now = DateTime.now().toUtc();
@@ -224,7 +223,7 @@ class PlanRepository {
         .go();
   }
 
-  /// Vero se la settimana ha almeno una serata pianificata (con piatti).
+  /// True if the week has at least one planned evening (with dishes).
   Future<bool> hasPlannedDishes(int year, int week) async {
     final plan = await (_db.select(_db.weekPlans)
           ..where((w) =>
@@ -244,13 +243,13 @@ class PlanRepository {
     return (row.read(count) ?? 0) > 0;
   }
 
-  /// Copia piatti e commensali della settimana `from` nella settimana `to`
-  /// (FR-19). La lista NON viene copiata: si rigenera dal piano (ADR-004).
+  /// Copies dishes and guests from week `from` into week `to` (FR-19). The
+  /// list is NOT copied: it is regenerated from the plan (ADR-004).
   ///
-  /// Quando la settimana di destinazione non è vuota il comportamento è scelto
-  /// dal chiamante (punto aperto §8 dei requisiti): con [replace] = true le
-  /// serate di destinazione vengono prima azzerate; altrimenti i piatti si
-  /// aggiungono a quelli esistenti senza duplicati.
+  /// When the destination week is not empty the behavior is chosen by the
+  /// caller (open point §8 of the requirements): with [replace] = true the
+  /// destination evenings are cleared first; otherwise the dishes are added
+  /// to the existing ones without duplicates.
   Future<void> copyWeek({
     required int fromYear,
     required int fromWeek,

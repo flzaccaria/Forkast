@@ -1,15 +1,15 @@
-/// Reparti del supermercato: lista fissa predefinita (punto aperto risolto).
+/// Supermarket departments: fixed predefined list (open point resolved).
 ///
-/// L'ordine di [reparti] è la sequenza tipica del percorso in negozio, così la
-/// lista della spesa si può raggruppare e ordinare per reparto e seguire il
-/// giro fisico invece di rimbalzare avanti e indietro.
+/// The order of [reparti] is the typical sequence of the store route, so the
+/// shopping list can be grouped and sorted by department and follow the
+/// physical walk instead of bouncing back and forth.
 ///
-/// Il valore salvato su `ingredient.category` è la stringa del reparto (uno di
-/// [reparti]) oppure `null` ("Senza reparto"). Si usa la stringa — e non un
-/// indice — così il dato resta leggibile e robusto se l'ordine cambia.
+/// The value stored in `ingredient.category` is the department string (one of
+/// [reparti]) or `null` ("Senza reparto"). A string is used — not an
+/// index — so the data stays readable and robust if the order changes.
 library;
 
-/// Elenco canonico dei reparti, nell'ordine del percorso in negozio.
+/// Canonical list of departments, in store-route order.
 const List<String> reparti = [
   'Ortofrutta',
   'Macelleria',
@@ -25,11 +25,11 @@ const List<String> reparti = [
   'Altro',
 ];
 
-/// Etichetta usata per gli ingredienti senza reparto assegnato.
+/// Label used for ingredients without an assigned department.
 const String repartoNonAssegnato = 'Senza reparto';
 
-/// Indice di ordinamento di un reparto: gli sconosciuti e i `null` finiscono
-/// in fondo, così un valore non più previsto non rompe l'ordine.
+/// Sort index of a department: unknown ones and `null` end up
+/// at the bottom, so a no-longer-expected value doesn't break the order.
 int repartoSortIndex(String? category) {
   if (category == null) return reparti.length + 1;
   final i = reparti.indexOf(category);

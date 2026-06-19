@@ -7,8 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/pairing_service.dart';
 import '../app_scope.dart';
 
-/// Abbinamento di un secondo dispositivo (ADR-006). Due modi: "Mostra codice"
-/// sul telefono che invita e "Inserisci codice" su quello che si unisce.
+/// Pairing of a second device (ADR-006). Two ways: "Mostra codice" on the
+/// inviting phone and "Inserisci codice" on the one that joins.
 class PairingScreen extends StatefulWidget {
   const PairingScreen({super.key});
 
@@ -50,7 +50,7 @@ class _PairingScreenState extends State<PairingScreen> {
   }
 }
 
-/// Telefono che invita: genera e mostra un codice con countdown di validità.
+/// Inviting phone: generates and shows a code with a validity countdown.
 class _ShowCodeTab extends StatefulWidget {
   const _ShowCodeTab({required this.service});
 
@@ -67,7 +67,7 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   Timer? _timer;
   int _remaining = 0;
 
-  static const _validitySeconds = 600; // coerente con la funzione SQL
+  static const _validitySeconds = 600; // consistent with the SQL function
 
   @override
   void dispose() {
@@ -154,8 +154,8 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   }
 }
 
-/// Telefono che si unisce: inserisce il codice e adotta l'household di chi
-/// l'ha generato.
+/// Joining phone: enters the code and adopts the household of whoever
+/// generated it.
 class _EnterCodeTab extends StatefulWidget {
   const _EnterCodeTab({required this.service});
 
@@ -186,8 +186,8 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
     try {
       final householdId = await widget.service.redeemCode(code);
       if (!mounted) return;
-      // Passa all'household appena adottato: l'albero si ricostruisce coi
-      // repository giusti; PowerSync sincronizzerà i dati in background.
+      // Switch to the just-adopted household: the tree rebuilds with the
+      // right repositories; PowerSync will sync the data in the background.
       AppScope.of(context).onHouseholdChanged?.call(householdId);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(

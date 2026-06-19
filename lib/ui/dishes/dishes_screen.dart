@@ -109,8 +109,8 @@ class _DishesScreenState extends State<DishesScreen> {
   }
 }
 
-/// Barra di filtri per tag (FR-15): scelta singola; "Tutti" azzera il filtro.
-/// Si nasconde se non esistono tag.
+/// Tag filter bar (FR-15): single choice; "Tutti" clears the filter.
+/// Hidden when no tags exist.
 class _TagFilterBar extends StatelessWidget {
   const _TagFilterBar({
     required this.tagRepo,

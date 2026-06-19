@@ -56,8 +56,8 @@ class _BootstrapGate extends StatefulWidget {
 class _BootstrapGateState extends State<_BootstrapGate> {
   late final Future<_Bootstrapped> _future = _bootstrap();
 
-  /// Household attivo sovrascritto a runtime (es. dopo l'abbinamento). Quando
-  /// null si usa quello determinato al bootstrap.
+  /// Active household overridden at runtime (e.g. after pairing). When
+  /// null, the one determined at bootstrap is used.
   String? _householdOverride;
 
   Future<_Bootstrapped> _bootstrap() async {

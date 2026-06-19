@@ -1,5 +1,5 @@
 -- 00001_initial_schema.sql
--- Schema iniziale: tutte le tabelle con household_id, UUID client-generated, LWW timestamps.
+-- Initial schema: all tables with household_id, client-generated UUIDs, LWW timestamps.
 
 -- ============================================================
 -- household

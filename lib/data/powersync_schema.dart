@@ -1,10 +1,10 @@
 import 'package:powersync/powersync.dart';
 
-/// Schema PowerSync: rispecchia le tabelle drift.
+/// PowerSync schema: mirrors the drift tables.
 ///
-/// In PowerSync la colonna `id` (UUID) è implicita su ogni tabella e non va
-/// dichiarata. I boolean sono interi (0/1), i timestamp sono testo ISO-8601.
-/// `pairing_code` è escluso di proposito: vive solo lato server.
+/// In PowerSync the `id` column (UUID) is implicit on every table and must not
+/// be declared. Booleans are integers (0/1), timestamps are ISO-8601 text.
+/// `pairing_code` is excluded on purpose: it lives only server-side.
 const forkastSchema = Schema([
   Table('household', [
     Column.text('name'),

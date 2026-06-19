@@ -3,15 +3,15 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
-/// Gruppi di tag (FR-14). La `portata` è a scelta singola e facoltativa; gli
-/// `attributo` sono multipli.
+/// Tag groups (FR-14). The `portata` is single-choice and optional; the
+/// `attributo` ones are multiple.
 class TagGroup {
   static const portata = 'portata';
   static const attributo = 'attributo';
 }
 
-/// Vocabolario curato dei tag dei piatti (FR-14), gestito nelle impostazioni.
-/// Filtrato per household (ADR-005), UUID client-side (ADR-003).
+/// Curated vocabulary of dish tags (FR-14), managed in the settings.
+/// Filtered by household (ADR-005), client-side UUIDs (ADR-003).
 class TagRepository {
   TagRepository(this._db, this._householdId);
 
@@ -20,7 +20,7 @@ class TagRepository {
 
   static const _uuid = Uuid();
 
-  /// Tutti i tag, ordinati per gruppo poi per `sortOrder`/nome.
+  /// All tags, ordered by group then by `sortOrder`/name.
   Stream<List<Tag>> watchAll() {
     return (_db.select(_db.tags)
           ..where((t) => t.householdId.equals(_householdId))
@@ -31,7 +31,7 @@ class TagRepository {
         .watch();
   }
 
-  /// Tag di un gruppo (`portata` o `attributo`).
+  /// Tags of a group (`portata` or `attributo`).
   Stream<List<Tag>> watchByGroup(String group) {
     return (_db.select(_db.tags)
           ..where((t) =>
@@ -43,7 +43,7 @@ class TagRepository {
         .watch();
   }
 
-  /// Tag assegnati a un piatto.
+  /// Tags assigned to a dish.
   Stream<List<Tag>> watchDishTags(String dishId) {
     final dt = _db.dishTags;
     final tag = _db.tags;
@@ -67,7 +67,7 @@ class TagRepository {
           name: name,
           tagGroup: group,
           color: Value(color),
-          // Default drift non applicato dallo schema PowerSync: esplicito.
+          // drift default not applied by the PowerSync schema: set explicitly.
           sortOrder: const Value(0),
           createdAt: now,
           updatedAt: now,
@@ -89,8 +89,8 @@ class TagRepository {
         TagsCompanion(name: Value(name), updatedAt: Value(DateTime.now().toUtc())));
   }
 
-  /// Numero di piatti che usano il tag: serve a proteggerne l'eliminazione
-  /// (coerente con FR-17) e a mostrarne l'impatto.
+  /// Number of dishes that use the tag: used to protect its deletion
+  /// (consistent with FR-17) and to show its impact.
   Future<int> usageCount(String tagId) async {
     final count = _db.dishTags.id.count();
     final query = _db.selectOnly(_db.dishTags)
@@ -100,16 +100,16 @@ class TagRepository {
     return row.read(count) ?? 0;
   }
 
-  /// Elimina un tag inutilizzato. Restituisce false se è ancora assegnato a
-  /// qualche piatto (eliminazione protetta).
+  /// Deletes an unused tag. Returns false if it is still assigned to some
+  /// dish (protected deletion).
   Future<bool> deleteIfUnused(String tagId) async {
     if (await usageCount(tagId) > 0) return false;
     await (_db.delete(_db.tags)..where((t) => t.id.equals(tagId))).go();
     return true;
   }
 
-  /// Imposta la portata (scelta singola, facoltativa) di un piatto: rimuove
-  /// l'eventuale portata precedente e assegna quella nuova (o nessuna).
+  /// Sets the portata (single choice, optional) of a dish: removes any
+  /// previous portata and assigns the new one (or none).
   Future<void> setDishPortata(String dishId, String? tagId) async {
     final portatas = await (_db.select(_db.tags)
           ..where((t) =>
@@ -124,7 +124,7 @@ class TagRepository {
     if (tagId != null) await _assign(dishId, tagId);
   }
 
-  /// Sostituisce l'insieme degli attributi di un piatto.
+  /// Replaces the set of attributes of a dish.
   Future<void> setDishAttributes(String dishId, Set<String> tagIds) async {
     final attributes = await (_db.select(_db.tags)
           ..where((t) =>

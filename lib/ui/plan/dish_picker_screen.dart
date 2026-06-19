@@ -4,9 +4,9 @@ import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../app_scope.dart';
 
-/// Selezione piatto del Piano (FR-7): riusa il catalogo piatti in modalità a
-/// scelta multipla. Restituisce gli id dei piatti scelti da aggiungere alla
-/// serata. I piatti già assegnati sono mostrati ma disabilitati.
+/// Plan dish selection (FR-7): reuses the dish catalog in multiple-choice
+/// mode. Returns the ids of the chosen dishes to add to the evening.
+/// Already-assigned dishes are shown but disabled.
 class DishPickerScreen extends StatefulWidget {
   const DishPickerScreen({super.key, this.alreadySelected = const []});
 

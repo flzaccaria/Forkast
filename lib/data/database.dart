@@ -38,27 +38,27 @@ part 'database.g.dart';
   ListChecks,
 ])
 class AppDatabase extends _$AppDatabase {
-  /// drift opera sopra il database gestito da PowerSync: stesso file SQLite,
-  /// così le scritture locali finiscono nella coda di upload di PowerSync.
+  /// drift operates on top of the database managed by PowerSync: same SQLite
+  /// file, so local writes end up in PowerSync's upload queue.
   AppDatabase(PowerSyncDatabase db)
       : powerSync = db,
         super(SqliteAsyncDriftConnection(db));
 
-  /// Costruttore per i test: opera su una connessione qualsiasi (es. un
-  /// database in-memory). Permette di replicare lo schema "stile PowerSync"
-  /// (senza i DEFAULT di drift) e verificare che gli insert settino sempre
-  /// i valori espliciti. Non usare in produzione.
+  /// Constructor for tests: operates on any connection (e.g. an in-memory
+  /// database). Allows replicating the "PowerSync-style" schema (without
+  /// drift's DEFAULTs) and verifying that inserts always set explicit
+  /// values. Do not use in production.
   AppDatabase.forTesting(super.connection) : powerSync = null;
 
-  /// Istanza PowerSync sottostante, per osservarne lo stato di sincronizzazione.
-  /// Null nei test, dove non c'è sync.
+  /// Underlying PowerSync instance, to observe its sync state.
+  /// Null in tests, where there is no sync.
   final PowerSyncDatabase? powerSync;
 
   @override
   int get schemaVersion => 1;
 
-  /// È PowerSync a creare e gestire lo schema (viste + trigger). drift non
-  /// deve creare né migrare tabelle: le strategie restano vuote.
+  /// PowerSync creates and manages the schema (views + triggers). drift must
+  /// not create or migrate tables: the strategies stay empty.
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {},

@@ -3,8 +3,8 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
-/// Accesso al catalogo ingredienti, sempre filtrato per household (ADR-005).
-/// Scritture local-first con UUID generati dal client (ADR-003).
+/// Access to the ingredient catalog, always filtered by household (ADR-005).
+/// Local-first writes with client-generated UUIDs (ADR-003).
 class IngredientRepository {
   IngredientRepository(this._db, this._householdId);
 
@@ -13,8 +13,8 @@ class IngredientRepository {
 
   static const _uuid = Uuid();
 
-  /// Stream del catalogo, ordinato per nome. Si aggiorna a ogni scrittura
-  /// locale o sync in arrivo.
+  /// Stream of the catalog, ordered by name. Updates on every local write
+  /// or incoming sync.
   Stream<List<Ingredient>> watchAll() {
     return (_db.select(_db.ingredients)
           ..where((i) => i.householdId.equals(_householdId))
@@ -22,8 +22,9 @@ class IngredientRepository {
         .watch();
   }
 
-  /// Crea una voce di catalogo e restituisce l'ingrediente inserito, così che
-  /// chi crea "al volo" (es. dall'editor piatto) possa selezionarlo subito.
+  /// Creates a catalog entry and returns the inserted ingredient, so that
+  /// whoever creates it "on the fly" (e.g. from the dish editor) can select
+  /// it immediately.
   Future<Ingredient> create({
     required String name,
     required String unit,
@@ -56,7 +57,7 @@ class IngredientRepository {
     );
   }
 
-  /// Numero di piatti che usano l'ingrediente. Base per FR-16/17.
+  /// Number of dishes that use the ingredient. Basis for FR-16/17.
   Future<int> usageCount(String ingredientId) async {
     final count = _db.dishIngredients.id.count();
     final query = _db.selectOnly(_db.dishIngredients)
@@ -66,7 +67,7 @@ class IngredientRepository {
     return row.read(count) ?? 0;
   }
 
-  /// Nomi dei piatti in cui l'ingrediente è usato (FR-17: "mostra dove").
+  /// Names of the dishes in which the ingredient is used (FR-17: "show where").
   Future<List<String>> dishesUsing(String ingredientId) async {
     final di = _db.dishIngredients;
     final dish = _db.dishes;
@@ -79,8 +80,8 @@ class IngredientRepository {
     return rows.map((r) => r.readTable(dish).name).toList();
   }
 
-  /// Aggiorna nome e — solo se non ancora in uso — unità (FR-16). L'unità
-  /// passata viene ignorata quando l'ingrediente è già usato in un piatto.
+  /// Updates name and — only if not yet in use — unit (FR-16). The passed
+  /// unit is ignored when the ingredient is already used in a dish.
   Future<void> update(
     String ingredientId, {
     required String name,
@@ -89,9 +90,9 @@ class IngredientRepository {
     Value<String?> category = const Value.absent(),
   }) async {
     final locked = await usageCount(ingredientId) > 0;
-    // L'unità (e il flag q.b., che ne è il corrispettivo) restano immutabili
-    // una volta che l'ingrediente è in uso (FR-16). Il reparto, invece, resta
-    // sempre modificabile: non incide su quantità/aggregazione.
+    // The unit (and the q.b. flag, which is its counterpart) stay immutable
+    // once the ingredient is in use (FR-16). The department, instead, stays
+    // always editable: it does not affect quantity/aggregation.
     final patch = IngredientsCompanion(
       name: Value(name),
       unit: (locked || unit == null) ? const Value.absent() : Value(unit),
@@ -104,12 +105,12 @@ class IngredientRepository {
         .write(patch);
   }
 
-  /// L'unità è bloccata quando l'ingrediente è usato (FR-16).
+  /// The unit is locked when the ingredient is used (FR-16).
   Future<bool> isUnitLocked(String ingredientId) async =>
       await usageCount(ingredientId) > 0;
 
-  /// Elimina un ingrediente solo se non è usato in alcun piatto (FR-17).
-  /// Restituisce false se è ancora in uso.
+  /// Deletes an ingredient only if it is not used in any dish (FR-17).
+  /// Returns false if it is still in use.
   Future<bool> deleteIfUnused(String ingredientId) async {
     if (await usageCount(ingredientId) > 0) return false;
     await (_db.delete(_db.ingredients)..where((i) => i.id.equals(ingredientId)))
@@ -117,11 +118,11 @@ class IngredientRepository {
     return true;
   }
 
-  /// Unisce il doppione `sourceId` in `targetId` (FR-18). Consentito solo a
-  /// parità di unità di misura. Ogni riga di piatto che usa la sorgente viene
-  /// ripuntata sul target; se il piatto usa già il target, le quantità si
-  /// sommano e la riga sorgente è eliminata. Infine la sorgente è rimossa dal
-  /// catalogo. Restituisce false se le unità differiscono.
+  /// Merges the duplicate `sourceId` into `targetId` (FR-18). Allowed only
+  /// with matching units of measure. Every dish row that uses the source is
+  /// repointed to the target; if the dish already uses the target, the
+  /// quantities are summed and the source row is deleted. Finally the source
+  /// is removed from the catalog. Returns false if the units differ.
   Future<bool> merge({required String sourceId, required String targetId}) async {
     if (sourceId == targetId) return true;
     final source = await (_db.select(_db.ingredients)
@@ -152,7 +153,7 @@ class IngredientRepository {
             updatedAt: Value(DateTime.now().toUtc()),
           ));
         } else {
-          // Il piatto usa già il target: somma le quantità (q.b. resta null).
+          // The dish already uses the target: sum the quantities (q.b. stays null).
           final merged = source.isQb
               ? null
               : (existing.qtyBase4 ?? 0) + (row.qtyBase4 ?? 0);

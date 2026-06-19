@@ -3,8 +3,8 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
-/// Una riga ingrediente in fase di editing del piatto.
-/// `qtyBase4` è null per gli ingredienti "quanto basta".
+/// An ingredient row while editing a dish.
+/// `qtyBase4` is null for "quanto basta" ingredients.
 class DishIngredientDraft {
   DishIngredientDraft({
     required this.ingredientId,
@@ -15,8 +15,8 @@ class DishIngredientDraft {
   final double? qtyBase4;
 }
 
-/// Accesso al catalogo piatti e alle relative righe ingrediente.
-/// Filtrato per household (ADR-005), UUID client-side (ADR-003).
+/// Access to the dish catalog and its ingredient rows.
+/// Filtered by household (ADR-005), client-side UUIDs (ADR-003).
 class DishRepository {
   DishRepository(this._db, this._householdId);
 
@@ -25,8 +25,8 @@ class DishRepository {
 
   static const _uuid = Uuid();
 
-  /// Catalogo piatti ordinato per nome, filtrabile per testo e per tag (FR-15).
-  /// `tagId`, se presente, limita ai piatti che hanno quel tag assegnato.
+  /// Dish catalog ordered by name, filterable by text and by tag (FR-15).
+  /// `tagId`, if present, limits to dishes that have that tag assigned.
   Stream<List<Dish>> watchAll({String query = '', String? tagId}) {
     final q = _db.select(_db.dishes)
       ..where((d) => d.householdId.equals(_householdId))
@@ -43,28 +43,28 @@ class DishRepository {
     return q.watch();
   }
 
-  /// Righe ingrediente di un piatto.
+  /// Ingredient rows of a dish.
   Stream<List<DishIngredient>> watchIngredients(String dishId) {
     return (_db.select(_db.dishIngredients)
           ..where((di) => di.dishId.equals(dishId)))
         .watch();
   }
 
-  /// Lettura una-tantum del piatto (per precaricare l'editor).
+  /// One-time read of the dish (to preload the editor).
   Future<Dish?> getDish(String dishId) {
     return (_db.select(_db.dishes)..where((d) => d.id.equals(dishId)))
         .getSingleOrNull();
   }
 
-  /// Lettura una-tantum delle righe ingrediente (per precaricare l'editor).
+  /// One-time read of the ingredient rows (to preload the editor).
   Future<List<DishIngredient>> getIngredients(String dishId) {
     return (_db.select(_db.dishIngredients)
           ..where((di) => di.dishId.equals(dishId)))
         .get();
   }
 
-  /// Crea un piatto con le sue righe ingrediente e i tag in un'unica
-  /// transazione. `tagIds` raccoglie portata (al più una) e attributi (FR-14).
+  /// Creates a dish with its ingredient rows and tags in a single
+  /// transaction. `tagIds` gathers the portata (at most one) and attributes (FR-14).
   Future<String> create({
     required String name,
     required List<DishIngredientDraft> ingredients,
@@ -116,9 +116,9 @@ class DishRepository {
     return dishId;
   }
 
-  /// Aggiorna un piatto esistente: nome, righe ingrediente e tag vengono
-  /// riscritti integralmente in un'unica transazione. Gli ID delle righe sono
-  /// rigenerati (lo strato lista è uno snapshot derivato, si rigenera).
+  /// Updates an existing dish: name, ingredient rows and tags are fully
+  /// rewritten in a single transaction. The row IDs are regenerated (the list
+  /// layer is a derived snapshot, it regenerates).
   Future<void> update(
     String dishId, {
     required String name,
@@ -165,9 +165,9 @@ class DishRepository {
     });
   }
 
-  /// Elimina un piatto e i suoi collegamenti: righe ingrediente, tag e
-  /// assegnazioni al piano (plan_day_dish). Lo strato lista è derivato e si
-  /// rigenera, quindi non va toccato qui.
+  /// Deletes a dish and its links: ingredient rows, tags and plan
+  /// assignments (plan_day_dish). The list layer is derived and regenerates,
+  /// so it is not touched here.
   Future<void> delete(String dishId) async {
     await _db.transaction(() async {
       await (_db.delete(_db.dishIngredients)

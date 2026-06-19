@@ -1,51 +1,51 @@
-# Migrazione JWT: da secret condiviso (legacy) a chiavi asimmetriche (JWKS)
+# JWT Migration: from shared secret (legacy) to asymmetric keys (JWKS)
 
-> Punto aperto di `CLAUDE.md`: sia Supabase sia PowerSync segnalano come
-> deprecato il vecchio meccanismo a **secret JWT condiviso (HS256)**. Questa è
-> una migrazione di **configurazione** (dashboard Supabase + istanza PowerSync):
-> **non richiede modifiche al codice dell'app**. Da fare prima del rilascio.
+> Open point from `CLAUDE.md`: both Supabase and PowerSync flag the old
+> **shared JWT secret (HS256)** mechanism as deprecated. This is a
+> **configuration** migration (Supabase dashboard + PowerSync instance):
+> it **requires no changes to the app code**. To be done before release.
 
-## Perché
+## Why
 
-- Il meccanismo legacy firma i JWT con un **secret simmetrico condiviso (HS256)**:
-  chi possiede il secret può sia firmare sia verificare i token.
-- Il nuovo meccanismo usa **chiavi asimmetriche (ES256)**: Supabase firma con la
-  chiave privata; chiunque verifica con la **chiave pubblica** esposta via
-  endpoint **JWKS** (`https://<project-ref>.supabase.co/auth/v1/jwks`). Niente
-  secret da condividere con PowerSync.
-- Dal **1° ottobre 2025** i nuovi progetti Supabase usano JWT asimmetrici di
-  default; i progetti esistenti migrano quando vogliono. I due sistemi possono
-  **coesistere** durante la transizione (il JWKS include anche il vecchio secret
-  come JWK simmetrico, così i token vecchi restano verificabili).
+- The legacy mechanism signs JWTs with a **shared symmetric secret (HS256)**:
+  whoever holds the secret can both sign and verify tokens.
+- The new mechanism uses **asymmetric keys (ES256)**: Supabase signs with the
+  private key; anyone verifies with the **public key** exposed via the
+  **JWKS** endpoint (`https://<project-ref>.supabase.co/auth/v1/jwks`). No
+  secret to share with PowerSync.
+- Since **October 1, 2025** new Supabase projects use asymmetric JWTs by
+  default; existing projects migrate whenever they want. The two systems can
+  **coexist** during the transition (the JWKS also includes the old secret as a
+  symmetric JWK, so old tokens remain verifiable).
 
-## Perché il codice dell'app non cambia
+## Why the app code does not change
 
-- `SupabaseConnector.fetchCredentials()` passa a PowerSync il
-  `session.accessToken` così com'è. La verifica del token avviene **lato
-  PowerSync** tramite JWKS: è indipendente dall'algoritmo di firma.
-- `Supabase.initialize(... publishableKey: ...)` usa già la nuova API delle
-  chiavi (publishable key), non la vecchia `anonKey`.
-- Il sign-in **anonimo** continua a funzionare: cambia solo *come* il token è
-  firmato e verificato, non *come* viene emesso.
+- `SupabaseConnector.fetchCredentials()` passes the `session.accessToken` to
+  PowerSync as-is. Token verification happens **on the PowerSync side** via
+  JWKS: it is independent of the signing algorithm.
+- `Supabase.initialize(... publishableKey: ...)` already uses the new key API
+  (publishable key), not the old `anonKey`.
+- **Anonymous** sign-in keeps working: only *how* the token is signed and
+  verified changes, not *how* it is issued.
 
-## Passi (solo dashboard)
+## Steps (dashboard only)
 
-1. **Supabase → Project Settings → JWT**: verifica quale tipo di chiave è in uso.
-2. **Crea/abilita la chiave di firma asimmetrica** (ES256) e importa il secret
-   legacy, così i token già emessi restano validi durante la transizione.
-3. **PowerSync → istanza → Client Auth**: configura l'autenticazione Supabase in
-   modalità **asimmetrica/JWKS** (PowerSync recupera le chiavi pubbliche
-   dall'endpoint JWKS del progetto). Rimuovi il secret JWT condiviso quando non
-   serve più.
-4. **Rotazione**: completa lo step **"Rotate to asymmetric JWTs"** su Supabase.
-   ⚠️ Saltare questo passo lascia la migrazione incompleta e provoca **fallimenti
-   di autenticazione**.
-5. **Verifica**: avvia l'app su un dispositivo pulito (nuova sessione anonima),
-   controlla in *Impostazioni → Sincronizzazione* che lo stato vada a "Connesso"
-   e che non compaiano errori di download/upload.
+1. **Supabase → Project Settings → JWT**: check which key type is in use.
+2. **Create/enable the asymmetric signing key** (ES256) and import the legacy
+   secret, so tokens already issued remain valid during the transition.
+3. **PowerSync → instance → Client Auth**: configure Supabase authentication in
+   **asymmetric/JWKS** mode (PowerSync fetches the public keys from the
+   project's JWKS endpoint). Remove the shared JWT secret once it is no longer
+   needed.
+4. **Rotation**: complete the **"Rotate to asymmetric JWTs"** step on Supabase.
+   ⚠️ Skipping this step leaves the migration incomplete and causes
+   **authentication failures**.
+5. **Verification**: launch the app on a clean device (new anonymous session),
+   check in *Settings → Sync* that the status reaches "Connected" and that no
+   download/upload errors appear.
 
-## Note
+## Notes
 
-- Tieni d'occhio l'endpoint JWKS: se le chiavi ruotano, PowerSync le ri-scarica
-  automaticamente. Nessuna azione manuale sul client.
-- Riferimenti: Supabase "JWT Signing Keys" e PowerSync "Supabase Auth".
+- Keep an eye on the JWKS endpoint: if the keys rotate, PowerSync re-downloads
+  them automatically. No manual action on the client.
+- References: Supabase "JWT Signing Keys" and PowerSync "Supabase Auth".

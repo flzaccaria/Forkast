@@ -4,8 +4,8 @@ import '../../data/repositories/plan_repository.dart';
 import '../app_scope.dart';
 import 'dish_picker_screen.dart';
 
-/// Cena del giorno (FR-8/9): commensali della serata (default sovrascrivibile)
-/// e piatti assegnati. La serata viene creata pigramente alla prima modifica.
+/// Dinner of the day (FR-8/9): guests for the evening (overridable default)
+/// and assigned dishes. The evening is created lazily on the first edit.
 class DayScreen extends StatefulWidget {
   const DayScreen({
     super.key,
@@ -27,7 +27,7 @@ class DayScreen extends StatefulWidget {
 class _DayScreenState extends State<DayScreen> {
   late final PlanRepository _repo;
 
-  /// Id della serata, risolto/creato pigramente.
+  /// Id of the evening, resolved/created lazily.
   String? _planDayId;
   int _guests = 4;
   bool _loading = true;

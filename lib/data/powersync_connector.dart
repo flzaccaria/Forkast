@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
 
-/// Collega PowerSync a Supabase: fornisce le credenziali (token anon)
-/// e svuota la coda di upload verso le tabelle Postgres.
+/// Connects PowerSync to Supabase: provides the credentials (anon token)
+/// and flushes the upload queue to the Postgres tables.
 class SupabaseConnector extends PowerSyncBackendConnector {
   @override
   Future<PowerSyncCredentials?> fetchCredentials() async {
@@ -38,9 +38,9 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       }
       await batch.complete();
     } on PostgrestException catch (e) {
-      // Errori "fatali" (es. violazione di vincolo): scartiamo l'operazione,
-      // altrimenti la coda resterebbe bloccata all'infinito. Gli errori
-      // transitori (rete) vengono rilanciati così PowerSync riprova.
+      // "Fatal" errors (e.g. constraint violation): discard the operation,
+      // otherwise the queue would stay blocked forever. Transient errors
+      // (network) are rethrown so PowerSync retries.
       final fatal = e.code != null && e.code!.startsWith('22') ||
           e.code != null && e.code!.startsWith('23');
       if (fatal) {

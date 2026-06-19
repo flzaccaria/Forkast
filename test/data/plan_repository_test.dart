@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/plan_repository.dart';
 
-/// Verifica il flusso di pianificazione su uno schema "stile PowerSync"
-/// (tabelle senza DEFAULT), così da intercettare anche eventuali default
-/// drift non applicati (es. plan_day_dish.sort_order).
+/// Verifies the planning flow on a "PowerSync-style" schema
+/// (tables without DEFAULT), so as to also catch any unapplied drift
+/// defaults (e.g. plan_day_dish.sort_order).
 void main() {
   late AppDatabase db;
   const householdId = 'hh-1';
@@ -36,7 +36,7 @@ void main() {
         id TEXT PRIMARY KEY, plan_day_id TEXT, dish_id TEXT, household_id TEXT,
         sort_order INTEGER, created_at TEXT)''');
 
-    // Un household con default commensali 4.
+    // A household with default guests 4.
     final now = DateTime.now().toUtc();
     await db.into(db.households).insert(HouseholdsCompanion.insert(
           id: householdId,
@@ -63,7 +63,7 @@ void main() {
     return id;
   }
 
-  test('ensurePlanDay crea la serata coi commensali di default ed è idempotente',
+  test('ensurePlanDay creates the evening with default guests and is idempotent',
       () async {
     final repo = PlanRepository(db, householdId);
     final day1 = await repo.ensurePlanDay(2026, 25, DateTime.monday);
@@ -78,7 +78,7 @@ void main() {
     expect(count.read<int>('c'), 1);
   });
 
-  test('setGuests aggiorna i commensali della serata', () async {
+  test('setGuests updates the guests of the evening', () async {
     final repo = PlanRepository(db, householdId);
     final day = await repo.ensurePlanDay(2026, 25, DateTime.tuesday);
     await repo.setGuests(day.id, 6);
@@ -89,14 +89,14 @@ void main() {
     expect(overview[DateTime.tuesday]!.guests, 6);
   });
 
-  test('addDishes assegna i piatti senza duplicati e li conta', () async {
+  test('addDishes assigns the dishes without duplicates and counts them', () async {
     final repo = PlanRepository(db, householdId);
     final pasta = await seedDish('Pasta');
     final sugo = await seedDish('Sugo');
 
     final day = await repo.ensurePlanDay(2026, 25, DateTime.friday);
     await repo.addDishes(day.id, [pasta, sugo]);
-    // Ri-aggiunge pasta: deve essere ignorato (no duplicati).
+    // Re-adds pasta: it must be ignored (no duplicates).
     await repo.addDishes(day.id, [pasta]);
 
     final entries = await repo.watchDayDishes(day.id).first;
@@ -107,7 +107,7 @@ void main() {
     expect(overview[DateTime.friday]!.dishCount, 2);
   });
 
-  test('removeDish toglie il piatto dalla serata', () async {
+  test('removeDish removes the dish from the evening', () async {
     final repo = PlanRepository(db, householdId);
     final pasta = await seedDish('Pasta');
     final day = await repo.ensurePlanDay(2026, 25, DateTime.saturday);
@@ -121,7 +121,7 @@ void main() {
     expect(entries, isEmpty);
   });
 
-  test('lo stesso piatto può stare in giorni diversi (FR-9)', () async {
+  test('the same dish can be in different days (FR-9)', () async {
     final repo = PlanRepository(db, householdId);
     final pasta = await seedDish('Pasta');
     final mon = await repo.ensurePlanDay(2026, 25, DateTime.monday);
@@ -133,18 +133,18 @@ void main() {
     expect(await repo.watchDayDishes(tue.id).first, hasLength(1));
   });
 
-  group('FR-19 copia settimana precedente', () {
-    test('hasPlannedDishes riflette i piatti pianificati', () async {
+  group('FR-19 copy previous week', () {
+    test('hasPlannedDishes reflects the planned dishes', () async {
       final repo = PlanRepository(db, householdId);
       expect(await repo.hasPlannedDishes(2026, 25), false);
       final pasta = await seedDish('Pasta');
       final day = await repo.ensurePlanDay(2026, 25, DateTime.monday);
-      expect(await repo.hasPlannedDishes(2026, 25), false); // serata vuota
+      expect(await repo.hasPlannedDishes(2026, 25), false); // empty evening
       await repo.addDishes(day.id, [pasta]);
       expect(await repo.hasPlannedDishes(2026, 25), true);
     });
 
-    test('copia piatti e commensali nella settimana destinazione', () async {
+    test('copies dishes and guests into the destination week', () async {
       final repo = PlanRepository(db, householdId);
       final pasta = await seedDish('Pasta');
       final mon = await repo.ensurePlanDay(2026, 25, DateTime.monday);
@@ -160,7 +160,7 @@ void main() {
       expect(entries.map((e) => e.dishName), ['Pasta']);
     });
 
-    test('replace azzera i piatti esistenti della destinazione', () async {
+    test('replace clears the existing dishes of the destination', () async {
       final repo = PlanRepository(db, householdId);
       final pasta = await seedDish('Pasta');
       final riso = await seedDish('Riso');
@@ -175,7 +175,7 @@ void main() {
       expect(entries.map((e) => e.dishName), ['Pasta']);
     });
 
-    test('merge aggiunge senza duplicati', () async {
+    test('merge adds without duplicates', () async {
       final repo = PlanRepository(db, householdId);
       final pasta = await seedDish('Pasta');
       final riso = await seedDish('Riso');

@@ -1,9 +1,9 @@
--- Reparto del supermercato sull'ingrediente (punto aperto risolto).
+-- Supermarket aisle on the ingredient (open point resolved).
 --
--- Lista fissa predefinita lato client (lib/core/reparto.dart): qui il campo è
--- un TEXT nullable, senza CHECK, così l'evoluzione dell'elenco resta una scelta
--- di prodotto nel client e non richiede una migrazione per ogni reparto.
--- "Senza reparto" = NULL.
+-- Fixed predefined list on the client side (lib/core/reparto.dart): here the
+-- field is a nullable TEXT, with no CHECK, so the evolution of the list remains
+-- a product decision in the client and does not require a migration for each
+-- aisle. "No aisle" = NULL.
 
 ALTER TABLE ingredient
     ADD COLUMN IF NOT EXISTS category TEXT;
