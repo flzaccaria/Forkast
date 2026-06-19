@@ -114,11 +114,10 @@ Implementazione:
 
 - Ordinamento lista per reparto: richiede un attributo `category` su `ingredient`, oggi assente.
 - Obbligatorietà della portata: attualmente facoltativa.
-- Autenticazione JWT legacy: sia Supabase che PowerSync la segnalano come deprecata. Valutare la migrazione al meccanismo sostitutivo prima del rilascio.
-
 ### Risolti
 - "Copia settimana precedente" su settimana non vuota (FR-19): l'utente sceglie **sostituisci o aggiungi** al momento della copia.
 - Rimozione di un tag in uso (FR-14): **protetta** (bloccata se in uso, mostra il conteggio), coerente con FR-17.
+- Autenticazione JWT legacy: guida alla migrazione HS256→ES256/JWKS in `docs/auth_jwt_migration.md`. Solo configurazione dashboard, nessuna modifica al codice.
 
 ---
 
