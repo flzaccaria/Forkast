@@ -97,19 +97,28 @@ Ogni tabella porta `household_id`. Ogni insert usa un **UUID generato dal client
 
 ---
 
-## Pairing dei dispositivi (l'unico "auth-lite" da costruire ora)
+## Pairing dei dispositivi (l'unico "auth-lite" da costruire ora) — FATTO
 
-Il secondo telefono entra nell'household del primo via **codice/QR generato dal primo**, con identità anonima per dispositivo + riga di `membership`. Domani l'identità anonima si promuove ad account reale (email) senza ristrutturare nulla (ADR-006).
+Il secondo telefono entra nell'household del primo via **codice numerico a 6 cifre generato dal primo**, con identità anonima per dispositivo + riga di `membership`. Domani l'identità anonima si promuove ad account reale (email) senza ristrutturare nulla (ADR-006).
+
+Implementazione:
+- Funzioni Postgres `SECURITY DEFINER` (`supabase/migrations/00002_pairing.sql`): `create_pairing_code()` e `redeem_pairing_code(p_code)`. Incapsulano l'unica scrittura privilegiata che le RLS bloccherebbero (un device che non è ancora membro). `pairing_code` resta server-side, esclusa da PowerSync.
+- Modello join: il secondo telefono **adotta l'household di chi invita** e abbandona il proprio (vuoto) del bootstrap; bloccato se ha già dati propri.
+- Client: `lib/data/pairing_service.dart` (wrapper `rpc()`), `PairingScreen` (mostra/inserisci codice), `householdId` commutabile a runtime via `AppScope.onHouseholdChanged`.
+- **Email predisposta**: seam documentato in `PairingService` per innestare l'invito-via-email quando l'identità anonima diventerà account reale, senza ristrutturare.
+- QR-scan: scartato di proposito (due telefoni vicini, digitare 6 cifre è più rapido).
 
 ---
 
 ## Punti aperti (segnalare, non decidere da soli)
 
-- "Copia settimana precedente" su settimana non vuota: sostituire / unire / bloccare? (FR-19)
 - Ordinamento lista per reparto: richiede un attributo `category` su `ingredient`, oggi assente.
-- Rimozione di un tag in uso: proteggere oppure "scollega dai piatti"? (coerente con FR-17)
 - Obbligatorietà della portata: attualmente facoltativa.
 - Autenticazione JWT legacy: sia Supabase che PowerSync la segnalano come deprecata. Valutare la migrazione al meccanismo sostitutivo prima del rilascio.
+
+### Risolti
+- "Copia settimana precedente" su settimana non vuota (FR-19): l'utente sceglie **sostituisci o aggiungi** al momento della copia.
+- Rimozione di un tag in uso (FR-14): **protetta** (bloccata se in uso, mostra il conteggio), coerente con FR-17.
 
 ---
 
