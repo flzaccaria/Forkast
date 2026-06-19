@@ -32,9 +32,10 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --dart-define=POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
 
-      - name: Deploy su Cloudflare Pages
+      - name: Deploy su Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/web --project-name=forkast
+          wranglerVersion: "4"
+          command: deploy
