@@ -52,6 +52,65 @@ class _PlanScreenState extends State<PlanScreen> {
 
   void _goToday() => setState(() => _reference = DateTime.now());
 
+  Future<void> _copyPreviousWeek() async {
+    final prev = _reference.subtract(const Duration(days: 7));
+    final fromYear = isoWeekYear(prev);
+    final fromWeek = isoWeekNumber(prev);
+
+    if (!await _repo.hasPlannedDishes(fromYear, fromWeek)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La settimana precedente è vuota.')),
+        );
+      }
+      return;
+    }
+
+    // Punto aperto §8: se la destinazione non è vuota, chiediamo all'utente.
+    var replace = false;
+    if (await _repo.hasPlannedDishes(_year, _week)) {
+      if (!mounted) return;
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Questa settimana non è vuota'),
+          content: const Text(
+              'Vuoi sostituire i piatti esistenti o aggiungere quelli della '
+              'settimana precedente?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annulla'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop('merge'),
+              child: const Text('Aggiungi'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop('replace'),
+              child: const Text('Sostituisci'),
+            ),
+          ],
+        ),
+      );
+      if (choice == null) return;
+      replace = choice == 'replace';
+    }
+
+    await _repo.copyWeek(
+      fromYear: fromYear,
+      fromWeek: fromWeek,
+      toYear: _year,
+      toWeek: _week,
+      replace: replace,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Settimana copiata.')),
+      );
+    }
+  }
+
   Future<void> _openDay(int dayOfWeek) async {
     final date = dateOfIsoWeek(_year, _week, dayOfWeek);
     await Navigator.of(context).push(
@@ -79,7 +138,24 @@ class _PlanScreenState extends State<PlanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Piano'),
-        actions: const [SettingsButton()],
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (v) {
+              if (v == 'copy') _copyPreviousWeek();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'copy',
+                child: ListTile(
+                  leading: Icon(Icons.copy_all),
+                  title: Text('Copia settimana precedente'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+          const SettingsButton(),
+        ],
       ),
       body: Column(
         children: [

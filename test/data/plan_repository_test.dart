@@ -132,4 +132,63 @@ void main() {
     expect(await repo.watchDayDishes(mon.id).first, hasLength(1));
     expect(await repo.watchDayDishes(tue.id).first, hasLength(1));
   });
+
+  group('FR-19 copia settimana precedente', () {
+    test('hasPlannedDishes riflette i piatti pianificati', () async {
+      final repo = PlanRepository(db, householdId);
+      expect(await repo.hasPlannedDishes(2026, 25), false);
+      final pasta = await seedDish('Pasta');
+      final day = await repo.ensurePlanDay(2026, 25, DateTime.monday);
+      expect(await repo.hasPlannedDishes(2026, 25), false); // serata vuota
+      await repo.addDishes(day.id, [pasta]);
+      expect(await repo.hasPlannedDishes(2026, 25), true);
+    });
+
+    test('copia piatti e commensali nella settimana destinazione', () async {
+      final repo = PlanRepository(db, householdId);
+      final pasta = await seedDish('Pasta');
+      final mon = await repo.ensurePlanDay(2026, 25, DateTime.monday);
+      await repo.setGuests(mon.id, 6);
+      await repo.addDishes(mon.id, [pasta]);
+
+      await repo.copyWeek(
+          fromYear: 2026, fromWeek: 25, toYear: 2026, toWeek: 26, replace: false);
+
+      final target = await repo.ensurePlanDay(2026, 26, DateTime.monday);
+      expect(target.guests, 6);
+      final entries = await repo.watchDayDishes(target.id).first;
+      expect(entries.map((e) => e.dishName), ['Pasta']);
+    });
+
+    test('replace azzera i piatti esistenti della destinazione', () async {
+      final repo = PlanRepository(db, householdId);
+      final pasta = await seedDish('Pasta');
+      final riso = await seedDish('Riso');
+      final src = await repo.ensurePlanDay(2026, 25, DateTime.monday);
+      await repo.addDishes(src.id, [pasta]);
+      final dst = await repo.ensurePlanDay(2026, 26, DateTime.monday);
+      await repo.addDishes(dst.id, [riso]);
+
+      await repo.copyWeek(
+          fromYear: 2026, fromWeek: 25, toYear: 2026, toWeek: 26, replace: true);
+      final entries = await repo.watchDayDishes(dst.id).first;
+      expect(entries.map((e) => e.dishName), ['Pasta']);
+    });
+
+    test('merge aggiunge senza duplicati', () async {
+      final repo = PlanRepository(db, householdId);
+      final pasta = await seedDish('Pasta');
+      final riso = await seedDish('Riso');
+      final src = await repo.ensurePlanDay(2026, 25, DateTime.monday);
+      await repo.addDishes(src.id, [pasta, riso]);
+      final dst = await repo.ensurePlanDay(2026, 26, DateTime.monday);
+      await repo.addDishes(dst.id, [riso]);
+
+      await repo.copyWeek(
+          fromYear: 2026, fromWeek: 25, toYear: 2026, toWeek: 26, replace: false);
+      final entries = await repo.watchDayDishes(dst.id).first;
+      expect(entries.map((e) => e.dishName).toSet(), {'Pasta', 'Riso'});
+      expect(entries, hasLength(2));
+    });
+  });
 }

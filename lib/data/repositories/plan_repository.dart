@@ -223,4 +223,68 @@ class PlanRepository {
           ..where((p) => p.id.equals(planDayDishId)))
         .go();
   }
+
+  /// Vero se la settimana ha almeno una serata pianificata (con piatti).
+  Future<bool> hasPlannedDishes(int year, int week) async {
+    final plan = await (_db.select(_db.weekPlans)
+          ..where((w) =>
+              w.householdId.equals(_householdId) &
+              w.year.equals(year) &
+              w.week.equals(week)))
+        .getSingleOrNull();
+    if (plan == null) return false;
+    final count = _db.planDayDishes.id.count();
+    final query = _db.selectOnly(_db.planDays).join([
+      innerJoin(_db.planDayDishes,
+          _db.planDayDishes.planDayId.equalsExp(_db.planDays.id)),
+    ])
+      ..addColumns([count])
+      ..where(_db.planDays.weekPlanId.equals(plan.id));
+    final row = await query.getSingle();
+    return (row.read(count) ?? 0) > 0;
+  }
+
+  /// Copia piatti e commensali della settimana `from` nella settimana `to`
+  /// (FR-19). La lista NON viene copiata: si rigenera dal piano (ADR-004).
+  ///
+  /// Quando la settimana di destinazione non è vuota il comportamento è scelto
+  /// dal chiamante (punto aperto §8 dei requisiti): con [replace] = true le
+  /// serate di destinazione vengono prima azzerate; altrimenti i piatti si
+  /// aggiungono a quelli esistenti senza duplicati.
+  Future<void> copyWeek({
+    required int fromYear,
+    required int fromWeek,
+    required int toYear,
+    required int toWeek,
+    required bool replace,
+  }) async {
+    final sourcePlan = await (_db.select(_db.weekPlans)
+          ..where((w) =>
+              w.householdId.equals(_householdId) &
+              w.year.equals(fromYear) &
+              w.week.equals(fromWeek)))
+        .getSingleOrNull();
+    if (sourcePlan == null) return;
+    final sourceDays = await (_db.select(_db.planDays)
+          ..where((d) => d.weekPlanId.equals(sourcePlan.id)))
+        .get();
+    if (sourceDays.isEmpty) return;
+
+    for (final day in sourceDays) {
+      final dishes = await (_db.select(_db.planDayDishes)
+            ..where((p) => p.planDayId.equals(day.id))
+            ..orderBy([(p) => OrderingTerm(expression: p.sortOrder)]))
+          .get();
+      if (dishes.isEmpty) continue;
+
+      final target = await ensurePlanDay(toYear, toWeek, day.dayOfWeek);
+      await setGuests(target.id, day.guests);
+      if (replace) {
+        await (_db.delete(_db.planDayDishes)
+              ..where((p) => p.planDayId.equals(target.id)))
+            .go();
+      }
+      await addDishes(target.id, dishes.map((d) => d.dishId).toList());
+    }
+  }
 }
