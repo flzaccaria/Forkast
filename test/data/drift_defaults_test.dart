@@ -50,6 +50,7 @@ void main() {
         name TEXT,
         unit TEXT,
         is_qb INTEGER,
+        category TEXT,
         created_at TEXT,
         updated_at TEXT
       )''');

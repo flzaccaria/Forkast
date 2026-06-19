@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/reparto.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/list_repository.dart';
@@ -276,11 +277,28 @@ class _GeneratedSection extends StatelessWidget {
             ),
           );
         }
-        return SliverList.separated(
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+        // Raggruppa per reparto seguendo l'ordine del percorso in negozio
+        // (lista fissa in core/reparto.dart); gli ingredienti senza reparto
+        // finiscono in coda. Dentro ogni reparto resta l'ordine per nome
+        // garantito dalla query.
+        final entries = _groupByReparto(items);
+        return SliverList.builder(
+          itemCount: entries.length,
           itemBuilder: (context, i) {
-            final item = items[i];
+            final entry = entries[i];
+            if (entry is _RepartoHeader) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  entry.label.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        letterSpacing: 0.8,
+                      ),
+                ),
+              );
+            }
+            final item = (entry as _RepartoItem).item;
             final textStyle = item.removed
                 ? const TextStyle(
                     decoration: TextDecoration.lineThrough,
@@ -307,6 +325,41 @@ class _GeneratedSection extends StatelessWidget {
       },
     );
   }
+
+  /// Trasforma la lista piatta in una sequenza di intestazioni di reparto +
+  /// righe, ordinata per percorso in negozio.
+  List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items) {
+    final sorted = [...items]..sort((a, b) {
+        final byReparto = repartoSortIndex(a.category)
+            .compareTo(repartoSortIndex(b.category));
+        return byReparto != 0 ? byReparto : a.name.compareTo(b.name);
+      });
+    final entries = <_RepartoEntry>[];
+    String? currentLabel;
+    for (final item in sorted) {
+      final label = item.category ?? repartoNonAssegnato;
+      if (label != currentLabel) {
+        entries.add(_RepartoHeader(label));
+        currentLabel = label;
+      }
+      entries.add(_RepartoItem(item));
+    }
+    return entries;
+  }
+}
+
+sealed class _RepartoEntry {
+  const _RepartoEntry();
+}
+
+class _RepartoHeader extends _RepartoEntry {
+  const _RepartoHeader(this.label);
+  final String label;
+}
+
+class _RepartoItem extends _RepartoEntry {
+  const _RepartoItem(this.item);
+  final GeneratedItemView item;
 }
 
 class _ManualSection extends StatelessWidget {

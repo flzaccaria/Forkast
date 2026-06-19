@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
+import '../../core/reparto.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
 
@@ -44,6 +46,7 @@ class _IngredientFormState extends State<_IngredientForm> {
           ? widget.existing!.unit
           : '');
   late bool _isQb = widget.existing?.isQb ?? false;
+  late String? _category = widget.existing?.category;
   bool _saving = false;
 
   /// In creazione l'unità è sempre modificabile; in modifica è bloccata se
@@ -82,11 +85,12 @@ class _IngredientFormState extends State<_IngredientForm> {
           // L'unità è ignorata dal repository quando è bloccata (FR-16).
           unit: unit,
           isQb: _unitLocked ? null : _isQb,
+          category: Value(_category),
         );
         if (mounted) Navigator.of(context).pop(widget.existing);
       } else {
-        final created =
-            await widget.repo.create(name: name, unit: unit, isQb: _isQb);
+        final created = await widget.repo
+            .create(name: name, unit: unit, isQb: _isQb, category: _category);
         if (mounted) Navigator.of(context).pop(created);
       }
     } catch (e) {
@@ -144,6 +148,23 @@ class _IngredientFormState extends State<_IngredientForm> {
               subtitle: const Text('Senza quantità, non riscalato'),
               value: _isQb,
               onChanged: _unitLocked ? null : (v) => setState(() => _isQb = v),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String?>(
+              initialValue: _category,
+              decoration: const InputDecoration(
+                labelText: 'Reparto',
+                helperText: 'Ordina la lista della spesa per reparto',
+              ),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text(repartoNonAssegnato),
+                ),
+                for (final r in reparti)
+                  DropdownMenuItem<String?>(value: r, child: Text(r)),
+              ],
+              onChanged: (v) => setState(() => _category = v),
             ),
             const SizedBox(height: 8),
             FilledButton(

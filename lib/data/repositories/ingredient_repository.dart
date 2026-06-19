@@ -28,6 +28,7 @@ class IngredientRepository {
     required String name,
     required String unit,
     bool isQb = false,
+    String? category,
   }) async {
     final now = DateTime.now().toUtc();
     final id = _uuid.v4();
@@ -38,6 +39,7 @@ class IngredientRepository {
             name: name,
             unit: unit,
             isQb: Value(isQb),
+            category: Value(category),
             createdAt: now,
             updatedAt: now,
           ),
@@ -48,6 +50,7 @@ class IngredientRepository {
       name: name,
       unit: unit,
       isQb: isQb,
+      category: category,
       createdAt: now,
       updatedAt: now,
     );
@@ -83,14 +86,17 @@ class IngredientRepository {
     required String name,
     String? unit,
     bool? isQb,
+    Value<String?> category = const Value.absent(),
   }) async {
     final locked = await usageCount(ingredientId) > 0;
     // L'unità (e il flag q.b., che ne è il corrispettivo) restano immutabili
-    // una volta che l'ingrediente è in uso (FR-16).
+    // una volta che l'ingrediente è in uso (FR-16). Il reparto, invece, resta
+    // sempre modificabile: non incide su quantità/aggregazione.
     final patch = IngredientsCompanion(
       name: Value(name),
       unit: (locked || unit == null) ? const Value.absent() : Value(unit),
       isQb: (locked || isQb == null) ? const Value.absent() : Value(isQb),
+      category: category,
       updatedAt: Value(DateTime.now().toUtc()),
     );
     await (_db.update(_db.ingredients)

@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
@@ -17,7 +17,7 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await exec('''CREATE TABLE ingredient (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
-      is_qb INTEGER, created_at TEXT, updated_at TEXT)''');
+      is_qb INTEGER, category TEXT, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
       created_at TEXT, updated_at TEXT)''');
@@ -84,6 +84,30 @@ void main() {
           .go();
       expect(await repo.deleteIfUnused(ing.id), true);
       expect(await repo.watchAll().first, isEmpty);
+    });
+  });
+
+  group('reparto (category)', () {
+    test('si salva alla creazione e si legge', () async {
+      final ing =
+          await repo.create(name: 'Mele', unit: 'g', category: 'Ortofrutta');
+      expect(ing.category, 'Ortofrutta');
+      expect((await repo.watchAll().first).single.category, 'Ortofrutta');
+    });
+
+    test('è sempre modificabile, anche se l\'unità è bloccata', () async {
+      final ing = await repo.create(name: 'Latte', unit: 'ml');
+      await seedDish('d1');
+      await use('d1', ing.id, 200);
+      expect(await repo.isUnitLocked(ing.id), true);
+
+      await repo.update(ing.id,
+          name: 'Latte', category: const Value('Latticini e uova'));
+      expect((await repo.watchAll().first).single.category, 'Latticini e uova');
+
+      // Si può anche azzerare ("Senza reparto").
+      await repo.update(ing.id, name: 'Latte', category: const Value(null));
+      expect((await repo.watchAll().first).single.category, isNull);
     });
   });
 

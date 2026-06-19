@@ -112,12 +112,14 @@ Implementazione:
 
 ## Punti aperti (segnalare, non decidere da soli)
 
-- Ordinamento lista per reparto: richiede un attributo `category` su `ingredient`, oggi assente.
-- Obbligatorietà della portata: attualmente facoltativa.
+- Nessuno al momento.
+
 ### Risolti
 - "Copia settimana precedente" su settimana non vuota (FR-19): l'utente sceglie **sostituisci o aggiungi** al momento della copia.
 - Rimozione di un tag in uso (FR-14): **protetta** (bloccata se in uso, mostra il conteggio), coerente con FR-17.
 - Autenticazione JWT legacy: guida alla migrazione HS256→ES256/JWKS in `docs/auth_jwt_migration.md`. Solo configurazione dashboard, nessuna modifica al codice.
+- Ordinamento lista per reparto: **lista fissa** di reparti in `lib/core/reparto.dart`, campo nullable `ingredient.category` (migration `00003`); la lista della spesa si raggruppa per reparto nell'ordine del percorso in negozio.
+- Obbligatorietà della portata: **resta facoltativa** (scelta di prodotto). Si può salvare un piatto senza portata.
 
 ---
 

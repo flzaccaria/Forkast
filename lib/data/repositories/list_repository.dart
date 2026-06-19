@@ -10,6 +10,7 @@ class GeneratedItemView {
     required this.ingredientId,
     required this.name,
     required this.unit,
+    required this.category,
     required this.generatedQty,
     required this.overrideQty,
     required this.isQb,
@@ -21,6 +22,7 @@ class GeneratedItemView {
   final String ingredientId;
   final String name;
   final String unit;
+  final String? category;
   final double? generatedQty;
   final double? overrideQty;
   final bool isQb;
@@ -183,7 +185,7 @@ class ListRepository {
   Stream<List<GeneratedItemView>> watchGeneratedItems(String listId) {
     return _db.customSelect(
       'SELECT g.ingredient_id AS ingredient_id, i.name AS name, '
-      'g.unit AS unit, g.qty AS qty, g.is_qb AS is_qb, '
+      'g.unit AS unit, i.category AS category, g.qty AS qty, g.is_qb AS is_qb, '
       'o.qty_override AS qty_override, o.removed AS removed, '
       'o.id AS override_id, c.checked AS checked '
       'FROM list_generated_row g '
@@ -208,6 +210,7 @@ class ListRepository {
           ingredientId: r.read<String>('ingredient_id'),
           name: r.read<String>('name'),
           unit: r.read<String>('unit'),
+          category: r.readNullable<String>('category'),
           generatedQty: r.readNullable<double>('qty'),
           overrideQty: r.readNullable<double>('qty_override'),
           isQb: r.read<int>('is_qb') != 0,
