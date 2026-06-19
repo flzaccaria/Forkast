@@ -1,0 +1,24 @@
+# PowerSync Sync Rules / Sync Streams — bucket per household
+# Each device receives only the data of its own household.
+# pairing_code is excluded: handled server-side via an edge function.
+
+bucket_definitions:
+  by_household:
+    parameters: SELECT household_id FROM membership WHERE device_id = token_parameters.user_id
+
+    data:
+      - SELECT * FROM household WHERE id = bucket.household_id
+      - SELECT * FROM membership WHERE household_id = bucket.household_id
+      - SELECT * FROM ingredient WHERE household_id = bucket.household_id
+      - SELECT * FROM tag WHERE household_id = bucket.household_id
+      - SELECT * FROM dish WHERE household_id = bucket.household_id
+      - SELECT * FROM dish_tag WHERE household_id = bucket.household_id
+      - SELECT * FROM dish_ingredient WHERE household_id = bucket.household_id
+      - SELECT * FROM week_plan WHERE household_id = bucket.household_id
+      - SELECT * FROM plan_day WHERE household_id = bucket.household_id
+      - SELECT * FROM plan_day_dish WHERE household_id = bucket.household_id
+      - SELECT * FROM shopping_list WHERE household_id = bucket.household_id
+      - SELECT * FROM list_generated_row WHERE household_id = bucket.household_id
+      - SELECT * FROM list_override WHERE household_id = bucket.household_id
+      - SELECT * FROM list_manual_item WHERE household_id = bucket.household_id
+      - SELECT * FROM list_check WHERE household_id = bucket.household_id
