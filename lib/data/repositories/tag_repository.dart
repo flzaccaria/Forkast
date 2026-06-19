@@ -67,6 +67,8 @@ class TagRepository {
           name: name,
           tagGroup: group,
           color: Value(color),
+          // Default drift non applicato dallo schema PowerSync: esplicito.
+          sortOrder: const Value(0),
           createdAt: now,
           updatedAt: now,
         ));
