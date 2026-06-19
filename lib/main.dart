@@ -14,6 +14,17 @@ import 'data/powersync_schema.dart';
 import 'ui/app_scope.dart';
 import 'ui/app_shell.dart';
 
+final _theme = ThemeData(
+  colorSchemeSeed: Colors.green,
+  useMaterial3: true,
+);
+
+final _darkTheme = ThemeData(
+  colorSchemeSeed: Colors.green,
+  brightness: Brightness.dark,
+  useMaterial3: true,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ForkastApp());
@@ -24,19 +35,7 @@ class ForkastApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Forkast',
-      theme: ThemeData(
-        colorSchemeSeed: Colors.green,
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: Colors.green,
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      home: const _BootstrapGate(),
-    );
+    return const _BootstrapGate();
   }
 }
 
@@ -47,8 +46,6 @@ class _Bootstrapped {
   final String householdId;
 }
 
-/// Avvia l'inizializzazione senza bloccare il primo frame: mostra uno spinner
-/// mentre lavora e, se qualcosa fallisce, l'errore finisce a schermo.
 class _BootstrapGate extends StatefulWidget {
   const _BootstrapGate();
 
@@ -78,7 +75,6 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     final deviceId = await ensureAnonAuth();
     final householdId = await ensureHousehold(db, deviceId);
 
-    // Sync in background: non blocca l'avvio (local-first).
     unawaited(powerSyncDb.connect(connector: SupabaseConnector()));
 
     return _Bootstrapped(db, householdId);
@@ -98,21 +94,36 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return _BootstrapErrorScreen(
-            error: snapshot.error!,
-            stackTrace: snapshot.stackTrace,
+          return MaterialApp(
+            title: 'Forkast',
+            theme: _theme,
+            darkTheme: _darkTheme,
+            home: _BootstrapErrorScreen(
+              error: snapshot.error!,
+              stackTrace: snapshot.stackTrace,
+            ),
           );
         }
         if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return MaterialApp(
+            title: 'Forkast',
+            theme: _theme,
+            darkTheme: _darkTheme,
+            home: const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
           );
         }
         final data = snapshot.data!;
         return AppScope(
           database: data.database,
           householdId: data.householdId,
-          child: const AppShell(),
+          child: MaterialApp(
+            title: 'Forkast',
+            theme: _theme,
+            darkTheme: _darkTheme,
+            home: const AppShell(),
+          ),
         );
       },
     );
