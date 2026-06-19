@@ -22,15 +22,18 @@ class IngredientRepository {
         .watch();
   }
 
-  Future<void> create({
+  /// Crea una voce di catalogo e restituisce l'ingrediente inserito, così che
+  /// chi crea "al volo" (es. dall'editor piatto) possa selezionarlo subito.
+  Future<Ingredient> create({
     required String name,
     required String unit,
     bool isQb = false,
-  }) {
+  }) async {
     final now = DateTime.now().toUtc();
-    return _db.into(_db.ingredients).insert(
+    final id = _uuid.v4();
+    await _db.into(_db.ingredients).insert(
           IngredientsCompanion.insert(
-            id: _uuid.v4(),
+            id: id,
             householdId: _householdId,
             name: name,
             unit: unit,
@@ -39,5 +42,14 @@ class IngredientRepository {
             updatedAt: now,
           ),
         );
+    return Ingredient(
+      id: id,
+      householdId: _householdId,
+      name: name,
+      unit: unit,
+      isQb: isQb,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 }

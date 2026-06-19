@@ -4,6 +4,7 @@ import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/ingredient_repository.dart';
 import '../app_scope.dart';
+import '../settings/ingredient_form.dart';
 
 /// Editor di un nuovo piatto: nome + righe ingrediente in base 4 (FR-2).
 /// Per gli ingredienti "quanto basta" la quantità non è richiesta (FR-6).
@@ -46,20 +47,14 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         catalog.where((i) => !alreadyUsed.contains(i.id)).toList();
 
     if (!mounted) return;
-    if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Nessun ingrediente disponibile. Creane dalle Impostazioni.'),
-        ),
-      );
-      return;
-    }
 
     final selected = await showModalBottomSheet<Ingredient>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _IngredientPicker(ingredients: available),
+      builder: (_) => _IngredientPicker(
+        ingredients: available,
+        repo: _ingredientRepo,
+      ),
     );
     if (selected != null) {
       setState(() {
@@ -206,25 +201,50 @@ class _IngredientRow {
   final TextEditingController qtyController;
 }
 
+/// Selettore ingrediente dal catalogo condiviso (FR-3, 4, 5). In cima offre
+/// "Crea nuovo ingrediente" per aggiungere una voce al volo (FR-4, 5, 6) senza
+/// uscire dall'editor; la voce creata viene selezionata immediatamente.
 class _IngredientPicker extends StatelessWidget {
-  const _IngredientPicker({required this.ingredients});
+  const _IngredientPicker({required this.ingredients, required this.repo});
 
   final List<Ingredient> ingredients;
+  final IngredientRepository repo;
+
+  Future<void> _createNew(BuildContext context) async {
+    final created = await showIngredientForm(context, repo: repo);
+    if (created != null && context.mounted) {
+      Navigator.of(context).pop(created);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: ListView.builder(
+      child: ListView(
         shrinkWrap: true,
-        itemCount: ingredients.length,
-        itemBuilder: (context, i) {
-          final ing = ingredients[i];
-          return ListTile(
-            title: Text(ing.name),
-            subtitle: Text(ing.isQb ? 'quanto basta' : ing.unit),
-            onTap: () => Navigator.of(context).pop(ing),
-          );
-        },
+        children: [
+          ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('Crea nuovo ingrediente'),
+            onTap: () => _createNew(context),
+          ),
+          const Divider(height: 1),
+          if (ingredients.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Text(
+                'Il catalogo è vuoto. Crea il primo ingrediente.',
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            for (final ing in ingredients)
+              ListTile(
+                title: Text(ing.name),
+                subtitle: Text(ing.isQb ? 'quanto basta' : ing.unit),
+                onTap: () => Navigator.of(context).pop(ing),
+              ),
+        ],
       ),
     );
   }
