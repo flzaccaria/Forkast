@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'dishes/dishes_screen.dart';
 import 'plan/plan_screen.dart';
 import 'list/list_screen.dart';
+import 'settings/pairing_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.pairingCode});
+
+  /// When non-null the pairing screen opens automatically with this code
+  /// pre-filled (e.g. from a `?code=` query parameter in the PWA URL).
+  final String? pairingCode;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -13,12 +18,28 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  bool _pairingHandled = false;
 
   static const _screens = [
     DishesScreen(),
     PlanScreen(),
     ListScreen(),
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_pairingHandled && widget.pairingCode != null) {
+      _pairingHandled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PairingScreen(initialCode: widget.pairingCode),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/qty_format.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/ingredient_repository.dart';
@@ -63,11 +64,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         _rows.add(_IngredientRow(
           ingredient: ing,
           qtyController: TextEditingController(
-            text: r.qtyBase4 == null
-                ? ''
-                : (r.qtyBase4 == r.qtyBase4!.roundToDouble()
-                    ? r.qtyBase4!.toInt().toString()
-                    : r.qtyBase4!.toString()),
+            text: r.qtyBase4 == null ? '' : formatQty(r.qtyBase4!),
           ),
         ));
       }

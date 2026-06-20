@@ -2,15 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../config.dart';
 import '../../data/pairing_service.dart';
 import '../app_scope.dart';
 
 /// Pairing of a second device (ADR-006). Two ways: "Mostra codice" on the
 /// inviting phone and "Inserisci codice" on the one that joins.
 class PairingScreen extends StatefulWidget {
-  const PairingScreen({super.key});
+  const PairingScreen({super.key, this.initialCode});
+
+  /// When non-null the "Inserisci codice" tab opens with this value
+  /// pre-filled (e.g. from a `?code=` deep-link).
+  final String? initialCode;
 
   @override
   State<PairingScreen> createState() => _PairingScreenState();
@@ -27,8 +33,10 @@ class _PairingScreenState extends State<PairingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasInitialCode = widget.initialCode != null;
     return DefaultTabController(
       length: 2,
+      initialIndex: hasInitialCode ? 1 : 0,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Abbina un dispositivo'),
@@ -42,7 +50,10 @@ class _PairingScreenState extends State<PairingScreen> {
         body: TabBarView(
           children: [
             _ShowCodeTab(service: _service),
-            _EnterCodeTab(service: _service),
+            _EnterCodeTab(
+              service: _service,
+              initialCode: widget.initialCode,
+            ),
           ],
         ),
       ),
@@ -50,7 +61,8 @@ class _PairingScreenState extends State<PairingScreen> {
   }
 }
 
-/// Inviting phone: generates and shows a code with a validity countdown.
+/// Inviting phone: generates and shows a code (text + QR) with a validity
+/// countdown.
 class _ShowCodeTab extends StatefulWidget {
   const _ShowCodeTab({required this.service});
 
@@ -67,8 +79,6 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   Timer? _timer;
   int _remaining = 0;
 
-  static const _validitySeconds = 600; // consistent with the SQL function
-
   @override
   void dispose() {
     _timer?.cancel();
@@ -81,11 +91,11 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
       _error = null;
     });
     try {
-      final code = await widget.service.createCode();
+      final pairing = await widget.service.createCode();
       if (!mounted) return;
       setState(() {
-        _code = code;
-        _remaining = _validitySeconds;
+        _code = pairing.code;
+        _remaining = pairing.remainingSeconds;
       });
       _startCountdown();
     } catch (e) {
@@ -107,6 +117,15 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
     });
   }
 
+  /// QR payload: PWA URL with `?code=` when APP_URL is configured,
+  /// otherwise the raw 6-digit code.
+  static String _qrPayload(String code) {
+    const base = AppConfig.appUrl;
+    if (base.isEmpty) return code;
+    final uri = Uri.parse(base).replace(queryParameters: {'code': code});
+    return uri.toString();
+  }
+
   String get _countdownLabel {
     final m = (_remaining ~/ 60).toString().padLeft(2, '0');
     final s = (_remaining % 60).toString().padLeft(2, '0');
@@ -117,58 +136,75 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Genera un codice e digitalo sull\'altro telefono entro la scadenza.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          if (_code != null) ...[
-            SelectableText(
-              _code!,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Genera un codice e inquadralo con l\'altro telefono, '
+              'oppure digitalo a mano.',
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text('Scade tra $_countdownLabel',
-                style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 24),
+            if (_code != null) ...[
+              QrImageView(
+                data: _qrPayload(_code!),
+                version: QrVersions.auto,
+                size: 200,
+                backgroundColor: Colors.white,
+              ),
+              const SizedBox(height: 16),
+              SelectableText(
+                _code!,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      letterSpacing: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text('Scade tra $_countdownLabel',
+                  style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 24),
+            ],
+            if (_error != null) ...[
+              Text(_error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              const SizedBox(height: 12),
+            ],
+            FilledButton.icon(
+              onPressed: _loading ? null : _generate,
+              icon: const Icon(Icons.qr_code),
+              label: Text(_code == null ? 'Genera codice' : 'Genera nuovo codice'),
+            ),
           ],
-          if (_error != null) ...[
-            Text(_error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            const SizedBox(height: 12),
-          ],
-          FilledButton.icon(
-            onPressed: _loading ? null : _generate,
-            icon: const Icon(Icons.qr_code),
-            label: Text(_code == null ? 'Genera codice' : 'Genera nuovo codice'),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Joining phone: enters the code and adopts the household of whoever
+/// Joining phone: enters the code manually and adopts the household of whoever
 /// generated it.
 class _EnterCodeTab extends StatefulWidget {
-  const _EnterCodeTab({required this.service});
+  const _EnterCodeTab({required this.service, this.initialCode});
 
   final PairingService service;
+  final String? initialCode;
 
   @override
   State<_EnterCodeTab> createState() => _EnterCodeTabState();
 }
 
 class _EnterCodeTabState extends State<_EnterCodeTab> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
   bool _loading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialCode);
+  }
 
   @override
   void dispose() {
@@ -179,6 +215,9 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
   Future<void> _redeem() async {
     final code = PairingService.normalizeCode(_controller.text);
     if (code.isEmpty) return;
+    final appScope = AppScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     setState(() {
       _loading = true;
       _error = null;
@@ -186,15 +225,13 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
     try {
       final householdId = await widget.service.redeemCode(code);
       if (!mounted) return;
-      // Switch to the just-adopted household: the tree rebuilds with the
-      // right repositories; PowerSync will sync the data in the background.
-      AppScope.of(context).onHouseholdChanged?.call(householdId);
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      appScope.onHouseholdChanged?.call(householdId);
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Dispositivo abbinato. Sincronizzazione in corso…'),
         ),
       );
+      navigator.pop();
     } on PairingException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {

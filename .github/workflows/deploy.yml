@@ -30,7 +30,8 @@ jobs:
           flutter build web --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
-            --dart-define=POWERSYNC_URL=${{ secrets.POWERSYNC_URL }}
+            --dart-define=POWERSYNC_URL=${{ secrets.POWERSYNC_URL }} \
+            --dart-define=APP_URL=${{ secrets.APP_URL }}
 
       - name: Deploy su Cloudflare
         uses: cloudflare/wrangler-action@v3

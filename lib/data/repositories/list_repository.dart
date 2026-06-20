@@ -84,6 +84,7 @@ class ListRepository {
   Future<List<ListLineInput>> _gatherLines(String weekPlanId) async {
     final rows = await _db.customSelect(
       'SELECT di.ingredient_id AS ingredient_id, i.unit AS unit, '
+      'i.rounding_kind AS rounding_kind, '
       'i.is_qb AS is_qb, di.qty_base4 AS qty_base4, pd.guests AS guests '
       'FROM plan_day pd '
       'JOIN plan_day_dish pdd ON pdd.plan_day_id = pd.id '
@@ -103,6 +104,7 @@ class ListRepository {
         .map((r) => ListLineInput(
               ingredientId: r.read<String>('ingredient_id'),
               unit: r.read<String>('unit'),
+              roundingKind: r.read<String>('rounding_kind'),
               isQb: r.read<int>('is_qb') != 0,
               qtyBase4: r.readNullable<double>('qty_base4'),
               guests: r.read<int>('guests'),

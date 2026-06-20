@@ -30,6 +30,7 @@ class IngredientRepository {
     required String unit,
     bool isQb = false,
     String? category,
+    String roundingKind = 'weight',
   }) async {
     final now = DateTime.now().toUtc();
     final id = _uuid.v4();
@@ -41,6 +42,7 @@ class IngredientRepository {
             unit: unit,
             isQb: Value(isQb),
             category: Value(category),
+            roundingKind: Value(roundingKind),
             createdAt: now,
             updatedAt: now,
           ),
@@ -52,6 +54,7 @@ class IngredientRepository {
       unit: unit,
       isQb: isQb,
       category: category,
+      roundingKind: roundingKind,
       createdAt: now,
       updatedAt: now,
     );
@@ -87,16 +90,17 @@ class IngredientRepository {
     required String name,
     String? unit,
     bool? isQb,
+    String? roundingKind,
     Value<String?> category = const Value.absent(),
   }) async {
     final locked = await usageCount(ingredientId) > 0;
-    // The unit (and the q.b. flag, which is its counterpart) stay immutable
-    // once the ingredient is in use (FR-16). The department, instead, stays
-    // always editable: it does not affect quantity/aggregation.
     final patch = IngredientsCompanion(
       name: Value(name),
       unit: (locked || unit == null) ? const Value.absent() : Value(unit),
       isQb: (locked || isQb == null) ? const Value.absent() : Value(isQb),
+      roundingKind: (locked || roundingKind == null)
+          ? const Value.absent()
+          : Value(roundingKind),
       category: category,
       updatedAt: Value(DateTime.now().toUtc()),
     );

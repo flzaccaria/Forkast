@@ -47,6 +47,7 @@ class _IngredientFormState extends State<_IngredientForm> {
           : '');
   late bool _isQb = widget.existing?.isQb ?? false;
   late String? _category = widget.existing?.category;
+  late String _roundingKind = widget.existing?.roundingKind ?? 'weight';
   bool _saving = false;
 
   /// On creation the unit is always editable; in edit mode it is locked if
@@ -82,15 +83,20 @@ class _IngredientFormState extends State<_IngredientForm> {
         await widget.repo.update(
           widget.existing!.id,
           name: name,
-          // The unit is ignored by the repository when locked (FR-16).
           unit: unit,
           isQb: _unitLocked ? null : _isQb,
+          roundingKind: _unitLocked ? null : _roundingKind,
           category: Value(_category),
         );
         if (mounted) Navigator.of(context).pop(widget.existing);
       } else {
-        final created = await widget.repo
-            .create(name: name, unit: unit, isQb: _isQb, category: _category);
+        final created = await widget.repo.create(
+          name: name,
+          unit: unit,
+          isQb: _isQb,
+          category: _category,
+          roundingKind: _roundingKind,
+        );
         if (mounted) Navigator.of(context).pop(created);
       }
     } catch (e) {
@@ -149,6 +155,31 @@ class _IngredientFormState extends State<_IngredientForm> {
               value: _isQb,
               onChanged: _unitLocked ? null : (v) => setState(() => _isQb = v),
             ),
+            if (!_isQb) ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _roundingKind,
+                decoration: InputDecoration(
+                  labelText: 'Arrotondamento',
+                  helperText: _unitLocked
+                      ? 'Bloccato: l\'ingrediente è già usato in un piatto'
+                      : null,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'whole', child: Text('Pezzo intero (↑ intero)')),
+                  DropdownMenuItem(
+                      value: 'weight',
+                      child: Text('Peso (↑ 10 g / 0,1 kg)')),
+                  DropdownMenuItem(
+                      value: 'volume',
+                      child: Text('Volume (↑ 10 ml / 0,1 l)')),
+                ],
+                onChanged: _unitLocked
+                    ? null
+                    : (v) => setState(() => _roundingKind = v!),
+              ),
+            ],
             const SizedBox(height: 8),
             DropdownButtonFormField<String?>(
               initialValue: _category,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/qty_format.dart';
 import '../../core/reparto.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
@@ -253,10 +254,7 @@ class _GeneratedSection extends StatelessWidget {
     if (item.isQb) return 'q.b.';
     final qty = item.displayQty;
     if (qty == null) return '';
-    final n = qty == qty.roundToDouble()
-        ? qty.toInt().toString()
-        : qty.toString();
-    return '$n ${item.unit}';
+    return '${formatQty(qty)} ${item.unit}';
   }
 
   @override
@@ -264,7 +262,15 @@ class _GeneratedSection extends StatelessWidget {
     return StreamBuilder<List<GeneratedItemView>>(
       stream: repo.watchGeneratedItems(listId),
       builder: (context, snapshot) {
-        final items = snapshot.data ?? const [];
+        if (!snapshot.hasData) {
+          return const SliverToBoxAdapter(
+            child: Center(child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            )),
+          );
+        }
+        final items = snapshot.data!;
         if (items.isEmpty) {
           return const SliverToBoxAdapter(
             child: Padding(
@@ -371,8 +377,7 @@ class _ManualSection extends StatelessWidget {
   String _qtyLabel(ManualItemView item) {
     if (item.qty == null) return '';
     final q = item.qty!;
-    final n = q == q.roundToDouble() ? q.toInt().toString() : q.toString();
-    return '$n ${item.unit ?? ''}'.trim();
+    return '${formatQty(q)} ${item.unit ?? ''}'.trim();
   }
 
   @override
@@ -380,8 +385,10 @@ class _ManualSection extends StatelessWidget {
     return StreamBuilder<List<ManualItemView>>(
       stream: repo.watchManualItems(listId),
       builder: (context, snapshot) {
-        final items = snapshot.data ?? const [];
-        if (items.isEmpty) return const SliverToBoxAdapter();
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SliverToBoxAdapter();
+        }
+        final items = snapshot.data!;
         return SliverMainAxisGroup(
           slivers: [
             const SliverToBoxAdapter(
@@ -439,7 +446,7 @@ class _GeneratedRowActions extends StatelessWidget {
 
   Future<void> _editQty(BuildContext context) async {
     final controller = TextEditingController(
-      text: item.displayQty?.toString() ?? '',
+      text: item.displayQty != null ? formatQty(item.displayQty!) : '',
     );
     final value = await showDialog<double>(
       context: context,
