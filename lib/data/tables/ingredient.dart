@@ -6,9 +6,8 @@ class Ingredients extends Table {
   TextColumn get name => text()();
   TextColumn get unit => text()();
   BoolColumn get isQb => boolean().withDefault(const Constant(false))();
-  // Supermarket department (fixed list in core/reparto.dart). Nullable:
-  // "No department" until assigned.
   TextColumn get category => text().nullable()();
+  TextColumn get roundingKind => text().withDefault(const Constant('weight'))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

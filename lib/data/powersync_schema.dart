@@ -29,6 +29,7 @@ const forkastSchema = Schema([
     Column.text('unit'),
     Column.integer('is_qb'),
     Column.text('category'),
+    Column.text('rounding_kind'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ], indexes: [

@@ -51,6 +51,7 @@ void main() {
         unit TEXT,
         is_qb INTEGER,
         category TEXT,
+        rounding_kind TEXT,
         created_at TEXT,
         updated_at TEXT
       )''');

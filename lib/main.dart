@@ -108,6 +108,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
           );
         }
         final data = snapshot.data!;
+        final pairingCode = Uri.base.queryParameters['code'];
         return AppScope(
           database: data.database,
           householdId: _householdOverride ?? data.householdId,
@@ -117,7 +118,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
             title: 'Forkast',
             theme: _theme,
             darkTheme: _darkTheme,
-            home: const AppShell(),
+            home: AppShell(pairingCode: pairingCode),
           ),
         );
       },

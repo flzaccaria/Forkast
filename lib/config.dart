@@ -9,6 +9,7 @@ class AppConfig {
   static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
   static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
   static const powersyncUrl = String.fromEnvironment('POWERSYNC_URL');
+  static const appUrl = String.fromEnvironment('APP_URL');
 
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty &&

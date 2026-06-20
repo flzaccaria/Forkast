@@ -782,6 +782,14 @@ class $IngredientsTable extends Ingredients
   late final GeneratedColumn<String> category = GeneratedColumn<String>(
       'category', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _roundingKindMeta =
+      const VerificationMeta('roundingKind');
+  @override
+  late final GeneratedColumn<String> roundingKind = GeneratedColumn<String>(
+      'rounding_kind', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('weight'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -795,8 +803,17 @@ class $IngredientsTable extends Ingredients
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, householdId, name, unit, isQb, category, createdAt, updatedAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        householdId,
+        name,
+        unit,
+        isQb,
+        category,
+        roundingKind,
+        createdAt,
+        updatedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -840,6 +857,12 @@ class $IngredientsTable extends Ingredients
       context.handle(_categoryMeta,
           category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
     }
+    if (data.containsKey('rounding_kind')) {
+      context.handle(
+          _roundingKindMeta,
+          roundingKind.isAcceptableOrUnknown(
+              data['rounding_kind']!, _roundingKindMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -877,6 +900,8 @@ class $IngredientsTable extends Ingredients
           .read(DriftSqlType.bool, data['${effectivePrefix}is_qb'])!,
       category: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category']),
+      roundingKind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}rounding_kind'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -897,6 +922,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String unit;
   final bool isQb;
   final String? category;
+  final String roundingKind;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Ingredient(
@@ -906,6 +932,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       required this.unit,
       required this.isQb,
       this.category,
+      required this.roundingKind,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -919,6 +946,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     if (!nullToAbsent || category != null) {
       map['category'] = Variable<String>(category);
     }
+    map['rounding_kind'] = Variable<String>(roundingKind);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -934,6 +962,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       category: category == null && nullToAbsent
           ? const Value.absent()
           : Value(category),
+      roundingKind: Value(roundingKind),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -949,6 +978,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       unit: serializer.fromJson<String>(json['unit']),
       isQb: serializer.fromJson<bool>(json['isQb']),
       category: serializer.fromJson<String?>(json['category']),
+      roundingKind: serializer.fromJson<String>(json['roundingKind']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -963,6 +993,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'unit': serializer.toJson<String>(unit),
       'isQb': serializer.toJson<bool>(isQb),
       'category': serializer.toJson<String?>(category),
+      'roundingKind': serializer.toJson<String>(roundingKind),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -975,6 +1006,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           String? unit,
           bool? isQb,
           Value<String?> category = const Value.absent(),
+          String? roundingKind,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Ingredient(
@@ -984,6 +1016,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         unit: unit ?? this.unit,
         isQb: isQb ?? this.isQb,
         category: category.present ? category.value : this.category,
+        roundingKind: roundingKind ?? this.roundingKind,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -996,6 +1029,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       unit: data.unit.present ? data.unit.value : this.unit,
       isQb: data.isQb.present ? data.isQb.value : this.isQb,
       category: data.category.present ? data.category.value : this.category,
+      roundingKind: data.roundingKind.present
+          ? data.roundingKind.value
+          : this.roundingKind,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1010,6 +1046,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('unit: $unit, ')
           ..write('isQb: $isQb, ')
           ..write('category: $category, ')
+          ..write('roundingKind: $roundingKind, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1017,8 +1054,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, householdId, name, unit, isQb, category, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, householdId, name, unit, isQb, category,
+      roundingKind, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1029,6 +1066,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.unit == this.unit &&
           other.isQb == this.isQb &&
           other.category == this.category &&
+          other.roundingKind == this.roundingKind &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1040,6 +1078,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String> unit;
   final Value<bool> isQb;
   final Value<String?> category;
+  final Value<String> roundingKind;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1050,6 +1089,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.unit = const Value.absent(),
     this.isQb = const Value.absent(),
     this.category = const Value.absent(),
+    this.roundingKind = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1061,6 +1101,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     required String unit,
     this.isQb = const Value.absent(),
     this.category = const Value.absent(),
+    this.roundingKind = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -1077,6 +1118,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<String>? unit,
     Expression<bool>? isQb,
     Expression<String>? category,
+    Expression<String>? roundingKind,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1088,6 +1130,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (unit != null) 'unit': unit,
       if (isQb != null) 'is_qb': isQb,
       if (category != null) 'category': category,
+      if (roundingKind != null) 'rounding_kind': roundingKind,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1101,6 +1144,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<String>? unit,
       Value<bool>? isQb,
       Value<String?>? category,
+      Value<String>? roundingKind,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -1111,6 +1155,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       unit: unit ?? this.unit,
       isQb: isQb ?? this.isQb,
       category: category ?? this.category,
+      roundingKind: roundingKind ?? this.roundingKind,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1138,6 +1183,9 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (category.present) {
       map['category'] = Variable<String>(category.value);
     }
+    if (roundingKind.present) {
+      map['rounding_kind'] = Variable<String>(roundingKind.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1159,6 +1207,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('unit: $unit, ')
           ..write('isQb: $isQb, ')
           ..write('category: $category, ')
+          ..write('roundingKind: $roundingKind, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -6260,6 +6309,7 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   required String unit,
   Value<bool> isQb,
   Value<String?> category,
+  Value<String> roundingKind,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6272,6 +6322,7 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<String> unit,
   Value<bool> isQb,
   Value<String?> category,
+  Value<String> roundingKind,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6303,6 +6354,9 @@ class $$IngredientsTableFilterComposer
 
   ColumnFilters<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get roundingKind => $composableBuilder(
+      column: $table.roundingKind, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6338,6 +6392,10 @@ class $$IngredientsTableOrderingComposer
   ColumnOrderings<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get roundingKind => $composableBuilder(
+      column: $table.roundingKind,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6371,6 +6429,9 @@ class $$IngredientsTableAnnotationComposer
 
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get roundingKind => $composableBuilder(
+      column: $table.roundingKind, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6408,6 +6469,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String> unit = const Value.absent(),
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
+            Value<String> roundingKind = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6419,6 +6481,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             unit: unit,
             isQb: isQb,
             category: category,
+            roundingKind: roundingKind,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6430,6 +6493,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             required String unit,
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
+            Value<String> roundingKind = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -6441,6 +6505,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             unit: unit,
             isQb: isQb,
             category: category,
+            roundingKind: roundingKind,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,

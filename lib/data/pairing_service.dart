@@ -9,10 +9,16 @@ class PairingService {
 
   final SupabaseClient _client;
 
-  /// Inviting device: generates a 6-digit code, valid for ~10 minutes.
-  Future<String> createCode() async {
+  /// Inviting device: generates a 6-digit code. The server returns the code
+  /// and its expiry so the client can count down without hardcoding the
+  /// validity duration.
+  Future<PairingCode> createCode() async {
     final res = await _client.rpc('create_pairing_code');
-    return res as String;
+    final map = res as Map<String, dynamic>;
+    return PairingCode(
+      code: map['code'] as String,
+      expiresAt: DateTime.parse(map['expires_at'] as String),
+    );
   }
 
   /// Second device: redeems the code and joins the inviter's household.
@@ -40,6 +46,17 @@ class PairingService {
   /// Normalizes the user's input: removes spaces and dashes.
   static String normalizeCode(String raw) =>
       raw.replaceAll(RegExp(r'[\s-]'), '').trim();
+}
+
+/// Code + server-provided expiry returned by [PairingService.createCode].
+class PairingCode {
+  PairingCode({required this.code, required this.expiresAt});
+
+  final String code;
+  final DateTime expiresAt;
+
+  int get remainingSeconds =>
+      expiresAt.difference(DateTime.now().toUtc()).inSeconds.clamp(0, 86400);
 }
 
 /// Pairing error with a message already localized for the UI.

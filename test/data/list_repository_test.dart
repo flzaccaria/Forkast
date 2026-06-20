@@ -22,7 +22,8 @@ void main() {
       week_start_day INTEGER, auto_regen INTEGER, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE ingredient (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
-      is_qb INTEGER, category TEXT, created_at TEXT, updated_at TEXT)''');
+      is_qb INTEGER, category TEXT, rounding_kind TEXT,
+      created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
       created_at TEXT, updated_at TEXT)''');
@@ -78,7 +79,7 @@ void main() {
   tearDown(() async => db.close());
 
   Future<void> seedIngredient(String id, String name,
-      {String unit = 'g', bool isQb = false}) async {
+      {String unit = 'g', bool isQb = false, String roundingKind = 'weight'}) async {
     final now = DateTime.now().toUtc();
     await db.into(db.ingredients).insert(IngredientsCompanion.insert(
           id: id,
@@ -86,6 +87,7 @@ void main() {
           name: name,
           unit: unit,
           isQb: Value(isQb),
+          roundingKind: Value(roundingKind),
           createdAt: now,
           updatedAt: now,
         ));

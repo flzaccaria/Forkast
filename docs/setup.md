@@ -121,10 +121,12 @@ the three `--dart-define` flags.
 
 Once the app is running on the first phone:
 
-1. Open **Settings → Pair device** on the first phone. A 6-digit code appears.
+1. Open **Settings → Pair device** on the first phone. A 6-digit code and a QR code appear.
 2. On the second phone, run the app with the same `--dart-define` values.
-3. On the second phone, enter the 6-digit code in the pairing screen.
+3. The second phone can either **scan the QR** with the system camera (opens the PWA with the code pre-filled) or **type the 6-digit code** manually in the pairing screen.
 4. The second device joins the first's household. Data syncs automatically.
+
+> The QR encodes the PWA URL with `?code=<6 digits>` (e.g. `https://your-app.pages.dev?code=123456`). This requires `APP_URL` to be set via `--dart-define`. Without it, the QR contains only the raw code.
 
 ---
 

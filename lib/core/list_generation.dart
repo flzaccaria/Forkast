@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'scaling.dart';
 
 /// Shopping list generation from the plan: rescaling (FR-11) and
@@ -10,6 +12,7 @@ class ListLineInput {
   ListLineInput({
     required this.ingredientId,
     required this.unit,
+    required this.roundingKind,
     required this.isQb,
     required this.qtyBase4,
     required this.guests,
@@ -17,6 +20,7 @@ class ListLineInput {
 
   final String ingredientId;
   final String unit;
+  final String roundingKind;
   final bool isQb;
 
   /// Quantity for 4 people; ignored (and typically null) for "q.b." items.
@@ -48,10 +52,21 @@ class GeneratedListRow {
 List<GeneratedListRow> aggregateList(List<ListLineInput> lines) {
   final sums = <String, double>{};
   final units = <String, String>{};
+  final roundingKinds = <String, String>{};
   final qbIds = <String>{};
 
   for (final l in lines) {
-    units[l.ingredientId] = l.unit;
+    final prev = units[l.ingredientId];
+    if (prev != null && prev != l.unit) {
+      assert(false,
+          'Unit mismatch for ingredient ${l.ingredientId}: "$prev" vs "${l.unit}"');
+      debugPrint('aggregateList: unit mismatch for ${l.ingredientId} '
+          '("$prev" vs "${l.unit}") — using "$prev"');
+      // Keep the first unit seen; the sum will be incoherent but visible.
+    } else {
+      units[l.ingredientId] = l.unit;
+    }
+    roundingKinds[l.ingredientId] = l.roundingKind;
     if (l.isQb) {
       qbIds.add(l.ingredientId);
     } else {
@@ -72,7 +87,7 @@ List<GeneratedListRow> aggregateList(List<ListLineInput> lines) {
         ingredientId: id,
         unit: unit,
         isQb: false,
-        qty: roundForUnit(sums[id]!, unit),
+        qty: roundForUnit(sums[id]!, roundingKinds[id]!, unit),
       ));
     }
   }
@@ -86,7 +101,7 @@ List<GeneratedListRow> aggregateList(List<ListLineInput> lines) {
 String planHash(List<ListLineInput> lines) {
   final canon = lines
       .map((l) =>
-          '${l.ingredientId}|${l.isQb}|${l.qtyBase4}|${l.unit}|${l.guests}')
+          '${l.ingredientId}|${l.isQb}|${l.qtyBase4}|${l.unit}|${l.roundingKind}|${l.guests}')
       .toList()
     ..sort();
   return _fnv1a64(canon.join(';'));

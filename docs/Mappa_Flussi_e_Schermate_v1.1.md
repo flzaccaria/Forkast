@@ -1,10 +1,10 @@
 # Mappa dei flussi e delle schermate — App Menu Settimanale & Lista della Spesa
 
-*v1.0 • 17 giugno 2026 • Complementare ai Requisiti Funzionali v0.3*
+*v1.1 • 20 giugno 2026 • Complementare ai Requisiti Funzionali v0.5*
 
 ## 1. Scopo
 
-Questo documento è l'indice navigabile delle schermate progettate per l'app e delle loro connessioni. Accompagna i Requisiti Funzionali v0.3: i requisiti dicono cosa l'app deve fare, questa mappa dice dove e come ci si muove tra le schermate.
+Questo documento è l'indice navigabile delle schermate progettate per l'app e delle loro connessioni. Accompagna i Requisiti Funzionali v0.5: i requisiti dicono cosa l'app deve fare, questa mappa dice dove e come ci si muove tra le schermate.
 
 ## 2. Aree e navigazione principale
 
@@ -21,10 +21,10 @@ L'app si articola in tre sezioni, raggiungibili da una barra a tre voci in basso
 | Piano | Piano settimanale | Settimana di cene; copia settimana precedente | FR-7, 9, 19, 20 |
 | Piano | Cena del giorno | Commensali per serata (default sovrascrivibile) e piatti | FR-8, 9 |
 | Piano | Selezione piatto | Catalogo in selezione multipla (riusa Catalogo piatti) | FR-7 |
-| Lista | Lista della spesa | Voci aggregate, riscalo, q.b., spunte, avviso rigenerazione | FR-10, 11, 12, 21 |
+| Lista | Lista della spesa | Voci aggregate per reparto (percorso negozio), riscalo, q.b., spunte, avviso rigenerazione | FR-10, 11, 12, 21, 22 |
 | Lista | Aggiungi / Modifica voce | Aggiunta manuale e override con ripristino | FR-13, 21 |
 | Impostazioni | Impostazioni | Default commensali, inizio settimana, rigenerazione auto, promemoria, tema, lingua, sync | FR-8, 20, 21 |
-| Impostazioni | Gestione ingredienti | Lista, modifica (unità bloccata), unione, eliminazione protetta | FR-4, 5, 16, 17, 18 |
+| Impostazioni | Gestione ingredienti | Lista, modifica (unità bloccata, reparto), unione, eliminazione protetta | FR-4, 5, 16, 17, 18, 22 |
 | Impostazioni | Gestione tag | Portata e attributi, utilizzo, riordino | FR-14 |
 
 ## 4. Mappa di navigazione
@@ -67,11 +67,21 @@ L'app si articola in tre sezioni, raggiungibili da una barra a tre voci in basso
 - Lista a due strati: righe generate (ricalcolabili) e strato manuale (persistente); override reversibile; rigenerazione su richiesta per impostazione predefinita.
 - Eliminazioni protette quando una voce è in uso; unione doppioni solo a parità di unità.
 - "Copia settimana precedente" copia piatti e commensali, non la lista.
+- La lista della spesa è raggruppata per reparto del supermercato nell'ordine del percorso in negozio; il reparto è un campo facoltativo dell'ingrediente (elenco fisso predefinito). Gli ingredienti senza reparto assegnato compaiono in coda sotto "Senza reparto"; "Altro" è un reparto selezionabile per ingredienti inclassificabili.
 
 ## 7. Punti aperti residui
 
 - Rimozione di un tag in uso: proteggere oppure "scollega dai piatti".
 - Obbligatorietà della portata: proposta attuale, facoltativa.
-- Ordinamento della lista per reparto: richiederebbe una categoria sugli ingredienti, oggi assente.
-- "Copia settimana" su una settimana non vuota: sostituire, unire o bloccare.
+- ~~Ordinamento della lista per reparto: richiederebbe una categoria sugli ingredienti, oggi assente.~~ → Risolto: campo `category` nullable su `ingredient`, elenco fisso di reparti, raggruppamento nella lista (FR-22).
+- ~~"Copia settimana" su una settimana non vuota: sostituire, unire o bloccare.~~ → Risolto: l'utente sceglie tra sostituisci e aggiungi (FR-19 v0.4).
 - Crescita del vocabolario dei tag: curato oppure con aggiunte libere.
+
+---
+
+## Changelog
+
+| Versione | Data | Modifiche |
+| --- | --- | --- |
+| **v1.0** | 17 giugno 2026 | Versione iniziale. |
+| **v1.1** | 20 giugno 2026 | Schermata Lista: aggiunto raggruppamento per reparto (FR-22). Schermata Gestione ingredienti: aggiunto reparto. §6: decisione di design sul raggruppamento. §7: punti aperti reparto e copia settimana marcati come risolti. Riferimenti aggiornati a Requisiti v0.5. |

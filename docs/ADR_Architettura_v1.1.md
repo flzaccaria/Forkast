@@ -1,20 +1,22 @@
 # Architecture Decision Record (ADR) — App Menu Settimanale & Lista della Spesa
 
-*v1.0 • 17 giugno 2026 • Architettura della fase*
+*v1.1 • 20 giugno 2026 • Architettura della fase*
 
 | | |
 | --- | --- |
 | **Documento** | Architecture Decision Record — architettura della fase iniziale |
 | **Stato** | Decisioni accettate (validate con il committente) |
 | **Autore** | Software & Data Architect |
-| **Documenti correlati** | Requisiti Funzionali v0.3 • Mappa dei flussi e delle schermate v1.0 |
-| **Ambito** | Prima versione a uso privato e familiare — solo cene, due dispositivi |
+| **Documenti correlati** | Requisiti Funzionali v0.5 • Mappa dei flussi e delle schermate v1.1 |
+| **Ambito** | Prima versione a uso privato e familiare — solo cene, due dispositivi + web |
 
 ## 1. Scopo e contesto
 
-Questo documento registra le decisioni architetturali della prima fase dell'app. Accompagna i Requisiti Funzionali v0.3 (cosa l'app deve fare) e la Mappa dei flussi v1.0 (dove e come ci si muove): qui si stabilisce su quali fondamenta tecniche poggia tutto il resto.
+Questo documento registra le decisioni architetturali della prima fase dell'app. Accompagna i Requisiti Funzionali v0.5 (cosa l'app deve fare) e la Mappa dei flussi v1.1 (dove e come ci si muove): qui si stabilisce su quali fondamenta tecniche poggia tutto il resto.
 
 La decisione madre è dove vivono i dati e come si sincronizzano tra i telefoni: tutte le altre scelte discendono da lì. Il vincolo guida è l'uso reale dell'app: la lista della spesa si consulta e si modifica al supermercato, dove la connessione è inaffidabile. L'app deve quindi funzionare offline e risincronizzare in seguito.
+
+Il target di deploy comprende iOS, Android e web (Cloudflare Workers). L'aggiunta del web non altera il vincolo offline: la PWA usa le stesse primitive local-first (SQLite via WASM + PowerSync) dei client nativi.
 
 Tre obiettivi di lungo periodo orientano le scelte pur senza essere implementati ora, perché oggi costano quasi nulla ed evitano una riscrittura domani: modellare il concetto di famiglia/household come contenitore dei dati; predisporre l'autenticazione; raccogliere il minimo indispensabile di dati personali (privacy by design).
 
@@ -28,7 +30,7 @@ Tre obiettivi di lungo periodo orientano le scelte pur senza essere implementati
 | **ADR-004** | Lista della spesa | Snapshot materializzato + strato override/spunte per ingrediente | FR-10–13, 21 |
 | **ADR-005** | Contenitore dati | Household come aggregate root su ogni entità | §2 requisiti |
 | **ADR-006** | Identità e pairing | Accesso anonimo per device + codice/QR di abbinamento | §2 requisiti |
-| **ADR-007** | Stack client | Cross-platform: Flutter + drift (SQLite) | — |
+| **ADR-007** | Stack client | Cross-platform (iOS, Android, Web): Flutter + drift (SQLite), deploy web su Cloudflare Workers | — |
 | **ADR-008** | Privacy e residenza | Data minimization + dati in region EU dal giorno zero | §2 requisiti |
 
 ## 3. Decisioni architetturali
@@ -149,26 +151,35 @@ Tre obiettivi di lungo periodo orientano le scelte pur senza essere implementati
 **Conseguenze.**
 
 - *Vantaggio:* il backend non presuppone mai "chiunque vede tutto"; le regole d'accesso filtrano già per household.
-- *Nota:* va progettato ora un piccolo flusso di abbinamento (genera codice / scansiona codice): è il minimo indispensabile non rimandabile.
+- *Implementato:* il flusso di abbinamento è operativo. Il dispositivo invitante mostra un codice a 6 cifre e un QR che codifica la URL della PWA con `?code=<codice>` (formato: `https://<APP_URL>?code=123456`). Il dispositivo che si unisce può: (a) inquadrare il QR con la fotocamera di sistema → la PWA si apre con il codice precompilato; oppure (b) digitare il codice a mano. L'inserimento manuale è la modalità primaria; nessuno scanner in-app.
 
-### ADR-007 — Stack del client: cross-platform Flutter
+### ADR-007 — Stack del client: cross-platform Flutter (iOS, Android, Web)
 
-**Stato:** Accettata • **Requisiti correlati:** —
+**Stato:** Accettata (aggiornata v1.1) • **Requisiti correlati:** —
 
-**Contesto.** L'app deve girare su iPhone e Android, sviluppata da un team molto piccolo. Il web è esplicitamente fuori dai piani. Tra le scelte architetturali è quella a impatto più basso: il motore di sync conta molto più del framework.
+**Contesto.** L'app deve girare su iPhone e Android, sviluppata da un team molto piccolo. Il web è stato aggiunto come terzo target di deploy dopo la valutazione iniziale: la maturità del supporto web di Flutter e della versione WASM di SQLite rende il costo incrementale trascurabile, e il beneficio (accesso da qualunque browser senza installazione) è immediato. Tra le scelte architetturali resta quella a impatto più basso: il motore di sync conta molto più del framework.
 
 **Opzioni valutate.**
 
 - **Nativo iOS + Android** — Due codebase per due persone: insostenibile e ingiustificato.
-- **Flutter + drift (SQLite)** — Codebase unico, integrazione PowerSync molto rodata (nata su Flutter), coerenza dell'interfaccia su entrambe le piattaforme.
-- **React Native + WatermelonDB** — Valido; il suo vantaggio principale (riuso della logica in un futuro client web in TypeScript) non si incassa perché il web è escluso.
+- **Flutter + drift (SQLite)** — Codebase unico, integrazione PowerSync molto rodata (nata su Flutter), coerenza dell'interfaccia su tutte e tre le piattaforme; il supporto web compila SQLite in WASM, senza dipendenza da `dart:ffi`.
+- **React Native + WatermelonDB** — Valido; l'argomento del riuso TypeScript per il web è reso irrilevante dal fatto che Flutter copre anch'esso il web con un solo codebase.
 
-**Decisione.** Flutter con drift (SQLite locale) come stack del client. La scelta di escludere il web rende superfluo il principale motivo che avrebbe fatto preferire React Native, e l'integrazione Flutter–PowerSync è la più matura.
+**Decisione.** Flutter con drift (SQLite locale) come stack del client per iOS, Android e web.
+
+*Strategia dei conditional import.* Sul web `dart:ffi` non è disponibile; l'apertura del database è isolata in tre file con un barrel di conditional import (`lib/data/open_database.dart`):
+
+- `open_database_native.dart` — usa `path_provider` + FFI, selezionato quando `dart.library.io` è disponibile (iOS/Android).
+- `open_database_web.dart` — usa il `PowerSyncDatabase` con percorso semplice (WASM), selezionato quando `dart.library.js_interop` è disponibile.
+- `open_database_stub.dart` — fallback che lancia `UnsupportedError` su piattaforme non previste.
+
+*Deploy web.* L'artefatto `flutter build web` viene servito da **Cloudflare Workers** (configurazione in `wrangler.toml`), con routing SPA (`not_found_handling = "single-page-application"`).
 
 **Conseguenze.**
 
-- *Vantaggio:* un solo codebase, interfaccia coerente, percorso di sincronizzazione ben supportato.
-- *Nota:* se in futuro il web tornasse in agenda, andrebbe rivalutato: è l'unico fattore che ribalterebbe questa decisione.
+- *Vantaggio:* un solo codebase, interfaccia coerente su tre piattaforme, percorso di sincronizzazione ben supportato.
+- *Vantaggio:* il web consente l'accesso rapido da qualunque browser senza installazione, utile per consultare il piano o la lista da un dispositivo non abituale.
+- *Costo:* il conditional import aggiunge una minima superficie di manutenzione (tre file paralleli per l'apertura del DB); il costo è trascurabile e già pagato.
 
 ### ADR-008 — Privacy by design e residenza dei dati
 
@@ -186,6 +197,7 @@ Tre obiettivi di lungo periodo orientano le scelte pur senza essere implementati
 **Conseguenze.**
 
 - *Vantaggio:* la residenza dei dati è una scelta di configurazione fatta ora; spostarla dopo sarebbe un cantiere. Il GDPR futuro parte già in regola.
+- *Nota:* la firma dei JWT passa da shared secret simmetrico (HS256, legacy) a chiavi asimmetriche (ES256/JWKS). È una migrazione di sola configurazione dashboard (Supabase + PowerSync), senza modifiche al codice. Guida completa in [`docs/auth_jwt_migration.md`](auth_jwt_migration.md).
 
 ## 4. Modello dati — la spina dorsale
 
@@ -223,8 +235,8 @@ Va definita una sola regola di arrotondamento, in codice condiviso e testato. Es
 
 ## 7. Punti aperti che intersecano l'architettura
 
-- **Ordinamento della lista per reparto:** richiederebbe una categoria sugli ingredienti, oggi assente. È un nuovo attributo su `ingredient`, a basso costo se previsto ora nel modello.
-- **"Copia settimana precedente" su una settimana non vuota:** definire se sostituire, unire o bloccare. È una scelta di comportamento sui dati del piano (FR-19).
+- ~~**Ordinamento della lista per reparto:**~~ Risolto e implementato (FR-22). Campo `ingredient.category` nullable (migration `00003`); elenco fisso di reparti in `lib/core/reparto.dart` con ordine del percorso in negozio. La lista è raggruppata per reparto; ingredienti senza reparto (`null`) in coda. Nessun impatto architetturale: è un attributo sull'entità `ingredient` esistente, derivazione e ordinamento restano lato client.
+- ~~**"Copia settimana precedente" su una settimana non vuota:**~~ Risolto: l'utente sceglie tra **sostituisci** e **aggiungi** (FR-19 v0.4). Nessun impatto architetturale: entrambe le operazioni sono scritture locali ordinarie.
 - **Rimozione di un tag in uso:** proteggere oppure "scollega dai piatti". Analoga all'eliminazione protetta degli ingredienti (FR-17), va resa coerente con essa.
 - **Rigenerazione automatica della lista:** l'opzione esiste (FR-21); quando attiva, l'arrotondamento deterministico del §5 diventa indispensabile perché il ricalcolo può avvenire su entrambi i dispositivi.
 
@@ -234,3 +246,13 @@ Va definita una sola regola di arrotondamento, in codice condiviso e testato. Es
 - Definire lo schema Postgres con `household_id` su ogni tabella e le regole di sync per bucket household (ADR-002, ADR-005).
 - Implementare il flusso di abbinamento dispositivi (genera/scansiona codice) con accesso anonimo (ADR-006).
 - Inizializzare il progetto Flutter con drift e l'SDK PowerSync; isolare la regola di riscalo/arrotondamento in un modulo testato (ADR-007, §5).
+- Configurare il deploy web su Cloudflare Workers (ADR-007) e verificare il funzionamento di SQLite via WASM nel browser.
+
+---
+
+## Changelog
+
+| Versione | Data | Modifiche |
+| --- | --- | --- |
+| **v1.0** | 17 giugno 2026 | Versione iniziale. |
+| **v1.1** | 20 giugno 2026 | **ADR-007 aggiornata:** il web è ora il terzo target di deploy (era esplicitamente escluso). Registrata la strategia dei conditional import (`dart.library.io` / `dart.library.js_interop`) per evitare `dart:ffi` sul web, e il deploy su Cloudflare Workers. Aggiornati §1 (scopo), §2 (tabella di sintesi) e §8 (prossimi passi) di conseguenza. |
