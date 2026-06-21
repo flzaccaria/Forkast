@@ -786,10 +786,8 @@ class $IngredientsTable extends Ingredients
       const VerificationMeta('roundingKind');
   @override
   late final GeneratedColumn<String> roundingKind = GeneratedColumn<String>(
-      'rounding_kind', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('weight'));
+      'rounding_kind', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -901,7 +899,7 @@ class $IngredientsTable extends Ingredients
       category: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category']),
       roundingKind: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}rounding_kind'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}rounding_kind']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -922,7 +920,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String unit;
   final bool isQb;
   final String? category;
-  final String roundingKind;
+  final String? roundingKind;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Ingredient(
@@ -932,7 +930,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       required this.unit,
       required this.isQb,
       this.category,
-      required this.roundingKind,
+      this.roundingKind,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -946,7 +944,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     if (!nullToAbsent || category != null) {
       map['category'] = Variable<String>(category);
     }
-    map['rounding_kind'] = Variable<String>(roundingKind);
+    if (!nullToAbsent || roundingKind != null) {
+      map['rounding_kind'] = Variable<String>(roundingKind);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -962,7 +962,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       category: category == null && nullToAbsent
           ? const Value.absent()
           : Value(category),
-      roundingKind: Value(roundingKind),
+      roundingKind: roundingKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(roundingKind),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -978,7 +980,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       unit: serializer.fromJson<String>(json['unit']),
       isQb: serializer.fromJson<bool>(json['isQb']),
       category: serializer.fromJson<String?>(json['category']),
-      roundingKind: serializer.fromJson<String>(json['roundingKind']),
+      roundingKind: serializer.fromJson<String?>(json['roundingKind']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -993,7 +995,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'unit': serializer.toJson<String>(unit),
       'isQb': serializer.toJson<bool>(isQb),
       'category': serializer.toJson<String?>(category),
-      'roundingKind': serializer.toJson<String>(roundingKind),
+      'roundingKind': serializer.toJson<String?>(roundingKind),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1006,7 +1008,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           String? unit,
           bool? isQb,
           Value<String?> category = const Value.absent(),
-          String? roundingKind,
+          Value<String?> roundingKind = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Ingredient(
@@ -1016,7 +1018,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         unit: unit ?? this.unit,
         isQb: isQb ?? this.isQb,
         category: category.present ? category.value : this.category,
-        roundingKind: roundingKind ?? this.roundingKind,
+        roundingKind:
+            roundingKind.present ? roundingKind.value : this.roundingKind,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1078,7 +1081,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String> unit;
   final Value<bool> isQb;
   final Value<String?> category;
-  final Value<String> roundingKind;
+  final Value<String?> roundingKind;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1144,7 +1147,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<String>? unit,
       Value<bool>? isQb,
       Value<String?>? category,
-      Value<String>? roundingKind,
+      Value<String?>? roundingKind,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -6309,7 +6312,7 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   required String unit,
   Value<bool> isQb,
   Value<String?> category,
-  Value<String> roundingKind,
+  Value<String?> roundingKind,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6322,7 +6325,7 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<String> unit,
   Value<bool> isQb,
   Value<String?> category,
-  Value<String> roundingKind,
+  Value<String?> roundingKind,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6469,7 +6472,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String> unit = const Value.absent(),
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
-            Value<String> roundingKind = const Value.absent(),
+            Value<String?> roundingKind = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6493,7 +6496,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             required String unit,
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
-            Value<String> roundingKind = const Value.absent(),
+            Value<String?> roundingKind = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),

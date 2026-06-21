@@ -7,7 +7,7 @@ class Ingredients extends Table {
   TextColumn get unit => text()();
   BoolColumn get isQb => boolean().withDefault(const Constant(false))();
   TextColumn get category => text().nullable()();
-  TextColumn get roundingKind => text().withDefault(const Constant('weight'))();
+  TextColumn get roundingKind => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

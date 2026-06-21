@@ -125,6 +125,26 @@ void main() {
     expect(pasta.isQb, false);
   });
 
+  test('ingredient with NULL rounding_kind reads without crash, treated as weight',
+      () async {
+    final householdId = await ensureHousehold(db, 'device-E');
+    final now = DateTime.now().toUtc().toIso8601String();
+    await db.customStatement(
+      "INSERT INTO ingredient (id, household_id, name, unit, is_qb, "
+      "rounding_kind, category, created_at, updated_at) "
+      "VALUES ('ing-null-rk', '$householdId', 'Farina', 'g', 0, "
+      "NULL, NULL, '$now', '$now')",
+    );
+
+    final repo = IngredientRepository(db, householdId);
+    final all = await repo.watchAll().first;
+    final farina = all.firstWhere((i) => i.name == 'Farina');
+    expect(farina.roundingKind, isNull);
+    // Callers treat NULL as 'weight':
+    final effective = farina.roundingKind ?? 'weight';
+    expect(effective, 'weight');
+  });
+
   test('DishRepository.create saves dish and ingredient rows', () async {
     final householdId = await ensureHousehold(db, 'device-D');
     final ingredientRepo = IngredientRepository(db, householdId);
