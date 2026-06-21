@@ -1,9 +1,52 @@
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:forkast/data/bootstrap.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/dish_repository.dart';
 import 'package:forkast/data/repositories/ingredient_repository.dart';
+import 'package:uuid/uuid.dart';
+
+const _uuid = Uuid();
+
+/// Test-only helper that replicates what the server-side
+/// `bootstrap_household()` function does, but locally — so unit tests don't
+/// need Supabase.
+Future<String> _insertHouseholdLocal(AppDatabase db, String deviceId) async {
+  final existing = await (db.select(db.memberships)
+        ..where((m) => m.deviceId.equals(deviceId)))
+      .getSingleOrNull();
+  if (existing != null) return existing.householdId;
+
+  final now = DateTime.now().toUtc();
+  final householdId = _uuid.v4();
+
+  await db.batch((b) {
+    b.insert(
+      db.households,
+      HouseholdsCompanion.insert(
+        id: householdId,
+        defaultGuests: const Value(4),
+        weekStartDay: const Value(1),
+        autoRegen: const Value(false),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    b.insert(
+      db.memberships,
+      MembershipsCompanion.insert(
+        id: _uuid.v4(),
+        householdId: householdId,
+        deviceId: deviceId,
+        role: const Value('member'),
+        joinedAt: now,
+        updatedAt: now,
+      ),
+    );
+  });
+
+  return householdId;
+}
 
 /// Regression test for the "unapplied drift defaults" class of bug.
 ///
@@ -15,7 +58,7 @@ import 'package:forkast/data/repositories/ingredient_repository.dart';
 ///
 /// Here we replicate that condition: we create the tables WITHOUT DEFAULT
 /// clauses (as PowerSync does) and verify that the real inserts
-/// (bootstrap + repository) produce readable rows without NULL.
+/// (repository) produce readable rows without NULL.
 void main() {
   late AppDatabase db;
 
@@ -79,11 +122,10 @@ void main() {
     await db.close();
   });
 
-  test('ensureHousehold creates readable household + membership (defaults populated)',
+  test('local household insert produces readable rows (defaults populated)',
       () async {
-    final householdId = await ensureHousehold(db, 'device-A');
+    final householdId = await _insertHouseholdLocal(db, 'device-A');
 
-    // The read must not crash: the fields with defaults are populated.
     final household = await (db.select(db.households)
           ..where((h) => h.id.equals(householdId)))
         .getSingle();
@@ -98,9 +140,9 @@ void main() {
     expect(membership.householdId, householdId);
   });
 
-  test('ensureHousehold is idempotent for the same device', () async {
-    final first = await ensureHousehold(db, 'device-B');
-    final second = await ensureHousehold(db, 'device-B');
+  test('local household insert is idempotent for the same device', () async {
+    final first = await _insertHouseholdLocal(db, 'device-B');
+    final second = await _insertHouseholdLocal(db, 'device-B');
     expect(first, second);
 
     final count = await db
@@ -111,7 +153,7 @@ void main() {
 
   test('IngredientRepository.create produces readable rows (is_qb populated)',
       () async {
-    final householdId = await ensureHousehold(db, 'device-C');
+    final householdId = await _insertHouseholdLocal(db, 'device-C');
     final repo = IngredientRepository(db, householdId);
 
     await repo.create(name: 'Pasta', unit: 'g');
@@ -127,7 +169,7 @@ void main() {
 
   test('ingredient with NULL rounding_kind reads without crash, treated as weight',
       () async {
-    final householdId = await ensureHousehold(db, 'device-E');
+    final householdId = await _insertHouseholdLocal(db, 'device-E');
     final now = DateTime.now().toUtc().toIso8601String();
     await db.customStatement(
       "INSERT INTO ingredient (id, household_id, name, unit, is_qb, "
@@ -140,13 +182,12 @@ void main() {
     final all = await repo.watchAll().first;
     final farina = all.firstWhere((i) => i.name == 'Farina');
     expect(farina.roundingKind, isNull);
-    // Callers treat NULL as 'weight':
     final effective = farina.roundingKind ?? 'weight';
     expect(effective, 'weight');
   });
 
   test('DishRepository.create saves dish and ingredient rows', () async {
-    final householdId = await ensureHousehold(db, 'device-D');
+    final householdId = await _insertHouseholdLocal(db, 'device-D');
     final ingredientRepo = IngredientRepository(db, householdId);
     final dishRepo = DishRepository(db, householdId);
 

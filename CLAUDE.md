@@ -97,12 +97,17 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 
 ---
 
-## Device pairing (the only "auth-lite" to build now) — DONE
+## Household bootstrap & device pairing — DONE
 
-The second phone joins the first's household via a **6-digit numeric code** + **QR code** that codifica la URL della PWA con `?code=`, with an anonymous identity per device + a `membership` row. Tomorrow the anonymous identity is promoted to a real account (email) without restructuring anything (ADR-006).
+Both operations use server-side `SECURITY DEFINER` functions because RLS blocks a device that is not yet a member from writing to `household`/`membership` (chicken-and-egg). See `docs/bootstrap_household.md` for the full rationale.
 
-Implementation:
-- Postgres `SECURITY DEFINER` functions (`supabase/migrations/00002_pairing.sql`): `create_pairing_code()` and `redeem_pairing_code(p_code)`. They encapsulate the only privileged write that RLS would block (a device that is not yet a member). `pairing_code` stays server-side, excluded from PowerSync.
+### Bootstrap (first launch)
+- Postgres function `bootstrap_household()` (`supabase/migrations/00006_bootstrap_household.sql`): creates `household` + `membership` atomically for `auth.uid()`, idempotent.
+- Client: `lib/data/bootstrap.dart` → `ensureHousehold(db, deviceId)` checks the local DB first (offline-fast path); if no membership is found, calls `rpc('bootstrap_household')`. The rows arrive on the device via PowerSync sync (read, not write).
+- Offline fallback: if the RPC fails for network, `BootstrapException` is thrown; the app shows an error screen and retries on next restart. The first launch always requires network (anonymous sign-in).
+
+### Pairing (second device)
+- Postgres functions `create_pairing_code()` and `redeem_pairing_code(p_code)` (`supabase/migrations/00002_pairing.sql`): encapsulate the only other privileged writes. `pairing_code` stays server-side, excluded from PowerSync.
 - Join model: the second phone **adopts the inviter's household** and abandons its own (empty) bootstrap one; blocked if it already has its own data.
 - Client: `lib/data/pairing_service.dart` (`rpc()` wrapper), `PairingScreen` (show code + QR / enter code), `householdId` switchable at runtime via `AppScope.onHouseholdChanged`.
 - **QR payload**: `https://<APP_URL>?code=123456` (compile-time `APP_URL`; fallback: raw 6 digits if `APP_URL` is empty). The system camera reads the QR, opens the PWA, the `?code=` param pre-fills the code field and opens the "Inserisci codice" tab. Manual entry remains the primary input method.
