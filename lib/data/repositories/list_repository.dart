@@ -104,7 +104,7 @@ class ListRepository {
         .map((r) => ListLineInput(
               ingredientId: r.read<String>('ingredient_id'),
               unit: r.read<String>('unit'),
-              roundingKind: r.read<String>('rounding_kind'),
+              roundingKind: r.readNullable<String>('rounding_kind') ?? 'weight',
               isQb: r.read<int>('is_qb') != 0,
               qtyBase4: r.readNullable<double>('qty_base4'),
               guests: r.read<int>('guests'),
