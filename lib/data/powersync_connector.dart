@@ -3,6 +3,25 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config.dart';
 
+/// Whether a PostgREST error should discard the operation rather than retry.
+///
+/// Fatal errors are permanent: retrying won't fix them and would block the
+/// entire upload queue. This includes:
+/// - Class 22: data exception (bad value for column type, etc.)
+/// - Class 23: integrity constraint violation (unique, FK, check)
+/// - 42501: insufficient privilege (RLS denial — the operation is structurally
+///   forbidden, e.g. a stale household write that RLS rejects)
+/// - 401 / 403: HTTP-level auth/permission errors from PostgREST (JWT expired
+///   or request denied before reaching Postgres)
+bool isFatalUploadError(PostgrestException e) {
+  final code = e.code ?? '';
+  return code.startsWith('22') ||
+      code.startsWith('23') ||
+      code == '42501' ||
+      code == '401' ||
+      code == '403';
+}
+
 /// Connects PowerSync to Supabase: provides the credentials (anon token)
 /// and flushes the upload queue to the Postgres tables.
 class SupabaseConnector extends PowerSyncBackendConnector {
@@ -38,12 +57,7 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       }
       await batch.complete();
     } on PostgrestException catch (e) {
-      // "Fatal" errors (e.g. constraint violation): discard the operation,
-      // otherwise the queue would stay blocked forever. Transient errors
-      // (network) are rethrown so PowerSync retries.
-      final fatal = e.code != null && e.code!.startsWith('22') ||
-          e.code != null && e.code!.startsWith('23');
-      if (fatal) {
+      if (isFatalUploadError(e)) {
         await batch.complete();
       } else {
         rethrow;
