@@ -97,6 +97,14 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 
 ---
 
+## PowerSync → drift notification bridge (fragile, do not remove)
+
+`AppDatabase._listenPowerSyncUpdates` (`lib/data/database.dart`) subscribes to `PowerSyncDatabase.updates` and calls `notifyUpdates()` on the drift database for every sync-down change. This bridge is **required** for real-time UI updates across devices: without it, drift `.watch()` streams do not re-fire when another device's changes arrive via PowerSync sync, because those writes happen in a separate SQLite isolate whose update notifications may not reach drift's `StreamQueryStore` through `SqliteAsyncDriftConnection` alone.
+
+If this subscription is removed or broken, the UI will appear to sync (data arrives in SQLite) but will **not refresh** until the user manually navigates away and back. The table names coming from `PowerSyncDatabase.updates` are already "friendly" (e.g. `ingredient`, not `ps_data__ingredient`); the bridge filters them against `allTables` to avoid notifying for internal PowerSync tables.
+
+---
+
 ## Household bootstrap & device pairing — DONE
 
 Both operations use server-side `SECURITY DEFINER` functions because RLS blocks a device that is not yet a member from writing to `household`/`membership` (chicken-and-egg). See `docs/bootstrap_household.md` for the full rationale.
