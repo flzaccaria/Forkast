@@ -58,6 +58,9 @@ class _BootstrapGateState extends State<_BootstrapGate> {
   /// null, the one determined at bootstrap is used.
   String? _householdOverride;
 
+  final String? _pairingCode = Uri.base.queryParameters['code'];
+  bool _urlCleared = false;
+
   Future<_Bootstrapped> _bootstrap() async {
     if (!AppConfig.isConfigured) {
       throw StateError(
@@ -109,8 +112,10 @@ class _BootstrapGateState extends State<_BootstrapGate> {
           );
         }
         final data = snapshot.data!;
-        final pairingCode = Uri.base.queryParameters['code'];
-        if (pairingCode != null) clearUrlQuery();
+        if (_pairingCode != null && !_urlCleared) {
+          _urlCleared = true;
+          clearUrlQuery();
+        }
         return AppScope(
           database: data.database,
           householdId: _householdOverride ?? data.householdId,
@@ -120,7 +125,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
             title: 'Forkast',
             theme: _theme,
             darkTheme: _darkTheme,
-            home: AppShell(pairingCode: pairingCode),
+            home: AppShell(pairingCode: _pairingCode),
           ),
         );
       },

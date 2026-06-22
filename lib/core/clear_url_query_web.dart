@@ -6,5 +6,8 @@ void clearUrlQuery() {
   final base = (location['origin'] as JSString).toDart +
       (location['pathname'] as JSString).toDart;
   final history = globalContext['history'] as JSObject;
-  history.callMethod('replaceState'.toJS, null, ''.toJS, base.toJS);
+  history.callMethodVarArgs(
+    'replaceState'.toJS,
+    <JSAny?>[null, ''.toJS, base.toJS],
+  );
 }
