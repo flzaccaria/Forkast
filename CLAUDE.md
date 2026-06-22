@@ -101,7 +101,28 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 
 `AppDatabase._listenPowerSyncUpdates` (`lib/data/database.dart`) subscribes to `PowerSyncDatabase.updates` and calls `notifyUpdates()` on the drift database for every sync-down change. This bridge is **required** for real-time UI updates across devices: without it, drift `.watch()` streams do not re-fire when another device's changes arrive via PowerSync sync, because those writes happen in a separate SQLite isolate whose update notifications may not reach drift's `StreamQueryStore` through `SqliteAsyncDriftConnection` alone.
 
-If this subscription is removed or broken, the UI will appear to sync (data arrives in SQLite) but will **not refresh** until the user manually navigates away and back. The table names coming from `PowerSyncDatabase.updates` are already "friendly" (e.g. `ingredient`, not `ps_data__ingredient`); the bridge filters them against `allTables` to avoid notifying for internal PowerSync tables.
+If this subscription is removed or broken, the UI will appear to sync (data arrives in SQLite) but will **not refresh** until the user manually navigates away and back.
+
+**Table name mapping**: PowerSync stores data in internal tables prefixed `ps_data__` (e.g. `ps_data__ingredient`). The SDK strips this prefix before emitting update events (see the `D2` helper in `web/powersync_db.worker.js`), so the names arriving at the bridge are already the logical/friendly ones (e.g. `ingredient`). The bridge filters them against `allTables` to avoid notifying for internal PowerSync tables that have no drift counterpart. If PowerSync ever changes this stripping behavior, the bridge will silently stop matching — watch for it.
+
+---
+
+## PowerSync upload connector — per-op error handling
+
+`SupabaseConnector` (`lib/data/powersync_connector.dart`) flushes PowerSync's upload queue to Supabase. The `processCrudBatch` helper iterates each `CrudEntry` individually and classifies errors:
+
+- **Fatal / permanent** (`isFatalUploadError`): Postgres class 22 (data exception), class 23 (integrity constraint), `42501` (insufficient privilege / RLS denial), HTTP `401`/`403`. These are **logged and skipped** — retrying would block the entire queue forever.
+- **Transient**: any other `PostgrestException` rethrows immediately; PowerSync will retry the batch.
+
+This per-op approach is critical: without it, a single RLS-rejected stale write (e.g. a household row the device no longer owns) would jam the queue and block all subsequent operations.
+
+---
+
+## RLS recursion fix — `auth_household_ids()` (migration `00006`)
+
+The original RLS policies in `00001` used inline sub-selects on `membership` (e.g. `household_id IN (SELECT household_id FROM membership WHERE device_id = auth.uid())`). On the `membership` table itself this caused **infinite recursion** (Postgres error `42P17`), which silently broke cross-device sync — it had never worked before this fix.
+
+Migration `00006` introduces `auth_household_ids()`, a `SECURITY DEFINER` function that reads `membership` bypassing RLS, and rewrites every table's policies to call it. The function is `STABLE` and granted only to `authenticated`.
 
 ---
 
@@ -110,7 +131,7 @@ If this subscription is removed or broken, the UI will appear to sync (data arri
 Both operations use server-side `SECURITY DEFINER` functions because RLS blocks a device that is not yet a member from writing to `household`/`membership` (chicken-and-egg). See `docs/bootstrap_household.md` for the full rationale.
 
 ### Bootstrap (first launch)
-- Postgres function `bootstrap_household()` (`supabase/migrations/00006_bootstrap_household.sql`): creates `household` + `membership` atomically for `auth.uid()`, idempotent.
+- Postgres function `bootstrap_household()` (`supabase/migrations/00007_bootstrap_household_membership.sql`): creates `household` + `membership` atomically for `auth.uid()`, idempotent.
 - Client: `lib/data/bootstrap.dart` → `ensureHousehold(db, deviceId)` checks the local DB first (offline-fast path); if no membership is found, calls `rpc('bootstrap_household')`. The rows arrive on the device via PowerSync sync (read, not write).
 - Offline fallback: if the RPC fails for network, `BootstrapException` is thrown; the app shows an error screen and retries on next restart. The first launch always requires network (anonymous sign-in).
 
@@ -118,8 +139,8 @@ Both operations use server-side `SECURITY DEFINER` functions because RLS blocks 
 - Postgres functions `create_pairing_code()` and `redeem_pairing_code(p_code)` (`supabase/migrations/00002_pairing.sql`): encapsulate the only other privileged writes. `pairing_code` stays server-side, excluded from PowerSync.
 - Join model: the second phone **adopts the inviter's household** and abandons its own (empty) bootstrap one; blocked if it already has its own data.
 - Client: `lib/data/pairing_service.dart` (`rpc()` wrapper), `PairingScreen` (show code + QR / enter code), `householdId` switchable at runtime via `AppScope.onHouseholdChanged`.
-- **QR payload**: `https://<APP_URL>?code=123456` (compile-time `APP_URL`; fallback: raw 6 digits if `APP_URL` is empty). The system camera reads the QR, opens the PWA, the `?code=` param pre-fills the code field and opens the "Inserisci codice" tab. Manual entry remains the primary input method.
-- **Deep-link flow**: `main.dart` reads `Uri.base.queryParameters['code']` → `AppShell(pairingCode:)` → `PairingScreen(initialCode:)` opens on the entry tab with code pre-filled.
+- **QR payload**: `https://<APP_URL>?code=123456` (compile-time `APP_URL` via `--dart-define`, defined in `lib/config.dart`; fallback: raw 6 digits if `APP_URL` is empty). `APP_URL` should point to the Cloudflare Workers deployment (e.g. `https://your-app.workers.dev`). The system camera reads the QR, opens the PWA, the `?code=` param pre-fills the code field and opens the "Inserisci codice" tab. Manual entry remains the primary input method.
+- **Deep-link flow**: `main.dart` reads `Uri.base.queryParameters['code']` → `AppShell(pairingCode:)` → `PairingScreen(initialCode:)` opens on the entry tab with code pre-filled. After the code is consumed, **the `?code=` param is stripped from the URL bar** via `history.replaceState` (web-only, `lib/core/clear_url_query_web.dart`; no-op on native via conditional import). This prevents re-triggering the pairing flow on page refresh.
 - **Email ready**: seam documented in `PairingService` to graft in email invites when the anonymous identity becomes a real account, without restructuring.
 
 ---
