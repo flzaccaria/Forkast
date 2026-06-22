@@ -70,6 +70,8 @@ class AppDatabase extends _$AppDatabase {
   StreamSubscription<void> _listenPowerSyncUpdates(PowerSyncDatabase db) {
     final knownTables = allTables.map((t) => t.actualTableName).toSet();
     return db.updates.listen((event) {
+      // ignore: avoid_print
+      print('PS updates: ${event.tables}');
       final updates = <TableUpdate>{};
       for (final table in event.tables) {
         if (knownTables.contains(table)) {

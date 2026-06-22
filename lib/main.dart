@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'core/clear_url_query.dart';
 import 'data/bootstrap.dart';
 import 'data/database.dart';
 import 'data/open_database.dart';
@@ -109,6 +110,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         }
         final data = snapshot.data!;
         final pairingCode = Uri.base.queryParameters['code'];
+        if (pairingCode != null) clearUrlQuery();
         return AppScope(
           database: data.database,
           householdId: _householdOverride ?? data.householdId,
