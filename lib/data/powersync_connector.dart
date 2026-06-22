@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart';
 import 'package:powersync/powersync.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -22,6 +25,53 @@ bool isFatalUploadError(PostgrestException e) {
       code == '403';
 }
 
+/// Executes a single CRUD operation against Supabase.
+///
+/// Extracted so that tests can replace it without a real Supabase client.
+typedef CrudUploader = Future<void> Function(CrudEntry op);
+
+/// Default [CrudUploader] that writes to [Supabase.instance.client].
+@visibleForTesting
+Future<void> defaultCrudUploader(CrudEntry op) async {
+  final table = Supabase.instance.client.from(op.table);
+  switch (op.op) {
+    case UpdateType.put:
+      final data = Map<String, dynamic>.of(op.opData ?? {});
+      data['id'] = op.id;
+      await table.upsert(data);
+    case UpdateType.patch:
+      await table.update(op.opData ?? {}).eq('id', op.id);
+    case UpdateType.delete:
+      await table.delete().eq('id', op.id);
+  }
+}
+
+/// Processes every op in [batch] through [uploader], skipping fatal errors.
+///
+/// Fatal [PostgrestException]s (see [isFatalUploadError]) are logged and
+/// skipped so the remaining ops in the batch still get a chance.
+/// Transient errors rethrow immediately — PowerSync will retry the batch.
+/// Calls [batch.complete()] once after all ops have been attempted.
+@visibleForTesting
+Future<void> processCrudBatch(CrudBatch batch, CrudUploader uploader) async {
+  for (final op in batch.crud) {
+    try {
+      await uploader(op);
+    } on PostgrestException catch (e) {
+      if (isFatalUploadError(e)) {
+        developer.log(
+          'Skipping fatally rejected op ${op.op.toJson()} '
+          '${op.table}/${op.id}: ${e.code} – ${e.message}',
+          name: 'SupabaseConnector',
+        );
+        continue;
+      }
+      rethrow;
+    }
+  }
+  await batch.complete();
+}
+
 /// Connects PowerSync to Supabase: provides the credentials (anon token)
 /// and flushes the upload queue to the Postgres tables.
 class SupabaseConnector extends PowerSyncBackendConnector {
@@ -39,29 +89,6 @@ class SupabaseConnector extends PowerSyncBackendConnector {
   Future<void> uploadData(PowerSyncDatabase database) async {
     final batch = await database.getCrudBatch();
     if (batch == null) return;
-
-    final rest = Supabase.instance.client;
-    try {
-      for (final op in batch.crud) {
-        final table = rest.from(op.table);
-        switch (op.op) {
-          case UpdateType.put:
-            final data = Map<String, dynamic>.of(op.opData ?? {});
-            data['id'] = op.id;
-            await table.upsert(data);
-          case UpdateType.patch:
-            await table.update(op.opData ?? {}).eq('id', op.id);
-          case UpdateType.delete:
-            await table.delete().eq('id', op.id);
-        }
-      }
-      await batch.complete();
-    } on PostgrestException catch (e) {
-      if (isFatalUploadError(e)) {
-        await batch.complete();
-      } else {
-        rethrow;
-      }
-    }
+    await processCrudBatch(batch, defaultCrudUploader);
   }
 }
