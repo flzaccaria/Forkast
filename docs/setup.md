@@ -21,6 +21,11 @@ How to go from zero to running the app on your phone.
    supabase/migrations/00001_initial_schema.sql
    supabase/migrations/00002_pairing.sql
    supabase/migrations/00003_ingredient_category.sql
+   supabase/migrations/00004_ingredient_rounding_kind.sql
+   supabase/migrations/00005_pairing_returns_expiry.sql
+   supabase/migrations/00006_fix_infinite_recursion.sql
+   supabase/migrations/00007_bootstrap_household_membership.sql
+   supabase/migrations/00008_plan_day_dish_cascade.sql
    ```
 
    Alternatively, if you have the Supabase CLI linked to the project:
@@ -89,6 +94,21 @@ flutter run \
   --dart-define=POWERSYNC_URL=https://<instance-id>.powersync.journeyapps.com
 ```
 
+### Web build (Cloudflare Workers)
+
+For the web target, add `APP_URL` so that QR codes encode the full PWA link
+(`https://your-app.workers.dev?code=123456`) instead of the raw 6-digit code:
+
+```bash
+flutter build web \
+  --dart-define=SUPABASE_URL=... \
+  --dart-define=SUPABASE_ANON_KEY=... \
+  --dart-define=POWERSYNC_URL=... \
+  --dart-define=APP_URL=https://your-app.workers.dev
+```
+
+`APP_URL` is optional for mobile builds (QR codes fall back to raw digits).
+
 ### Tip: use a launch configuration
 
 To avoid typing `--dart-define` every time:
@@ -105,7 +125,8 @@ To avoid typing `--dart-define` every time:
       "args": [
         "--dart-define=SUPABASE_URL=https://<project-ref>.supabase.co",
         "--dart-define=SUPABASE_ANON_KEY=eyJ...",
-        "--dart-define=POWERSYNC_URL=https://<instance-id>.powersync.journeyapps.com"
+        "--dart-define=POWERSYNC_URL=https://<instance-id>.powersync.journeyapps.com",
+        "--dart-define=APP_URL=https://your-app.workers.dev"
       ]
     }
   ]
@@ -113,7 +134,7 @@ To avoid typing `--dart-define` every time:
 ```
 
 **Android Studio**: Run → Edit Configurations → Additional run args → paste
-the three `--dart-define` flags.
+the `--dart-define` flags.
 
 ---
 
@@ -126,7 +147,10 @@ Once the app is running on the first phone:
 3. The second phone can either **scan the QR** with the system camera (opens the PWA with the code pre-filled) or **type the 6-digit code** manually in the pairing screen.
 4. The second device joins the first's household. Data syncs automatically.
 
-> The QR encodes the PWA URL with `?code=<6 digits>` (e.g. `https://your-app.pages.dev?code=123456`). This requires `APP_URL` to be set via `--dart-define`. Without it, the QR contains only the raw code.
+> The QR encodes the PWA URL with `?code=<6 digits>` (e.g. `https://your-app.workers.dev?code=123456`). This requires `APP_URL` to be set via `--dart-define`. Without it, the QR contains only the raw code.
+
+On the web target, after the `?code=` parameter is consumed the app clears it
+from the URL bar via `history.replaceState` (web-only; no-op on native).
 
 ---
 
@@ -159,7 +183,7 @@ Requires an Apple Developer account and provisioning profile.
 ## Checklist
 
 - [ ] Supabase project created (EU region)
-- [ ] Migrations applied (00001, 00002, 00003)
+- [ ] All migrations applied (00001 through 00008)
 - [ ] Anonymous sign-in enabled
 - [ ] PowerSync instance created and connected to Supabase
 - [ ] Sync rules deployed

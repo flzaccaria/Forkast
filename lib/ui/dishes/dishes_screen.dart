@@ -5,6 +5,7 @@ import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 import '../widgets/settings_button.dart';
+import 'confirm_delete_dish.dart';
 import 'dish_editor_screen.dart';
 
 class DishesScreen extends StatefulWidget {
@@ -85,16 +86,37 @@ class _DishesScreenState extends State<DishesScreen> {
                 return ListView.separated(
                   itemCount: dishes.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, i) => ListTile(
-                    title: Text(dishes[i].name),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DishEditorScreen(dishId: dishes[i].id),
+                  itemBuilder: (context, i) {
+                    final dish = dishes[i];
+                    return Dismissible(
+                      key: ValueKey(dish.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        color: Theme.of(context).colorScheme.error,
+                        child: Icon(
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.onError,
+                        ),
                       ),
-                    ),
-                  ),
+                      confirmDismiss: (_) => confirmAndDeleteDish(
+                        context,
+                        repo: _repo,
+                        dishId: dish.id,
+                      ),
+                      child: ListTile(
+                        title: Text(dish.name),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                DishEditorScreen(dishId: dish.id),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),

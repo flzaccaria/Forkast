@@ -165,6 +165,16 @@ class DishRepository {
     });
   }
 
+  /// Number of planned dinners that include this dish (plan_day_dish rows).
+  Future<int> plannedDinnerCount(String dishId) async {
+    final count = _db.planDayDishes.id.count();
+    final query = _db.selectOnly(_db.planDayDishes)
+      ..addColumns([count])
+      ..where(_db.planDayDishes.dishId.equals(dishId));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
   /// Deletes a dish and its links: ingredient rows, tags and plan
   /// assignments (plan_day_dish). The list layer is derived and regenerates,
   /// so it is not touched here.

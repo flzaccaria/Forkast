@@ -7,6 +7,7 @@ import '../../data/repositories/ingredient_repository.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 import '../settings/ingredient_form.dart';
+import 'confirm_delete_dish.dart';
 
 /// Dish editor: name + ingredient rows in base 4 (FR-2) + tags (FR-14).
 /// For "quanto basta" ingredients the quantity is not required (FR-6).
@@ -173,39 +174,25 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   }
 
   Future<void> _delete() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminare il piatto?'),
-        content: const Text(
-            'Verrà rimosso dal catalogo e da tutte le serate in cui è '
-            'pianificato. Le liste già generate si aggiornano alla prossima '
-            'rigenerazione.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annulla'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Elimina'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
     setState(() => _saving = true);
     try {
-      await _dishRepo.delete(widget.dishId!);
-      if (mounted) Navigator.of(context).pop();
+      final deleted = await confirmAndDeleteDish(
+        context,
+        repo: _dishRepo,
+        dishId: widget.dishId!,
+      );
+      if (deleted && mounted) {
+        Navigator.of(context).pop();
+        return;
+      }
     } catch (e) {
       if (mounted) {
-        setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Errore nell\'eliminazione del piatto')),
         );
       }
     }
+    if (mounted) setState(() => _saving = false);
   }
 
   @override

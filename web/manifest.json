@@ -1,11 +1,11 @@
 {
-    "name": "forkast",
-    "short_name": "forkast",
+    "name": "Forkast",
+    "short_name": "Forkast",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Menu settimanale e lista della spesa per la famiglia.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

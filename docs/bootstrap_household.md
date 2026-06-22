@@ -11,7 +11,7 @@ and the device is not yet a member of any household at that point
 ## Solution
 
 Household creation now goes through a server-side `SECURITY DEFINER` function
-(`bootstrap_household`, migration `00006`), the same pattern used for device
+(`bootstrap_household`, migration `00007`), the same pattern used for device
 pairing (`create_pairing_code` / `redeem_pairing_code`, migration `00002`).
 
 The function:
@@ -23,6 +23,18 @@ The function:
    privileges, bypassing RLS.
 
 The rows then arrive on the device via PowerSync sync (read path, not write).
+
+### Prerequisite: RLS recursion fix (migration `00006`)
+
+Before `bootstrap_household` could work, the RLS policies themselves had to be
+fixed. The original `00001` policies used sub-selects on `membership` directly,
+which caused **infinite recursion** (Postgres error `42P17`) whenever a
+policy on `membership` referenced itself.
+
+Migration `00006` introduces `auth_household_ids()`, a `SECURITY DEFINER`
+function that reads `membership.household_id` without going through RLS, and
+rewrites every policy to call it. This also unblocked cross-device sync, which
+had never worked before this fix.
 
 ## Client flow (`lib/data/bootstrap.dart`)
 
