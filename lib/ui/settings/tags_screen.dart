@@ -173,7 +173,7 @@ class _TagList extends StatelessWidget {
           children: [
             for (final tag in tags)
               ListTile(
-                leading: const Icon(Icons.label_outline),
+                leading: const Icon(Icons.label_outlined),
                 title: Text(tag.name),
                 onTap: () => onRename(tag),
                 trailing: IconButton(

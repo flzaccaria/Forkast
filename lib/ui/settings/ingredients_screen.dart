@@ -135,8 +135,13 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
           final items = snapshot.data!;
           if (items.isEmpty) {
             return const Center(
-              child: Text('Nessun ingrediente.\nTocca + per aggiungerne uno.',
-                  textAlign: TextAlign.center),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Nessun ingrediente ancora.\nTocca + per aggiungere il primo.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
           return ListView.separated(
@@ -148,7 +153,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                 title: Text(ing.name),
                 subtitle: Text(ing.isQb ? 'quanto basta' : ing.unit),
                 trailing: ing.isQb
-                    ? const Icon(Icons.all_inclusive, size: 18)
+                    ? const Icon(Icons.all_inclusive_outlined, size: 18)
                     : null,
                 onTap: () => _openActions(ing),
               );

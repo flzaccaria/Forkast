@@ -11,17 +11,7 @@ import 'data/open_database.dart';
 import 'data/powersync_connector.dart';
 import 'ui/app_scope.dart';
 import 'ui/app_shell.dart';
-
-final _theme = ThemeData(
-  colorSchemeSeed: Colors.green,
-  useMaterial3: true,
-);
-
-final _darkTheme = ThemeData(
-  colorSchemeSeed: Colors.green,
-  brightness: Brightness.dark,
-  useMaterial3: true,
-);
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,8 +83,8 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         if (snapshot.hasError) {
           return MaterialApp(
             title: 'Forkast',
-            theme: _theme,
-            darkTheme: _darkTheme,
+            theme: forkastLightTheme,
+            darkTheme: forkastDarkTheme,
             home: _BootstrapErrorScreen(
               error: snapshot.error!,
               stackTrace: snapshot.stackTrace,
@@ -104,8 +94,8 @@ class _BootstrapGateState extends State<_BootstrapGate> {
         if (!snapshot.hasData) {
           return MaterialApp(
             title: 'Forkast',
-            theme: _theme,
-            darkTheme: _darkTheme,
+            theme: forkastLightTheme,
+            darkTheme: forkastDarkTheme,
             home: const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             ),
@@ -123,8 +113,8 @@ class _BootstrapGateState extends State<_BootstrapGate> {
               setState(() => _householdOverride = id),
           child: MaterialApp(
             title: 'Forkast',
-            theme: _theme,
-            darkTheme: _darkTheme,
+            theme: forkastLightTheme,
+            darkTheme: forkastDarkTheme,
             home: AppShell(pairingCode: _pairingCode),
           ),
         );

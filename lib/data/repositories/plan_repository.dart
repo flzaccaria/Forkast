@@ -9,11 +9,13 @@ class DayOverview {
     required this.planDayId,
     required this.guests,
     required this.dishCount,
+    this.dishNames = const [],
   });
 
   final String planDayId;
   final int guests;
   final int dishCount;
+  final List<String> dishNames;
 }
 
 /// A dish assigned to an evening, with the name resolved from the catalog.
@@ -68,29 +70,35 @@ class PlanRepository {
         .watchSingleOrNull();
   }
 
-  /// Per-day summary (guests + dish count) of the week, indexed by
-  /// `dayOfWeek`. Reactive to changes on evenings and dishes.
+  /// Per-day summary (guests + dish count + dish names) of the week,
+  /// indexed by `dayOfWeek`. Reactive to changes on evenings and dishes.
   Stream<Map<int, DayOverview>> watchWeekOverview(String weekPlanId) {
     return _db
         .customSelect(
           'SELECT pd.id AS id, pd.day_of_week AS day_of_week, '
-          'pd.guests AS guests, COUNT(pdd.id) AS dish_count '
+          'pd.guests AS guests, COUNT(pdd.id) AS dish_count, '
+          "COALESCE(GROUP_CONCAT(d.name, ', '), '') AS dish_names "
           'FROM plan_day pd '
           'LEFT JOIN plan_day_dish pdd ON pdd.plan_day_id = pd.id '
+          'LEFT JOIN dish d ON d.id = pdd.dish_id '
           'WHERE pd.week_plan_id = ? '
           'GROUP BY pd.id',
           variables: [Variable.withString(weekPlanId)],
-          readsFrom: {_db.planDays, _db.planDayDishes},
+          readsFrom: {_db.planDays, _db.planDayDishes, _db.dishes},
         )
         .watch()
         .map((rows) {
       final map = <int, DayOverview>{};
       for (final row in rows) {
         final dow = row.read<int>('day_of_week');
+        final namesStr = row.read<String>('dish_names');
         map[dow] = DayOverview(
           planDayId: row.read<String>('id'),
           guests: row.read<int>('guests'),
           dishCount: row.read<int>('dish_count'),
+          dishNames: namesStr.isEmpty
+              ? const []
+              : namesStr.split(', '),
         );
       }
       return map;

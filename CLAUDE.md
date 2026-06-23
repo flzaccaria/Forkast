@@ -145,6 +145,19 @@ Both operations use server-side `SECURITY DEFINER` functions because RLS blocks 
 
 ---
 
+## Design system
+
+**Visual system v0.2 applied** — source of truth: `Forkast_Design_Brief_v0.2.md`.
+
+- Centralized theme in `lib/ui/theme.dart` (light + dark). All colour/typography tokens flow from `ForkastTokens` extension and `ThemeData`. No hardcoded colours in screens.
+- Wordmark SVG (`assets/forkast-wordmark.svg`) in every screen's app bar via `lib/ui/widgets/forkast_app_bar.dart`.
+- Three-voice bottom nav (Piatti / Piano / Lista) with outline icons, active state in `primary`.
+- Outline icon family throughout all screens (single family, thin strokes).
+- "q.b." rendered as a tenue pill (border background, ink-muted text), not bare text.
+- **Dependency noted**: department micro-icons in the shopping list require the `category` attribute on `ingredient` (ADR §7). Grouping by department is active where `category` is set; the micro-icons themselves are not yet implemented.
+
+---
+
 ## Open points (flag, don't decide on your own)
 
 - None at the moment.

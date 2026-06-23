@@ -3,6 +3,14 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
+/// A dish with its resolved tags, for display in the catalog list.
+class DishWithTags {
+  DishWithTags({required this.dish, required this.tags});
+
+  final Dish dish;
+  final List<Tag> tags;
+}
+
 /// An ingredient row while editing a dish.
 /// `qtyBase4` is null for "quanto basta" ingredients.
 class DishIngredientDraft {
@@ -41,6 +49,37 @@ class DishRepository {
       q.where((d) => d.id.isInQuery(tagged));
     }
     return q.watch();
+  }
+
+  /// Dishes with their resolved tags for the catalog list view.
+  Stream<List<DishWithTags>> watchAllWithTags({String query = '', String? tagId}) {
+    final dishStream = watchAll(query: query, tagId: tagId);
+    final tagTable = _db.tags;
+    final dtTable = _db.dishTags;
+    final allTagsStream = (_db.select(dtTable).join([
+      innerJoin(tagTable, tagTable.id.equalsExp(dtTable.tagId)),
+    ])
+          ..where(dtTable.householdId.equals(_householdId)))
+        .watch()
+        .map((rows) {
+      final map = <String, List<Tag>>{};
+      for (final row in rows) {
+        final dt = row.readTable(dtTable);
+        final tag = row.readTable(tagTable);
+        (map[dt.dishId] ??= []).add(tag);
+      }
+      return map;
+    });
+    return dishStream.asyncExpand((dishes) {
+      return allTagsStream.map((tagMap) {
+        return dishes.map((dish) {
+          return DishWithTags(
+            dish: dish,
+            tags: tagMap[dish.id] ?? const [],
+          );
+        }).toList();
+      });
+    });
   }
 
   /// Ingredient rows of a dish.
