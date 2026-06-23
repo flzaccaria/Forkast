@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/plan_repository.dart';
 import '../app_scope.dart';
+import '../theme.dart';
 import 'dish_picker_screen.dart';
 
 /// Dinner of the day (FR-8/9): guests for the evening (overridable default)
@@ -98,7 +99,7 @@ class _DayScreenState extends State<DayScreen> {
           : Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.people_outline),
+                  leading: const Icon(Icons.people_outlined),
                   title: const Text('Commensali'),
                   trailing: Text(
                     '$_guests',
@@ -131,10 +132,16 @@ class _DayScreenState extends State<DayScreen> {
         }
         final dishes = snapshot.data!;
         if (dishes.isEmpty) {
-          return const Center(
-            child: Text('Nessun piatto per questa cena.\n'
-                'Tocca "Aggiungi piatto".',
-                textAlign: TextAlign.center),
+          final tokens = Theme.of(context).extension<ForkastTokens>()!;
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Nessun piatto per questa cena.\nTocca "Aggiungi piatto" per iniziare.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: tokens.inkMuted, fontSize: 15),
+              ),
+            ),
           );
         }
         return ListView.separated(

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Forkast — icona app -->
+<!-- Tile corallo #D85A30 con marchio bianco centrato. 512x512, scalabile. -->
+<!-- NOTA STORE: questa è la versione "rounded tile" per anteprime e uso generico. -->
+<!--  - iOS applica la propria maschera: per la submission fornire un quadrato full-bleed (senza angoli arrotondati). -->
+<!--  - Android adaptive icon: fornire foreground (marchio) e background (corallo) separati, area sicura ~66%. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Forkast">
+  <title>Forkast</title>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="#D85A30"/>
+  <g transform="translate(-12.75,-17) scale(3.5)">
+    <rect x="60" y="38" width="7" height="62" fill="#FFFFFF"/>
+    <path d="M63.5 100 C63.5 110 56 115 51 112" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#FFFFFF">
+      <rect x="60" y="38" width="46" height="7" rx="3"/>
+      <rect x="60" y="47" width="46" height="7" rx="3"/>
+      <rect x="60" y="56" width="46" height="7" rx="3"/>
+      <rect x="60" y="65" width="46" height="7" rx="3"/>
+    </g>
+  </g>
+</svg>

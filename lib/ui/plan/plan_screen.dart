@@ -4,11 +4,12 @@ import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../app_scope.dart';
-import '../widgets/settings_button.dart';
+import '../theme.dart';
+import '../widgets/forkast_app_bar.dart';
 import 'day_screen.dart';
 
-/// Weekly plan (FR-7): a navigable week of dinners, with dish and guest
-/// counts per day. Tapping a day opens "Dinner of the day".
+/// Weekly plan (FR-7): a navigable week of dinners, with dish names
+/// per day. Tapping a day opens "Dinner of the day".
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
 
@@ -27,9 +28,8 @@ class _PlanScreenState extends State<PlanScreen> {
     'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
     'lug', 'ago', 'set', 'ott', 'nov', 'dic',
   ];
-  static const _dayNames = [
-    'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì',
-    'Venerdì', 'Sabato', 'Domenica',
+  static const _shortDayNames = [
+    'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom',
   ];
 
   int get _year => isoWeekYear(_reference);
@@ -66,7 +66,6 @@ class _PlanScreenState extends State<PlanScreen> {
       return;
     }
 
-    // Open point §8: if the destination is not empty, ask the user.
     var replace = false;
     if (await _repo.hasPlannedDishes(_year, _week)) {
       if (!mounted) return;
@@ -136,27 +135,7 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     final weekdays = orderedWeekdays(_weekStartDay);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Piano'),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (v) {
-              if (v == 'copy') _copyPreviousWeek();
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'copy',
-                child: ListTile(
-                  leading: Icon(Icons.copy_all),
-                  title: Text('Copia settimana precedente'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ],
-          ),
-          const SettingsButton(),
-        ],
-      ),
+      appBar: forkastAppBar(context),
       body: Column(
         children: [
           _WeekHeader(
@@ -166,20 +145,26 @@ class _PlanScreenState extends State<PlanScreen> {
             onNext: () => _shiftWeek(1),
             onToday: _goToday,
           ),
-          const Divider(height: 1),
+          Divider(
+            height: 0.5,
+            color: Theme.of(context).extension<ForkastTokens>()!.border,
+          ),
           Expanded(
             child: StreamBuilder<WeekPlan?>(
               stream: _repo.watchWeekPlan(_year, _week),
               builder: (context, planSnap) {
                 final weekPlan = planSnap.data;
                 if (weekPlan == null) {
-                  return _buildDayList(weekdays, const {});
+                  return _buildDayList(weekdays, const {}, weekEmpty: true);
                 }
                 return StreamBuilder<Map<int, DayOverview>>(
                   stream: _repo.watchWeekOverview(weekPlan.id),
                   builder: (context, overviewSnap) {
-                    return _buildDayList(
-                        weekdays, overviewSnap.data ?? const {});
+                    final overview = overviewSnap.data ?? const {};
+                    final isEmpty = overview.values
+                        .every((ov) => ov.dishCount == 0);
+                    return _buildDayList(weekdays, overview,
+                        weekEmpty: isEmpty);
                   },
                 );
               },
@@ -190,37 +175,191 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _buildDayList(List<int> weekdays, Map<int, DayOverview> overview) {
+  Widget _buildDayList(
+    List<int> weekdays,
+    Map<int, DayOverview> overview, {
+    required bool weekEmpty,
+  }) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final today = DateTime.now();
-    return ListView.separated(
-      itemCount: weekdays.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final dow = weekdays[i];
-        final date = dateOfIsoWeek(_year, _week, dow);
-        final ov = overview[dow];
-        final isToday = date.year == today.year &&
-            date.month == today.month &&
-            date.day == today.day;
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: isToday
-                ? Theme.of(context).colorScheme.primaryContainer
-                : null,
-            child: Text('${date.day}'),
+    return Column(
+      children: [
+        // "Copy previous week" — prominent only when the week is empty
+        if (weekEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _copyPreviousWeek,
+                icon: const Icon(Icons.copy_all_outlined, size: 18),
+                label: const Text('Copia settimana precedente'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: tokens.ink,
+                  side: BorderSide(color: tokens.border),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
           ),
-          title: Text(_dayNames[dow - 1]),
-          subtitle: Text(
-            ov == null || ov.dishCount == 0
-                ? 'Nessun piatto'
-                : '${ov.dishCount} '
-                    '${ov.dishCount == 1 ? "piatto" : "piatti"} · '
-                    '${ov.guests} ${ov.guests == 1 ? "commensale" : "commensali"}',
+        Expanded(
+          child: ListView.separated(
+            itemCount: weekdays.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 0.5,
+              indent: 20,
+              endIndent: 20,
+              color: tokens.border,
+            ),
+            itemBuilder: (context, i) {
+              final dow = weekdays[i];
+              final date = dateOfIsoWeek(_year, _week, dow);
+              final ov = overview[dow];
+              final isToday = date.year == today.year &&
+                  date.month == today.month &&
+                  date.day == today.day;
+              return _DayRow(
+                dayName: _shortDayNames[dow - 1],
+                dayNumber: date.day,
+                isToday: isToday,
+                dishNames: ov?.dishNames ?? const [],
+                guests: ov?.guests,
+                onTap: () => _openDay(dow),
+              );
+            },
           ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => _openDay(dow),
-        );
-      },
+        ),
+        // "Copy" in the overflow menu when week is NOT empty
+        if (!weekEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _copyPreviousWeek,
+                icon: const Icon(Icons.copy_all_outlined, size: 16),
+                label: const Text('Copia settimana precedente'),
+                style: TextButton.styleFrom(
+                  foregroundColor: tokens.inkMuted,
+                  textStyle: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DayRow extends StatelessWidget {
+  const _DayRow({
+    required this.dayName,
+    required this.dayNumber,
+    required this.isToday,
+    required this.dishNames,
+    this.guests,
+    required this.onTap,
+  });
+
+  final String dayName;
+  final int dayNumber;
+  final bool isToday;
+  final List<String> dishNames;
+  final int? guests;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final primary = Theme.of(context).colorScheme.primary;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: isToday
+            ? BoxDecoration(
+                color: primary.withValues(alpha: 0.06),
+              )
+            : null,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Day badge
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isToday ? primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    dayName,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: isToday ? Colors.white : tokens.inkMuted,
+                    ),
+                  ),
+                  Text(
+                    '$dayNumber',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: isToday ? Colors.white : tokens.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Dish names
+            Expanded(
+              child: dishNames.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Nessun piatto',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: tokens.inkMuted,
+                        ),
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 2),
+                        for (final name in dishNames)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: tokens.ink,
+                              ),
+                            ),
+                          ),
+                        if (guests != null)
+                          Text(
+                            '$guests ${guests == 1 ? "commensale" : "commensali"}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: tokens.inkMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+            Icon(Icons.chevron_right, color: tokens.inkMuted, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -242,6 +381,7 @@ class _WeekHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
@@ -254,9 +394,12 @@ class _WeekHeader extends StatelessWidget {
             child: Column(
               children: [
                 Text(label,
-                    style: Theme.of(context).textTheme.titleMedium),
+                    style: Theme.of(context).textTheme.titleSmall),
                 Text(range,
-                    style: Theme.of(context).textTheme.bodySmall),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: tokens.inkMuted,
+                    )),
               ],
             ),
           ),

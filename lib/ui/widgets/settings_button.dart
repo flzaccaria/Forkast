@@ -9,7 +9,7 @@ class SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.settings),
+      icon: const Icon(Icons.settings_outlined),
       tooltip: 'Impostazioni',
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const SettingsScreen()),

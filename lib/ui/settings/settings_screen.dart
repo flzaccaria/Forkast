@@ -82,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const _SectionHeader('Pianificazione'),
               ListTile(
-                leading: const Icon(Icons.people_outline),
+                leading: const Icon(Icons.people_outlined),
                 title: const Text('Commensali predefiniti'),
                 subtitle: const Text('Valore iniziale di ogni nuova serata'),
                 trailing: Text(
@@ -94,7 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : () => _editDefaultGuests(household.defaultGuests),
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_view_week),
+                leading: const Icon(Icons.calendar_view_week_outlined),
                 title: const Text('Inizio settimana'),
                 trailing: Text(
                   household == null
@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : () => _editWeekStart(household.weekStartDay),
               ),
               SwitchListTile(
-                secondary: const Icon(Icons.autorenew),
+                secondary: const Icon(Icons.autorenew_outlined),
                 title: const Text('Rigenerazione automatica'),
                 subtitle: const Text(
                     'Aggiorna la lista appena il piano cambia, senza chiedere'),
@@ -118,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const _SectionHeader('Cataloghi'),
               ListTile(
-                leading: const Icon(Icons.kitchen),
+                leading: const Icon(Icons.kitchen_outlined),
                 title: const Text('Gestione ingredienti'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
@@ -126,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.label_outline),
+                leading: const Icon(Icons.label_outlined),
                 title: const Text('Tag dei piatti'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const _SectionHeader('Dispositivi'),
               ListTile(
-                leading: const Icon(Icons.devices),
+                leading: const Icon(Icons.devices_outlined),
                 title: const Text('Abbina un dispositivo'),
                 subtitle: const Text('Condividi i dati con un secondo telefono'),
                 trailing: const Icon(Icons.chevron_right),
@@ -144,7 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.sync),
+                leading: const Icon(Icons.sync_outlined),
                 title: const Text('Sincronizzazione'),
                 subtitle: const Text('Stato della sincronizzazione tra dispositivi'),
                 trailing: const Icon(Icons.chevron_right),

@@ -6,6 +6,7 @@ import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/ingredient_repository.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
+import '../theme.dart';
 import '../settings/ingredient_form.dart';
 import 'confirm_delete_dish.dart';
 
@@ -61,7 +62,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       _nameController.text = dish?.name ?? '';
       for (final r in rows) {
         final ing = catalog[r.ingredientId];
-        if (ing == null) continue; // ingredient removed from the catalog
+        if (ing == null) continue;
         _rows.add(_IngredientRow(
           ingredient: ing,
           qtyController: TextEditingController(
@@ -197,6 +198,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Modifica piatto')),
@@ -220,8 +222,9 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
+          // --- Section: Name & tags ---
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Nome del piatto'),
@@ -241,40 +244,81 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
               }
             }),
           ),
+
+          // --- Breathing room between sections ---
+          const SizedBox(height: 32),
+          Divider(color: tokens.border, height: 0.5),
           const SizedBox(height: 24),
+
+          // --- Section: Ingredients (base 4) ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Ingredienti (per 4 persone)',
+              Text('Ingredienti',
                   style: Theme.of(context).textTheme.titleMedium),
               TextButton.icon(
                 onPressed: _pickIngredient,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, size: 18),
                 label: const Text('Aggiungi'),
               ),
             ],
           ),
-          if (_rows.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('Nessun ingrediente aggiunto.'),
+          // Persistent reminder (brief §6)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Le quantità sono per 4 persone',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: tokens.inkMuted,
+              ),
             ),
-          for (final row in _rows) _buildRow(row),
+          ),
+          if (_rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'Nessun ingrediente aggiunto.',
+                style: TextStyle(color: tokens.inkMuted),
+              ),
+            ),
+          for (final row in _rows) _buildRow(row, tokens),
         ],
       ),
     );
   }
 
-  Widget _buildRow(_IngredientRow row) {
+  Widget _buildRow(_IngredientRow row, ForkastTokens tokens) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Expanded(child: Text(row.ingredient.name)),
+          Expanded(
+            child: Text(
+              row.ingredient.name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: tokens.ink,
+              ),
+            ),
+          ),
           if (row.ingredient.isQb)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
-              child: Text('q.b.'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: tokens.border.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'q.b.',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: tokens.inkMuted,
+                ),
+              ),
             )
           else
             SizedBox(
@@ -290,7 +334,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
               ),
             ),
           IconButton(
-            icon: const Icon(Icons.close),
+            icon: Icon(Icons.close, size: 18, color: tokens.inkMuted),
             onPressed: () => setState(() {
               row.qtyController.dispose();
               _rows.remove(row);
@@ -310,8 +354,7 @@ class _IngredientRow {
 }
 
 /// Dish tag selection (FR-14): one portata (single choice, optional) and
-/// multiple attributes. The vocabulary is curated in the settings; here it is
-/// only selected.
+/// multiple attributes.
 class _TagSection extends StatelessWidget {
   const _TagSection({
     required this.tagRepo,
@@ -395,9 +438,7 @@ class _NoTagsHint extends StatelessWidget {
   }
 }
 
-/// Ingredient picker from the shared catalog (FR-3, 4, 5). At the top it offers
-/// "Crea nuovo ingrediente" to add an entry on the fly (FR-4, 5, 6) without
-/// leaving the editor; the created entry is selected immediately.
+/// Ingredient picker from the shared catalog (FR-3, 4, 5).
 class _IngredientPicker extends StatelessWidget {
   const _IngredientPicker({required this.ingredients, required this.repo});
 
@@ -413,6 +454,7 @@ class _IngredientPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return SafeArea(
       child: ListView(
         shrinkWrap: true,
@@ -422,13 +464,14 @@ class _IngredientPicker extends StatelessWidget {
             title: const Text('Crea nuovo ingrediente'),
             onTap: () => _createNew(context),
           ),
-          const Divider(height: 1),
+          Divider(height: 0.5, color: tokens.border),
           if (ingredients.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               child: Text(
                 'Il catalogo è vuoto. Crea il primo ingrediente.',
                 textAlign: TextAlign.center,
+                style: TextStyle(color: tokens.inkMuted),
               ),
             )
           else

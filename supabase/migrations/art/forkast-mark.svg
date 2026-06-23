@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Forkast — marchio da solo (senza wordmark) -->
+<!-- Colore primario corallo #D85A30. Per ricolorare via CSS, sostituire i fill/stroke con "currentColor". -->
+<!-- Nota d'uso: il marchio nudo legge come F solo nel contesto. Isolato, preferire il wordmark o l'icona app. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="44 32 66 88" width="132" height="176" role="img" aria-label="Forkast">
+  <title>Forkast</title>
+  <rect x="60" y="38" width="7" height="62" fill="#D85A30"/>
+  <path d="M63.5 100 C63.5 110 56 115 51 112" fill="none" stroke="#D85A30" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#D85A30">
+    <rect x="60" y="38" width="46" height="7" rx="3"/>
+    <rect x="60" y="47" width="46" height="7" rx="3"/>
+    <rect x="60" y="56" width="46" height="7" rx="3"/>
+    <rect x="60" y="65" width="46" height="7" rx="3"/>
+  </g>
+</svg>

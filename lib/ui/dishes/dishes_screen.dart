@@ -4,7 +4,8 @@ import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
-import '../widgets/settings_button.dart';
+import '../theme.dart';
+import '../widgets/forkast_app_bar.dart';
 import 'confirm_delete_dish.dart';
 import 'dish_editor_screen.dart';
 
@@ -44,19 +45,17 @@ class _DishesScreenState extends State<DishesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Piatti'),
-        actions: const [SettingsButton()],
-      ),
+      appBar: forkastAppBar(context),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: SearchBar(
               controller: _searchController,
               hintText: 'Cerca un piatto',
-              leading: const Icon(Icons.search),
+              leading: Icon(Icons.search, color: tokens.inkMuted),
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
@@ -66,8 +65,9 @@ class _DishesScreenState extends State<DishesScreen> {
             onSelected: (id) => setState(() => _filterTagId = id),
           ),
           Expanded(
-            child: StreamBuilder<List<Dish>>(
-              stream: _repo.watchAll(query: _query, tagId: _filterTagId),
+            child: StreamBuilder<List<DishWithTags>>(
+              stream: _repo.watchAllWithTags(
+                  query: _query, tagId: _filterTagId),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -75,45 +75,43 @@ class _DishesScreenState extends State<DishesScreen> {
                 final dishes = snapshot.data!;
                 if (dishes.isEmpty) {
                   return Center(
-                    child: Text(
-                      _query.isEmpty
-                          ? 'Nessun piatto.\nTocca + per crearne uno.'
-                          : 'Nessun piatto trovato.',
-                      textAlign: TextAlign.center,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _query.isEmpty
+                            ? 'Nessun piatto ancora.\n'
+                                'Tocca + per creare il primo.'
+                            : 'Nessun piatto trovato.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: tokens.inkMuted),
+                      ),
                     ),
                   );
                 }
                 return ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: dishes.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => Divider(
+                    height: 0.5,
+                    indent: 20,
+                    endIndent: 20,
+                    color: tokens.border,
+                  ),
                   itemBuilder: (context, i) {
-                    final dish = dishes[i];
-                    return Dismissible(
-                      key: ValueKey(dish.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        color: Theme.of(context).colorScheme.error,
-                        child: Icon(
-                          Icons.delete_outline,
-                          color: Theme.of(context).colorScheme.onError,
+                    final item = dishes[i];
+                    return _DishRow(
+                      dish: item.dish,
+                      tags: item.tags,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              DishEditorScreen(dishId: item.dish.id),
                         ),
                       ),
-                      confirmDismiss: (_) => confirmAndDeleteDish(
+                      onDismiss: () => confirmAndDeleteDish(
                         context,
                         repo: _repo,
-                        dishId: dish.id,
-                      ),
-                      child: ListTile(
-                        title: Text(dish.name),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                DishEditorScreen(dishId: dish.id),
-                          ),
-                        ),
+                        dishId: item.dish.id,
                       ),
                     );
                   },
@@ -126,6 +124,103 @@ class _DishesScreenState extends State<DishesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openEditor,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _DishRow extends StatelessWidget {
+  const _DishRow({
+    required this.dish,
+    required this.tags,
+    required this.onTap,
+    required this.onDismiss,
+  });
+
+  final Dish dish;
+  final List<Tag> tags;
+  final VoidCallback onTap;
+  final Future<bool?> Function() onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    return Dismissible(
+      key: ValueKey(dish.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: Theme.of(context).colorScheme.error,
+        child: Icon(
+          Icons.delete_outline,
+          color: Theme.of(context).colorScheme.onError,
+        ),
+      ),
+      confirmDismiss: (_) => onDismiss(),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dish.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.ink,
+                      ),
+                    ),
+                    if (tags.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: tags.map((tag) => _TagChip(tag: tag)).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: tokens.inkMuted, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  const _TagChip({required this.tag});
+
+  final Tag tag;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final color = tag.color != null
+        ? Color(int.parse('FF${tag.color}', radix: 16))
+        : Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.5),
+      ),
+      child: Text(
+        tag.name,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: tokens.ink,
+        ),
       ),
     );
   }
@@ -155,7 +250,7 @@ class _TagFilterBar extends StatelessWidget {
           height: 48,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),

@@ -7,7 +7,8 @@ import '../../data/database.dart';
 import '../../data/repositories/list_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../app_scope.dart';
-import '../widgets/settings_button.dart';
+import '../theme.dart';
+import '../widgets/forkast_app_bar.dart';
 
 /// Shopping list (FR-10/11/12/13/21) for the current week. Layer generated
 /// from the plan + manual items and persistent checks. Regeneration is not
@@ -48,20 +49,32 @@ class _ListScreenState extends State<ListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lista'),
-        actions: const [SettingsButton()],
-      ),
+      appBar: forkastAppBar(context),
       body: StreamBuilder<WeekPlan?>(
         stream: _planRepo.watchWeekPlan(_year, _week),
         builder: (context, planSnap) {
           final weekPlan = planSnap.data;
           if (weekPlan == null) {
-            return const _CenteredHint(
-              icon: Icons.event_busy,
-              text: 'Nessun piano per la settimana corrente.\n'
-                  'Pianifica le cene per generare la lista.',
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.event_busy_outlined, size: 48,
+                        color: tokens.inkMuted),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Ancora niente in lista.\n'
+                      'Pianifica qualche cena e ci penso io.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: tokens.inkMuted, fontSize: 15),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
           return StreamBuilder<ShoppingList?>(
@@ -98,17 +111,21 @@ class _EmptyList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.shopping_cart_outlined, size: 48),
+          Icon(Icons.shopping_bag_outlined, size: 48, color: tokens.inkMuted),
           const SizedBox(height: 12),
-          const Text('Nessuna lista per questa settimana.'),
+          Text(
+            'Nessuna lista per questa settimana.',
+            style: TextStyle(color: tokens.inkMuted, fontSize: 15),
+          ),
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: generating ? null : onGenerate,
-            icon: const Icon(Icons.auto_awesome),
+            icon: const Icon(Icons.auto_awesome_outlined),
             label: const Text('Genera lista'),
           ),
         ],
@@ -158,7 +175,6 @@ class _ListContentState extends State<_ListContent> {
   Future<void> _checkDivergence() async {
     final current = await widget.repo.currentPlanHash(widget.weekPlanId);
     final diverged = current != widget.list.planHash;
-    // Optional automatic regeneration (FR-21).
     if (diverged && await widget.repo.autoRegen()) {
       widget.onRegenerate();
       return;
@@ -199,21 +215,40 @@ class _ListContentState extends State<_ListContent> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
       body: Column(
         children: [
+          // FR-21: "Aggiorna" as a subtle warning banner, not a popup
           if (_diverged)
-            MaterialBanner(
-              backgroundColor:
-                  Theme.of(context).colorScheme.secondaryContainer,
-              content: const Text('Il piano è cambiato dopo la generazione.'),
-              leading: const Icon(Icons.info_outline),
-              actions: [
-                TextButton(
-                  onPressed: widget.generating ? null : widget.onRegenerate,
-                  child: const Text('Aggiorna'),
-                ),
-              ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: tokens.warning.withValues(alpha: 0.12),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: tokens.warning),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Il piano è cambiato dopo la generazione.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: tokens.ink,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed:
+                        widget.generating ? null : widget.onRegenerate,
+                    style: TextButton.styleFrom(
+                      foregroundColor: tokens.warning,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    child: const Text('Aggiorna'),
+                  ),
+                ],
+              ),
             ),
           Expanded(
             child: CustomScrollView(
@@ -250,15 +285,9 @@ class _GeneratedSection extends StatelessWidget {
   final String listId;
   final ValueChanged<GeneratedItemView> onTapRow;
 
-  String _qtyLabel(GeneratedItemView item) {
-    if (item.isQb) return 'q.b.';
-    final qty = item.displayQty;
-    if (qty == null) return '';
-    return '${formatQty(qty)} ${item.unit}';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return StreamBuilder<List<GeneratedItemView>>(
       stream: repo.watchGeneratedItems(listId),
       builder: (context, snapshot) {
@@ -272,58 +301,31 @@ class _GeneratedSection extends StatelessWidget {
         }
         final items = snapshot.data!;
         if (items.isEmpty) {
-          return const SliverToBoxAdapter(
+          return SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
                 'Lo strato generato è vuoto: il piano di questa settimana '
                 'non ha piatti con ingredienti.',
                 textAlign: TextAlign.center,
+                style: TextStyle(color: tokens.inkMuted),
               ),
             ),
           );
         }
-        // Group by department following the in-store route order
-        // (fixed list in core/reparto.dart); ingredients without a department
-        // go at the end. Within each department, the by-name order
-        // guaranteed by the query is preserved.
         final entries = _groupByReparto(items);
         return SliverList.builder(
           itemCount: entries.length,
           itemBuilder: (context, i) {
             final entry = entries[i];
             if (entry is _RepartoHeader) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text(
-                  entry.label.toUpperCase(),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        letterSpacing: 0.8,
-                      ),
-                ),
-              );
+              return _StickyDepartmentHeader(label: entry.label);
             }
             final item = (entry as _RepartoItem).item;
-            final textStyle = item.removed
-                ? const TextStyle(
-                    decoration: TextDecoration.lineThrough,
-                    color: Colors.grey,
-                  )
-                : null;
-            return ListTile(
-              leading: Checkbox(
-                value: item.checked,
-                onChanged: item.removed
-                    ? null
-                    : (v) => repo.setIngredientChecked(
-                        listId, item.ingredientId, v ?? false),
-              ),
-              title: Text(item.name, style: textStyle),
-              subtitle: item.hasOverride && !item.removed
-                  ? const Text('modificato')
-                  : (item.removed ? const Text('rimosso') : null),
-              trailing: Text(_qtyLabel(item), style: textStyle),
+            return _GeneratedRow(
+              item: item,
+              onCheck: (v) => repo.setIngredientChecked(
+                  listId, item.ingredientId, v),
               onTap: () => onTapRow(item),
             );
           },
@@ -332,8 +334,6 @@ class _GeneratedSection extends StatelessWidget {
     );
   }
 
-  /// Transforms the flat list into a sequence of department headers +
-  /// rows, ordered by the in-store route.
   List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items) {
     final sorted = [...items]..sort((a, b) {
         final byReparto = repartoSortIndex(a.category)
@@ -351,6 +351,137 @@ class _GeneratedSection extends StatelessWidget {
       entries.add(_RepartoItem(item));
     }
     return entries;
+  }
+}
+
+class _StickyDepartmentHeader extends StatelessWidget {
+  const _StickyDepartmentHeader({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      color: tokens.surfacePage,
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.8,
+          color: primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _GeneratedRow extends StatelessWidget {
+  const _GeneratedRow({
+    required this.item,
+    required this.onCheck,
+    required this.onTap,
+  });
+
+  final GeneratedItemView item;
+  final ValueChanged<bool> onCheck;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final checked = item.checked;
+    final removed = item.removed;
+    final dimmed = checked || removed;
+    final nameColor = dimmed ? tokens.inkMuted : tokens.ink;
+    final nameDecoration =
+        checked ? TextDecoration.lineThrough : TextDecoration.none;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        child: Row(
+          children: [
+            Checkbox(
+              value: checked,
+              onChanged: removed ? null : (v) => onCheck(v ?? false),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: nameColor,
+                      decoration: nameDecoration,
+                    ),
+                  ),
+                  if (item.hasOverride && !removed)
+                    Text('modificato',
+                        style: TextStyle(
+                            fontSize: 12, color: tokens.inkMuted)),
+                  if (removed)
+                    Text('rimosso',
+                        style: TextStyle(
+                            fontSize: 12, color: tokens.inkMuted)),
+                ],
+              ),
+            ),
+            _QtyLabel(item: item, dimmed: dimmed),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Renders quantity or "q.b." pill for a generated item.
+class _QtyLabel extends StatelessWidget {
+  const _QtyLabel({required this.item, required this.dimmed});
+
+  final GeneratedItemView item;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    if (item.isQb) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: tokens.border.withValues(alpha: dimmed ? 0.3 : 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          'q.b.',
+          style: TextStyle(
+            fontSize: 13,
+            color: dimmed
+                ? tokens.inkMuted.withValues(alpha: 0.5)
+                : tokens.inkMuted,
+          ),
+        ),
+      );
+    }
+    final qty = item.displayQty;
+    if (qty == null) return const SizedBox.shrink();
+    return Text(
+      '${formatQty(qty)} ${item.unit}',
+      style: TextStyle(
+        fontSize: 13,
+        color: dimmed ? tokens.inkMuted.withValues(alpha: 0.5) : tokens.inkMuted,
+        decoration: item.checked ? TextDecoration.lineThrough : null,
+      ),
+    );
   }
 }
 
@@ -374,14 +505,9 @@ class _ManualSection extends StatelessWidget {
   final ListRepository repo;
   final String listId;
 
-  String _qtyLabel(ManualItemView item) {
-    if (item.qty == null) return '';
-    final q = item.qty!;
-    return '${formatQty(q)} ${item.unit ?? ''}'.trim();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return StreamBuilder<List<ManualItemView>>(
       stream: repo.watchManualItems(listId),
       builder: (context, snapshot) {
@@ -391,31 +517,110 @@ class _ManualSection extends StatelessWidget {
         final items = snapshot.data!;
         return SliverMainAxisGroup(
           slivers: [
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text('Aggiunte manuali',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+            SliverToBoxAdapter(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 6),
+                color: tokens.surfacePage,
+                child: Row(
+                  children: [
+                    Text(
+                      'AGGIUNTE MANUALI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.8,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Manual badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'manuale',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             SliverList.separated(
               itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, __) => Divider(
+                height: 0.5,
+                indent: 20,
+                endIndent: 20,
+                color: tokens.border,
+              ),
               itemBuilder: (context, i) {
                 final item = items[i];
-                return ListTile(
-                  leading: Checkbox(
-                    value: item.checked,
-                    onChanged: (v) =>
-                        repo.setManualChecked(listId, item.id, v ?? false),
-                  ),
-                  title: Text(item.name),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                final checked = item.checked;
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  child: Row(
                     children: [
-                      Text(_qtyLabel(item)),
+                      Checkbox(
+                        value: checked,
+                        onChanged: (v) => repo.setManualChecked(
+                            listId, item.id, v ?? false),
+                      ),
+                      const SizedBox(width: 4),
+                      // Manual marker dot
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: checked ? tokens.inkMuted : tokens.ink,
+                            decoration: checked
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                      ),
+                      if (item.qty != null)
+                        Text(
+                          '${formatQty(item.qty!)} ${item.unit ?? ''}'.trim(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: checked
+                                ? tokens.inkMuted.withValues(alpha: 0.5)
+                                : tokens.inkMuted,
+                            decoration:
+                                checked ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close,
+                            size: 18, color: tokens.inkMuted),
                         onPressed: () =>
                             repo.removeManualItem(listId, item.id),
                       ),
@@ -488,7 +693,7 @@ class _GeneratedRowActions extends StatelessWidget {
         children: [
           if (!item.isQb && !item.removed)
             ListTile(
-              leading: const Icon(Icons.edit),
+              leading: const Icon(Icons.edit_outlined),
               title: const Text('Modifica quantità'),
               onTap: () => _editQty(context),
             ),
@@ -503,7 +708,7 @@ class _GeneratedRowActions extends StatelessWidget {
             ),
           if (item.hasOverride)
             ListTile(
-              leading: const Icon(Icons.restart_alt),
+              leading: const Icon(Icons.restart_alt_outlined),
               title: const Text('Ripristina valore calcolato'),
               onTap: () {
                 onRestore();
@@ -559,7 +764,7 @@ class _ManualItemFormState extends State<_ManualItemForm> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomInset),
       child: Form(
         key: _formKey,
         child: Column(
@@ -602,30 +807,6 @@ class _ManualItemFormState extends State<_ManualItemForm> {
             FilledButton(onPressed: _save, child: const Text('Aggiungi')),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CenteredHint extends StatelessWidget {
-  const _CenteredHint({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 48),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(text, textAlign: TextAlign.center),
-          ),
-        ],
       ),
     );
   }
