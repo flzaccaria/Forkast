@@ -62,15 +62,6 @@ class ListRepository {
 
   static const _uuid = Uuid();
 
-  /// Automatic list regeneration setting (FR-21), default off: normally it is
-  /// the user who decides when to update.
-  Future<bool> autoRegen() async {
-    final household = await (_db.select(_db.households)
-          ..where((h) => h.id.equals(_householdId)))
-        .getSingle();
-    return household.autoRegen;
-  }
-
   Stream<ShoppingList?> watchList(String weekPlanId) {
     return (_db.select(_db.shoppingLists)
           ..where((s) =>

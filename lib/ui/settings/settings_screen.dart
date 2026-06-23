@@ -4,7 +4,6 @@ import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/household_repository.dart';
 import '../app_scope.dart';
-import 'ingredients_screen.dart';
 import 'pairing_screen.dart';
 import 'sync_status_screen.dart';
 import 'tags_screen.dart';
@@ -106,28 +105,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ? null
                     : () => _editWeekStart(household.weekStartDay),
               ),
-              SwitchListTile(
-                secondary: const Icon(Icons.autorenew_outlined),
-                title: const Text('Rigenerazione automatica'),
-                subtitle: const Text(
-                    'Aggiorna la lista appena il piano cambia, senza chiedere'),
-                value: household?.autoRegen ?? false,
-                onChanged: household == null
-                    ? null
-                    : (v) => _repo.setAutoRegen(v),
-              ),
               const _SectionHeader('Cataloghi'),
               ListTile(
-                leading: const Icon(Icons.kitchen_outlined),
-                title: const Text('Gestione ingredienti'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const IngredientsScreen()),
-                ),
-              ),
-              ListTile(
                 leading: const Icon(Icons.label_outlined),
-                title: const Text('Tag dei piatti'),
+                title: const Text('Vocabolario portate'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const TagsScreen()),

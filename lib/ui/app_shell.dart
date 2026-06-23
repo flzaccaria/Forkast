@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dishes/dishes_screen.dart';
 import 'plan/plan_screen.dart';
 import 'list/list_screen.dart';
+import 'settings/ingredients_screen.dart';
 import 'settings/pairing_screen.dart';
 
 class AppShell extends StatefulWidget {
@@ -24,6 +25,7 @@ class _AppShellState extends State<AppShell> {
     DishesScreen(),
     PlanScreen(),
     ListScreen(),
+    IngredientsScreen(),
   ];
 
   @override
@@ -66,6 +68,11 @@ class _AppShellState extends State<AppShell> {
             icon: Icon(Icons.shopping_bag_outlined),
             selectedIcon: Icon(Icons.shopping_bag),
             label: 'Lista',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.kitchen_outlined),
+            selectedIcon: Icon(Icons.kitchen),
+            label: 'Ingredienti',
           ),
         ],
       ),

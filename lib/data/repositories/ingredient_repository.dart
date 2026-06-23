@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/unit.dart';
 import '../database.dart';
 
 /// Access to the ingredient catalog, always filtered by household (ADR-005).
@@ -120,6 +122,40 @@ class IngredientRepository {
     await (_db.delete(_db.ingredients)..where((i) => i.id.equals(ingredientId)))
         .go();
     return true;
+  }
+
+  /// Migrates free-text unit values to the canonical [Unit] enum (FR-5).
+  /// Unrecognized values are logged and mapped to [Unit.pezzo] as a
+  /// "da rivedere" fallback — no data is lost, only the unit label changes.
+  Future<void> migrateUnitsToEnum() async {
+    final all = await (_db.select(_db.ingredients)
+          ..where((i) => i.householdId.equals(_householdId)))
+        .get();
+    for (final ing in all) {
+      if (ing.isQb) continue;
+      final canonical = Unit.tryParse(ing.unit);
+      if (canonical != null) continue; // already canonical
+      final mapped = Unit.tryParseLoose(ing.unit);
+      if (mapped != null) {
+        await (_db.update(_db.ingredients)
+              ..where((i) => i.id.equals(ing.id)))
+            .write(IngredientsCompanion(
+          unit: Value(mapped.dbValue),
+          roundingKind: Value(mapped.roundingKind),
+          updatedAt: Value(DateTime.now().toUtc()),
+        ));
+      } else {
+        debugPrint('migrateUnitsToEnum: unrecognized unit "${ing.unit}" '
+            'on ingredient "${ing.name}" (${ing.id}) — mapping to "pz"');
+        await (_db.update(_db.ingredients)
+              ..where((i) => i.id.equals(ing.id)))
+            .write(IngredientsCompanion(
+          unit: Value(Unit.pezzo.dbValue),
+          roundingKind: Value(Unit.pezzo.roundingKind),
+          updatedAt: Value(DateTime.now().toUtc()),
+        ));
+      }
+    }
   }
 
   /// Merges the duplicate `sourceId` into `targetId` (FR-18). Allowed only

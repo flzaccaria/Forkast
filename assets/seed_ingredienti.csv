@@ -1,0 +1,218 @@
+nome,reparto,unita,qb
+Pomodori freschi,Ortofrutta,pz,false
+Pomodorini,Ortofrutta,g,false
+Insalata,Ortofrutta,pz,false
+Rucola,Ortofrutta,g,false
+Carote,Ortofrutta,g,false
+Cipolle,Ortofrutta,pz,false
+Cipolla rossa,Ortofrutta,pz,false
+Aglio,Ortofrutta,pz,false
+Patate,Ortofrutta,g,false
+Zucchine,Ortofrutta,pz,false
+Melanzane,Ortofrutta,pz,false
+Peperoni,Ortofrutta,pz,false
+Sedano,Ortofrutta,pz,false
+Finocchi,Ortofrutta,pz,false
+Spinaci,Ortofrutta,g,false
+Broccoli,Ortofrutta,g,false
+Cavolfiore,Ortofrutta,pz,false
+Verza,Ortofrutta,pz,false
+Funghi champignon,Ortofrutta,g,false
+Zucca,Ortofrutta,g,false
+Fagiolini,Ortofrutta,g,false
+Piselli freschi,Ortofrutta,g,false
+Asparagi,Ortofrutta,g,false
+Radicchio,Ortofrutta,pz,false
+Cetrioli,Ortofrutta,pz,false
+Porri,Ortofrutta,pz,false
+Bietola,Ortofrutta,g,false
+Basilico,Ortofrutta,pz,true
+Prezzemolo,Ortofrutta,pz,true
+Rosmarino,Ortofrutta,pz,true
+Salvia,Ortofrutta,pz,true
+Peperoncino fresco,Ortofrutta,pz,true
+Zenzero,Ortofrutta,g,false
+Limoni,Ortofrutta,pz,false
+Arance,Ortofrutta,pz,false
+Mele,Ortofrutta,pz,false
+Banane,Ortofrutta,pz,false
+Pere,Ortofrutta,pz,false
+Fragole,Ortofrutta,g,false
+Uva,Ortofrutta,g,false
+Pesche,Ortofrutta,pz,false
+Kiwi,Ortofrutta,pz,false
+Melone,Ortofrutta,pz,false
+Mandarini,Ortofrutta,pz,false
+Ciliegie,Ortofrutta,g,false
+Mirtilli,Ortofrutta,g,false
+Avocado,Ortofrutta,pz,false
+Carne macinata di manzo,Macelleria,g,false
+Carne macinata mista,Macelleria,g,false
+Petto di pollo,Macelleria,g,false
+Cosce di pollo,Macelleria,g,false
+Pollo intero,Macelleria,pz,false
+Fettine di vitello,Macelleria,g,false
+Bistecca di manzo,Macelleria,g,false
+Arrosto di maiale,Macelleria,g,false
+Salsicce,Macelleria,g,false
+Costine di maiale,Macelleria,g,false
+Spezzatino di manzo,Macelleria,g,false
+Fettine di tacchino,Macelleria,g,false
+Coniglio,Macelleria,pz,false
+Braciole di maiale,Macelleria,g,false
+Lonza di maiale,Macelleria,g,false
+Salmone,Pescheria,g,false
+Tonno fresco,Pescheria,g,false
+Orata,Pescheria,pz,false
+Branzino,Pescheria,pz,false
+Gamberi,Pescheria,g,false
+Calamari,Pescheria,g,false
+Cozze,Pescheria,g,false
+Vongole,Pescheria,g,false
+Merluzzo,Pescheria,g,false
+Platessa,Pescheria,g,false
+Seppie,Pescheria,g,false
+Polpo,Pescheria,g,false
+Sgombro,Pescheria,pz,false
+Trota,Pescheria,pz,false
+Prosciutto crudo,Salumi e formaggi,g,false
+Prosciutto cotto,Salumi e formaggi,g,false
+Mortadella,Salumi e formaggi,g,false
+Salame,Salumi e formaggi,g,false
+Speck,Salumi e formaggi,g,false
+Pancetta,Salumi e formaggi,g,false
+Bresaola,Salumi e formaggi,g,false
+Parmigiano Reggiano,Salumi e formaggi,g,false
+Grana Padano,Salumi e formaggi,g,false
+Pecorino,Salumi e formaggi,g,false
+Mozzarella,Salumi e formaggi,pz,false
+Mozzarella di bufala,Salumi e formaggi,pz,false
+Gorgonzola,Salumi e formaggi,g,false
+Stracchino,Salumi e formaggi,g,false
+Ricotta,Salumi e formaggi,g,false
+Scamorza,Salumi e formaggi,pz,false
+Fontina,Salumi e formaggi,g,false
+Mascarpone,Salumi e formaggi,g,false
+Latte,Latticini e uova,l,false
+Latte parzialmente scremato,Latticini e uova,l,false
+Uova,Latticini e uova,pz,false
+Burro,Latticini e uova,g,false
+Yogurt bianco,Latticini e uova,g,false
+Yogurt greco,Latticini e uova,g,false
+Panna fresca,Latticini e uova,ml,false
+Panna da cucina,Latticini e uova,ml,false
+Latte di soia,Latticini e uova,l,false
+Pane,Pane e forno,g,false
+Panini per hamburger,Pane e forno,pz,false
+Pane in cassetta,Pane e forno,pz,false
+Baguette,Pane e forno,pz,false
+Grissini,Pane e forno,g,false
+Crackers,Pane e forno,g,false
+Fette biscottate,Pane e forno,g,false
+Pangrattato,Pane e forno,g,false
+Piadina,Pane e forno,pz,false
+Tortillas,Pane e forno,pz,false
+Base per pizza,Pane e forno,pz,false
+Pasta spaghetti,Dispensa,g,false
+Pasta penne,Dispensa,g,false
+Pasta fusilli,Dispensa,g,false
+Riso,Dispensa,g,false
+Riso basmati,Dispensa,g,false
+Orzo,Dispensa,g,false
+Farro,Dispensa,g,false
+Cous cous,Dispensa,g,false
+Farina di mais per polenta,Dispensa,g,false
+Gnocchi,Dispensa,g,false
+Farina 00,Dispensa,g,false
+Farina integrale,Dispensa,g,false
+Zucchero,Dispensa,g,false
+Zucchero di canna,Dispensa,g,false
+Lievito per dolci,Dispensa,pz,false
+Lievito di birra,Dispensa,pz,false
+Cacao amaro,Dispensa,g,false
+Cioccolato fondente,Dispensa,g,false
+Vanillina,Dispensa,pz,true
+Passata di pomodoro,Dispensa,g,false
+Pomodori pelati,Dispensa,g,false
+Pomodori a pezzi in barattolo,Dispensa,g,false
+Concentrato di pomodoro,Dispensa,g,false
+Tonno in scatola,Dispensa,g,false
+Mais in scatola,Dispensa,g,false
+Fagioli in scatola,Dispensa,g,false
+Ceci in scatola,Dispensa,g,false
+Lenticchie,Dispensa,g,false
+Olive,Dispensa,g,false
+Capperi,Dispensa,g,true
+Acciughe sottolio,Dispensa,g,true
+Dado da brodo,Dispensa,pz,false
+Olio extravergine di oliva,Dispensa,ml,true
+Olio di semi,Dispensa,ml,true
+Aceto,Dispensa,ml,true
+Aceto balsamico,Dispensa,ml,true
+Sale fino,Dispensa,g,true
+Sale grosso,Dispensa,g,true
+Pepe nero,Dispensa,g,true
+Senape,Dispensa,g,true
+Maionese,Dispensa,g,false
+Ketchup,Dispensa,ml,false
+Salsa di soia,Dispensa,ml,true
+Miele,Dispensa,g,false
+Marmellata,Dispensa,g,false
+Crema spalmabile alla nocciola,Dispensa,g,false
+Origano,Dispensa,g,true
+Cannella,Dispensa,g,true
+Noce moscata,Dispensa,g,true
+Curcuma,Dispensa,g,true
+Paprika,Dispensa,g,true
+Curry,Dispensa,g,true
+Peperoncino in polvere,Dispensa,g,true
+Alloro,Dispensa,pz,true
+Zafferano,Dispensa,pz,true
+Noci,Dispensa,g,false
+Mandorle,Dispensa,g,false
+Pinoli,Dispensa,g,true
+Uvetta,Dispensa,g,true
+Caffe,Dispensa,g,false
+Te,Dispensa,pz,false
+Cereali,Dispensa,g,false
+Biscotti,Dispensa,g,false
+Piselli surgelati,Surgelati,g,false
+Spinaci surgelati,Surgelati,g,false
+Minestrone surgelato,Surgelati,g,false
+Bastoncini di pesce,Surgelati,pz,false
+Gamberi surgelati,Surgelati,g,false
+Patatine fritte surgelate,Surgelati,g,false
+Pizza surgelata,Surgelati,pz,false
+Gelato,Surgelati,g,false
+Verdure miste surgelate,Surgelati,g,false
+Filetti di merluzzo surgelati,Surgelati,g,false
+Acqua naturale,Bevande,l,false
+Acqua frizzante,Bevande,l,false
+Vino rosso,Bevande,ml,false
+Vino bianco,Bevande,ml,false
+Birra,Bevande,ml,false
+Succo di arancia,Bevande,l,false
+Bibita gassata,Bevande,l,false
+Detersivo per piatti,Cura della casa,ml,false
+Detersivo per lavatrice,Cura della casa,ml,false
+Carta igienica,Cura della casa,pz,false
+Rotolo da cucina,Cura della casa,pz,false
+Sacchetti per la spazzatura,Cura della casa,pz,false
+Pellicola trasparente,Cura della casa,pz,false
+Carta da forno,Cura della casa,pz,false
+Rotolo di alluminio,Cura della casa,pz,false
+Spugne,Cura della casa,pz,false
+Ammorbidente,Cura della casa,ml,false
+Candeggina,Cura della casa,ml,false
+Dentifricio,Cura della persona,pz,false
+Spazzolino,Cura della persona,pz,false
+Sapone,Cura della persona,pz,false
+Shampoo,Cura della persona,ml,false
+Bagnoschiuma,Cura della persona,ml,false
+Deodorante,Cura della persona,pz,false
+Rasoi,Cura della persona,pz,false
+Fazzoletti di carta,Cura della persona,pz,false
+Cibo per gatti,Altro,g,false
+Cibo per cani,Altro,g,false
+Pile,Altro,pz,false
+Lampadine,Altro,pz,false

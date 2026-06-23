@@ -16,11 +16,12 @@ void main() {
     await db.customStatement('''
       CREATE TABLE household (
         id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-        week_start_day INTEGER, auto_regen INTEGER,
+        week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT,
         created_at TEXT, updated_at TEXT)''');
     await db.customStatement('''
       CREATE TABLE dish (
         id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
+        difficulty TEXT, time_estimate TEXT,
         created_at TEXT, updated_at TEXT)''');
     await db.customStatement('''
       CREATE TABLE week_plan (

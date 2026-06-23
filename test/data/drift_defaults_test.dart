@@ -74,6 +74,7 @@ void main() {
         default_guests INTEGER,
         week_start_day INTEGER,
         auto_regen INTEGER,
+        seeded_at TEXT,
         created_at TEXT,
         updated_at TEXT
       )''');
@@ -103,6 +104,8 @@ void main() {
         id TEXT PRIMARY KEY,
         household_id TEXT,
         name TEXT,
+        difficulty TEXT,
+        time_estimate TEXT,
         created_at TEXT,
         updated_at TEXT
       )''');

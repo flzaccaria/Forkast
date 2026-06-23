@@ -19,6 +19,7 @@ void main() {
       color TEXT, sort_order INTEGER, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
+      difficulty TEXT, time_estimate TEXT,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_tag (
       id TEXT PRIMARY KEY, dish_id TEXT, tag_id TEXT, household_id TEXT,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/dish_enums.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/tag_repository.dart';
@@ -22,6 +23,8 @@ class _DishesScreenState extends State<DishesScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   String? _filterTagId;
+  Difficulty? _filterDifficulty;
+  TimeEstimate? _filterTime;
 
   @override
   void didChangeDependencies() {
@@ -59,15 +62,24 @@ class _DishesScreenState extends State<DishesScreen> {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
-          _TagFilterBar(
+          _FilterBar(
             tagRepo: _tagRepo,
             selectedTagId: _filterTagId,
-            onSelected: (id) => setState(() => _filterTagId = id),
+            selectedDifficulty: _filterDifficulty,
+            selectedTime: _filterTime,
+            onTagSelected: (id) => setState(() => _filterTagId = id),
+            onDifficultySelected: (d) =>
+                setState(() => _filterDifficulty = d),
+            onTimeSelected: (t) => setState(() => _filterTime = t),
           ),
           Expanded(
             child: StreamBuilder<List<DishWithTags>>(
               stream: _repo.watchAllWithTags(
-                  query: _query, tagId: _filterTagId),
+                query: _query,
+                tagId: _filterTagId,
+                difficulty: _filterDifficulty?.dbValue,
+                timeEstimate: _filterTime?.dbValue,
+              ),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -145,6 +157,15 @@ class _DishRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final chips = <Widget>[];
+    for (final tag in tags) {
+      chips.add(_TagChip(tag: tag));
+    }
+    final diff = Difficulty.tryParse(dish.difficulty);
+    if (diff != null) chips.add(_SmallChip(label: diff.label));
+    final time = TimeEstimate.tryParse(dish.timeEstimate);
+    if (time != null) chips.add(_SmallChip(label: time.label));
+
     return Dismissible(
       key: ValueKey(dish.id),
       direction: DismissDirection.endToStart,
@@ -176,13 +197,9 @@ class _DishRow extends StatelessWidget {
                         color: tokens.ink,
                       ),
                     ),
-                    if (tags.isNotEmpty) ...[
+                    if (chips.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: tags.map((tag) => _TagChip(tag: tag)).toList(),
-                      ),
+                      Wrap(spacing: 6, runSpacing: 4, children: chips),
                     ],
                   ],
                 ),
@@ -226,26 +243,64 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-/// Tag filter bar (FR-15): single choice; "Tutti" clears the filter.
-/// Hidden when no tags exist.
-class _TagFilterBar extends StatelessWidget {
-  const _TagFilterBar({
+class _SmallChip extends StatelessWidget {
+  const _SmallChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: tokens.border.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: tokens.inkMuted,
+        ),
+      ),
+    );
+  }
+}
+
+/// Filter bar (FR-15): portata tags + difficulty + time.
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({
     required this.tagRepo,
     required this.selectedTagId,
-    required this.onSelected,
+    required this.selectedDifficulty,
+    required this.selectedTime,
+    required this.onTagSelected,
+    required this.onDifficultySelected,
+    required this.onTimeSelected,
   });
 
   final TagRepository tagRepo;
   final String? selectedTagId;
-  final ValueChanged<String?> onSelected;
+  final Difficulty? selectedDifficulty;
+  final TimeEstimate? selectedTime;
+  final ValueChanged<String?> onTagSelected;
+  final ValueChanged<Difficulty?> onDifficultySelected;
+  final ValueChanged<TimeEstimate?> onTimeSelected;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Tag>>(
-      stream: tagRepo.watchAll(),
+      stream: tagRepo.watchByGroup(TagGroup.portata),
       builder: (context, snapshot) {
-        final tags = snapshot.data ?? const [];
-        if (tags.isEmpty) return const SizedBox.shrink();
+        final portate = snapshot.data ?? const [];
+        final hasFilters = portate.isNotEmpty;
+        if (!hasFilters &&
+            selectedDifficulty == null &&
+            selectedTime == null) {
+          return const SizedBox(height: 8);
+        }
         return SizedBox(
           height: 48,
           child: ListView(
@@ -256,17 +311,42 @@ class _TagFilterBar extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
                   label: const Text('Tutti'),
-                  selected: selectedTagId == null,
-                  onSelected: (_) => onSelected(null),
+                  selected: selectedTagId == null &&
+                      selectedDifficulty == null &&
+                      selectedTime == null,
+                  onSelected: (_) {
+                    onTagSelected(null);
+                    onDifficultySelected(null);
+                    onTimeSelected(null);
+                  },
                 ),
               ),
-              for (final tag in tags)
+              for (final tag in portate)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     label: Text(tag.name),
                     selected: selectedTagId == tag.id,
-                    onSelected: (sel) => onSelected(sel ? tag.id : null),
+                    onSelected: (sel) => onTagSelected(sel ? tag.id : null),
+                  ),
+                ),
+              for (final d in Difficulty.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(d.label),
+                    selected: selectedDifficulty == d,
+                    onSelected: (sel) =>
+                        onDifficultySelected(sel ? d : null),
+                  ),
+                ),
+              for (final t in TimeEstimate.values)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(t.label),
+                    selected: selectedTime == t,
+                    onSelected: (sel) => onTimeSelected(sel ? t : null),
                   ),
                 ),
             ],

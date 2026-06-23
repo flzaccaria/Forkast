@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../core/reparto.dart';
+import '../../core/unit.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
 import '../app_scope.dart';
+import '../theme.dart';
+import '../widgets/forkast_app_bar.dart';
 import 'ingredient_form.dart';
 
+/// Ingredients catalog tab (FR-23): grouped by department, sortable by name.
 class IngredientsScreen extends StatefulWidget {
   const IngredientsScreen({super.key});
 
@@ -91,7 +96,6 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   Future<void> _merge(Ingredient source) async {
-    // Only duplicates with the same unit and same q.b. type (FR-18).
     final all = await _repo.watchAll().first;
     final candidates = all
         .where((i) =>
@@ -122,10 +126,30 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
         : 'Unione non riuscita: le unità devono coincidere.');
   }
 
+  List<_RepartoEntry> _groupByReparto(List<Ingredient> items) {
+    final sorted = [...items]..sort((a, b) {
+        final byReparto = repartoSortIndex(a.category)
+            .compareTo(repartoSortIndex(b.category));
+        return byReparto != 0 ? byReparto : a.name.compareTo(b.name);
+      });
+    final entries = <_RepartoEntry>[];
+    String? currentLabel;
+    for (final item in sorted) {
+      final label = item.category ?? repartoNonAssegnato;
+      if (label != currentLabel) {
+        entries.add(_RepartoHeader(label));
+        currentLabel = label;
+      }
+      entries.add(_RepartoItem(item));
+    }
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestione ingredienti')),
+      appBar: forkastAppBar(context),
       body: StreamBuilder<List<Ingredient>>(
         stream: _repo.watchAll(),
         builder: (context, snapshot) {
@@ -134,24 +158,41 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
           }
           final items = snapshot.data!;
           if (items.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32),
-                child: Text(
-                  'Nessun ingrediente ancora.\nTocca + per aggiungere il primo.',
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.kitchen_outlined, size: 48,
+                        color: tokens.inkMuted),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Nessun ingrediente ancora.\n'
+                      'Tocca + per aggiungere il primo.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: tokens.inkMuted, fontSize: 15),
+                    ),
+                  ],
                 ),
               ),
             );
           }
-          return ListView.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+          final entries = _groupByReparto(items);
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: entries.length,
             itemBuilder: (context, i) {
-              final ing = items[i];
+              final entry = entries[i];
+              if (entry is _RepartoHeader) {
+                return _StickyDepartmentHeader(label: entry.label);
+              }
+              final ing = (entry as _RepartoItem).ingredient;
               return ListTile(
                 title: Text(ing.name),
-                subtitle: Text(ing.isQb ? 'quanto basta' : ing.unit),
+                subtitle: Text(ing.isQb
+                    ? 'quanto basta'
+                    : Unit.tryParse(ing.unit)?.label ?? ing.unit),
                 trailing: ing.isQb
                     ? const Icon(Icons.all_inclusive_outlined, size: 18)
                     : null,
@@ -167,6 +208,46 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       ),
     );
   }
+}
+
+class _StickyDepartmentHeader extends StatelessWidget {
+  const _StickyDepartmentHeader({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      color: tokens.surfacePage,
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.8,
+          color: primary,
+        ),
+      ),
+    );
+  }
+}
+
+sealed class _RepartoEntry {
+  const _RepartoEntry();
+}
+
+class _RepartoHeader extends _RepartoEntry {
+  const _RepartoHeader(this.label);
+  final String label;
+}
+
+class _RepartoItem extends _RepartoEntry {
+  const _RepartoItem(this.ingredient);
+  final Ingredient ingredient;
 }
 
 class _IngredientActions extends StatelessWidget {
@@ -198,7 +279,9 @@ class _IngredientActions extends StatelessWidget {
           ListTile(
             title: Text(ingredient.name,
                 style: Theme.of(context).textTheme.titleMedium),
-            subtitle: Text(ingredient.isQb ? 'quanto basta' : ingredient.unit),
+            subtitle: Text(ingredient.isQb
+                ? 'quanto basta'
+                : Unit.tryParse(ingredient.unit)?.label ?? ingredient.unit),
           ),
           const Divider(height: 1),
           ListTile(

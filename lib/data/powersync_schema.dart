@@ -11,6 +11,7 @@ const forkastSchema = Schema([
     Column.integer('default_guests'),
     Column.integer('week_start_day'),
     Column.integer('auto_regen'),
+    Column.text('seeded_at'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ]),
@@ -49,6 +50,8 @@ const forkastSchema = Schema([
   Table('dish', [
     Column.text('household_id'),
     Column.text('name'),
+    Column.text('difficulty'),
+    Column.text('time_estimate'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ], indexes: [

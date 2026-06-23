@@ -16,7 +16,7 @@ void main() {
     await db.customStatement('''
       CREATE TABLE household (
         id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-        week_start_day INTEGER, auto_regen INTEGER,
+        week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT,
         created_at TEXT, updated_at TEXT)''');
     final now = DateTime.now().toUtc();
     await db.into(db.households).insert(HouseholdsCompanion.insert(
