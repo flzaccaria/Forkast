@@ -33,9 +33,14 @@ class DishRepository {
 
   static const _uuid = Uuid();
 
-  /// Dish catalog ordered by name, filterable by text and by tag (FR-15).
-  /// `tagId`, if present, limits to dishes that have that tag assigned.
-  Stream<List<Dish>> watchAll({String query = '', String? tagId}) {
+  /// Dish catalog ordered by name, filterable by text, tag, difficulty and
+  /// time estimate (FR-15).
+  Stream<List<Dish>> watchAll({
+    String query = '',
+    String? tagId,
+    String? difficulty,
+    String? timeEstimate,
+  }) {
     final q = _db.select(_db.dishes)
       ..where((d) => d.householdId.equals(_householdId))
       ..orderBy([(d) => OrderingTerm(expression: d.name)]);
@@ -48,12 +53,28 @@ class DishRepository {
         ..where(_db.dishTags.tagId.equals(tagId));
       q.where((d) => d.id.isInQuery(tagged));
     }
+    if (difficulty != null) {
+      q.where((d) => d.difficulty.equals(difficulty));
+    }
+    if (timeEstimate != null) {
+      q.where((d) => d.timeEstimate.equals(timeEstimate));
+    }
     return q.watch();
   }
 
   /// Dishes with their resolved tags for the catalog list view.
-  Stream<List<DishWithTags>> watchAllWithTags({String query = '', String? tagId}) {
-    final dishStream = watchAll(query: query, tagId: tagId);
+  Stream<List<DishWithTags>> watchAllWithTags({
+    String query = '',
+    String? tagId,
+    String? difficulty,
+    String? timeEstimate,
+  }) {
+    final dishStream = watchAll(
+      query: query,
+      tagId: tagId,
+      difficulty: difficulty,
+      timeEstimate: timeEstimate,
+    );
     final tagTable = _db.tags;
     final dtTable = _db.dishTags;
     final allTagsStream = (_db.select(dtTable).join([
@@ -108,6 +129,8 @@ class DishRepository {
     required String name,
     required List<DishIngredientDraft> ingredients,
     List<String> tagIds = const [],
+    String? difficulty,
+    String? timeEstimate,
   }) async {
     final now = DateTime.now().toUtc();
     final dishId = _uuid.v4();
@@ -118,6 +141,8 @@ class DishRepository {
               id: dishId,
               householdId: _householdId,
               name: name,
+              difficulty: Value(difficulty),
+              timeEstimate: Value(timeEstimate),
               createdAt: now,
               updatedAt: now,
             ),
@@ -163,11 +188,18 @@ class DishRepository {
     required String name,
     required List<DishIngredientDraft> ingredients,
     List<String> tagIds = const [],
+    Value<String?> difficulty = const Value.absent(),
+    Value<String?> timeEstimate = const Value.absent(),
   }) async {
     final now = DateTime.now().toUtc();
     await _db.transaction(() async {
       await (_db.update(_db.dishes)..where((d) => d.id.equals(dishId))).write(
-          DishesCompanion(name: Value(name), updatedAt: Value(now)));
+          DishesCompanion(
+            name: Value(name),
+            difficulty: difficulty,
+            timeEstimate: timeEstimate,
+            updatedAt: Value(now),
+          ));
       await (_db.delete(_db.dishIngredients)
             ..where((di) => di.dishId.equals(dishId)))
           .go();

@@ -19,13 +19,14 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await exec('''CREATE TABLE household (
       id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-      week_start_day INTEGER, auto_regen INTEGER, created_at TEXT, updated_at TEXT)''');
+      week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE ingredient (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
       is_qb INTEGER, category TEXT, rounding_kind TEXT,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
+      difficulty TEXT, time_estimate TEXT,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_ingredient (
       id TEXT PRIMARY KEY, dish_id TEXT, ingredient_id TEXT, household_id TEXT,

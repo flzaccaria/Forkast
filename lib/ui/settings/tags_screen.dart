@@ -4,8 +4,9 @@ import '../../data/database.dart';
 import '../../data/repositories/tag_repository.dart';
 import '../app_scope.dart';
 
-/// Management of the curated tag vocabulary (FR-14): portate and attributes.
+/// Management of the curated portata vocabulary (FR-14).
 /// Deletion is protected when the tag is in use (consistent with FR-17).
+/// Attributes have been replaced by difficulty/time fields (v0.6).
 class TagsScreen extends StatefulWidget {
   const TagsScreen({super.key});
 
@@ -23,12 +24,10 @@ class _TagsScreenState extends State<TagsScreen> {
     _repo = TagRepository(scope.database, scope.householdId);
   }
 
-  Future<void> _addTag(String group) async {
-    final name = await _promptName(
-      title: group == TagGroup.portata ? 'Nuova portata' : 'Nuovo attributo',
-    );
+  Future<void> _addTag() async {
+    final name = await _promptName(title: 'Nuova portata');
     if (name != null && name.isNotEmpty) {
-      await _repo.create(name: name, group: group);
+      await _repo.create(name: name, group: TagGroup.portata);
     }
   }
 
@@ -83,28 +82,18 @@ class _TagsScreenState extends State<TagsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tag dei piatti')),
+      appBar: AppBar(title: const Text('Vocabolario portate')),
       body: ListView(
         children: [
           _GroupHeader(
             label: 'Portate',
-            onAdd: () => _addTag(TagGroup.portata),
+            onAdd: _addTag,
           ),
           _TagList(
             stream: _repo.watchByGroup(TagGroup.portata),
             onRename: _rename,
             onDelete: _delete,
             emptyHint: 'Nessuna portata. Esempi: Primo, Secondo, Contorno.',
-          ),
-          _GroupHeader(
-            label: 'Attributi',
-            onAdd: () => _addTag(TagGroup.attributo),
-          ),
-          _TagList(
-            stream: _repo.watchByGroup(TagGroup.attributo),
-            onRename: _rename,
-            onDelete: _delete,
-            emptyHint: 'Nessun attributo. Esempi: Veloce, Vegetariano, Pesce.',
           ),
         ],
       ),

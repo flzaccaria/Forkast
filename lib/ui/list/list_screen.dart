@@ -10,9 +10,9 @@ import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 
-/// Shopping list (FR-10/11/12/13/21) for the current week. Layer generated
-/// from the plan + manual items and persistent checks. Regeneration is not
-/// automatic by default: when the plan diverges, "Aggiorna" is shown.
+/// Shopping list (FR-10/11/12/13/21) for the current week. Generated layer
+/// auto-regenerates when the plan changes (v0.6); manual items, overrides
+/// and checks persist.
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
 
@@ -39,6 +39,7 @@ class _ListScreenState extends State<ListScreen> {
   }
 
   Future<void> _generate(String weekPlanId) async {
+    if (_generating) return;
     setState(() => _generating = true);
     try {
       await _repo.generate(weekPlanId);
@@ -82,14 +83,12 @@ class _ListScreenState extends State<ListScreen> {
             builder: (context, listSnap) {
               final list = listSnap.data;
               if (list == null) {
-                return _EmptyList(
-                  generating: _generating,
-                  onGenerate: () => _generate(weekPlan.id),
-                );
+                // Auto-generate on first visit (FR-21 v0.6).
+                _generate(weekPlan.id);
+                return const Center(child: CircularProgressIndicator());
               }
               return _ListContent(
                 repo: _repo,
-                planRepo: _planRepo,
                 weekPlanId: weekPlan.id,
                 list: list,
                 generating: _generating,
@@ -103,41 +102,9 @@ class _ListScreenState extends State<ListScreen> {
   }
 }
 
-class _EmptyList extends StatelessWidget {
-  const _EmptyList({required this.generating, required this.onGenerate});
-
-  final bool generating;
-  final VoidCallback onGenerate;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<ForkastTokens>()!;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.shopping_bag_outlined, size: 48, color: tokens.inkMuted),
-          const SizedBox(height: 12),
-          Text(
-            'Nessuna lista per questa settimana.',
-            style: TextStyle(color: tokens.inkMuted, fontSize: 15),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: generating ? null : onGenerate,
-            icon: const Icon(Icons.auto_awesome_outlined),
-            label: const Text('Genera lista'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ListContent extends StatefulWidget {
   const _ListContent({
     required this.repo,
-    required this.planRepo,
     required this.weekPlanId,
     required this.list,
     required this.generating,
@@ -145,7 +112,6 @@ class _ListContent extends StatefulWidget {
   });
 
   final ListRepository repo;
-  final PlanRepository planRepo;
   final String weekPlanId;
   final ShoppingList list;
   final bool generating;
@@ -156,30 +122,25 @@ class _ListContent extends StatefulWidget {
 }
 
 class _ListContentState extends State<_ListContent> {
-  bool _diverged = false;
-
   @override
   void initState() {
     super.initState();
-    _checkDivergence();
+    _autoRegenIfNeeded();
   }
 
   @override
   void didUpdateWidget(_ListContent old) {
     super.didUpdateWidget(old);
     if (old.list.planHash != widget.list.planHash) {
-      _checkDivergence();
+      _autoRegenIfNeeded();
     }
   }
 
-  Future<void> _checkDivergence() async {
+  Future<void> _autoRegenIfNeeded() async {
     final current = await widget.repo.currentPlanHash(widget.weekPlanId);
-    final diverged = current != widget.list.planHash;
-    if (diverged && await widget.repo.autoRegen()) {
+    if (current != widget.list.planHash) {
       widget.onRegenerate();
-      return;
     }
-    if (mounted) setState(() => _diverged = diverged);
   }
 
   Future<void> _addManual() async {
@@ -215,54 +176,16 @@ class _ListContentState extends State<_ListContent> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
-      body: Column(
-        children: [
-          // FR-21: "Aggiorna" as a subtle warning banner, not a popup
-          if (_diverged)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: tokens.warning.withValues(alpha: 0.12),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 18, color: tokens.warning),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Il piano è cambiato dopo la generazione.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: tokens.ink,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed:
-                        widget.generating ? null : widget.onRegenerate,
-                    style: TextButton.styleFrom(
-                      foregroundColor: tokens.warning,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    child: const Text('Aggiorna'),
-                  ),
-                ],
-              ),
-            ),
-          Expanded(
-            child: CustomScrollView(
-              slivers: [
-                _GeneratedSection(
-                  repo: widget.repo,
-                  listId: widget.list.id,
-                  onTapRow: _editGenerated,
-                ),
-                _ManualSection(repo: widget.repo, listId: widget.list.id),
-                const SliverToBoxAdapter(child: SizedBox(height: 80)),
-              ],
-            ),
+      body: CustomScrollView(
+        slivers: [
+          _GeneratedSection(
+            repo: widget.repo,
+            listId: widget.list.id,
+            onTapRow: _editGenerated,
           ),
+          _ManualSection(repo: widget.repo, listId: widget.list.id),
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -444,7 +367,6 @@ class _GeneratedRow extends StatelessWidget {
   }
 }
 
-/// Renders quantity or "q.b." pill for a generated item.
 class _QtyLabel extends StatelessWidget {
   const _QtyLabel({required this.item, required this.dimmed});
 
@@ -534,7 +456,6 @@ class _ManualSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Manual badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 1),
@@ -580,7 +501,6 @@ class _ManualSection extends StatelessWidget {
                             listId, item.id, v ?? false),
                       ),
                       const SizedBox(width: 4),
-                      // Manual marker dot
                       Container(
                         width: 6,
                         height: 6,

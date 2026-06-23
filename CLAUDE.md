@@ -1,7 +1,7 @@
 # CLAUDE.md — Weekly Menu & Shopping List App
 
 > Context file for Claude Code. Read at every session. Keep it concise and up to date.
-> Complete sources of truth: `Requisiti_Funzionali_v0.5.docx`, `Mappa_Flussi_e_Schermate_v1.1.docx`, `ADR_Architettura_v1.1.docx`.
+> Complete sources of truth: `docs/Requisiti Funzionali v0.6.md`, `Mappa_Flussi_e_Schermate_v1.1.docx`, `ADR_Architettura_v1.1.docx`.
 > If a request contradicts this file or an ADR, **stop and flag it** instead of deciding on your own.
 
 ---
@@ -51,9 +51,9 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 
 - `household` — container for all data.
 - `membership` — links a device (tomorrow a user) to a household. Basis for pairing.
-- `ingredient` — shared catalog. Owns `unit` and the `is_qb` flag ("to taste").
-- `tag` — `portata` (course, single) or `attributo` (attribute, multiple) group, with color and order.
-- `dish` + `dish_tag` — reusable dish; one course, multiple attributes.
+- `ingredient` — shared catalog. Owns `unit` (from closed enum, FR-5) and the `is_qb` flag ("to taste").
+- `tag` — `portata` (course, single) group, with color and order. Old `attributo` tags archived in DB (v0.6).
+- `dish` + `dish_tag` — reusable dish; one course. Has optional `difficulty` and `time_estimate` fields (v0.6).
 - `dish_ingredient` — ingredient row of the dish, `qty_base4` (ignored for `is_qb`).
 - `week_plan` → `plan_day` (with the evening's `guests`) → `plan_day_dish`.
 - `shopping_list` — snapshot context: week, `generated_at`, **fingerprint/hash of the source plan**.
@@ -74,7 +74,7 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 - **Protected deletion** (FR-17): an ingredient in use cannot be deleted; show where it is used.
 - **Merging duplicates** (FR-18): only when units match.
 - **Two-layer list** (FR-21): generated (recreatable snapshot) + manual/override/checks (persistent). Override reversible via "restore".
-- **Regeneration NOT automatic by default** (FR-21): when the plan diverges from the fingerprint saved on the snapshot, show the "Update" warning; the user decides when. Option for automatic regeneration in settings.
+- **Regeneration automatic and invisible** (FR-21 v0.6): when the plan diverges from the saved fingerprint, the generated layer regenerates silently. No banner, no user action, no setting. Manual layer (checks, overrides, manual items) persists.
 
 > Offline-first note: cross-device invariants are **best-effort** (UI + reconciliation), not global transactions. This is an accepted limitation (§6 ADR). Do not promise transactional guarantees across devices.
 
@@ -86,7 +86,7 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 - Always write locally first, then let PowerSync sync.
 - Filter every query by `household_id`; set the access rules (RLS) accordingly.
 - Isolate rescaling + rounding in a pure, tested module.
-- Generate the list snapshot on an explicit user action, saving the plan hash.
+- The list snapshot regenerates automatically when the plan changes (v0.6).
 
 **DON'T**
 - No CRDT / Automerge / Yjs.
@@ -151,10 +151,35 @@ Both operations use server-side `SECURITY DEFINER` functions because RLS blocks 
 
 - Centralized theme in `lib/ui/theme.dart` (light + dark). All colour/typography tokens flow from `ForkastTokens` extension and `ThemeData`. No hardcoded colours in screens.
 - Wordmark SVG (`assets/forkast-wordmark.svg`) in every screen's app bar via `lib/ui/widgets/forkast_app_bar.dart`.
-- Three-voice bottom nav (Piatti / Piano / Lista) with outline icons, active state in `primary`.
+- Four-voice bottom nav (Piatti / Piano / Lista / Ingredienti) with outline icons, active state in `primary` (v0.6: Ingredienti tab added, FR-23).
 - Outline icon family throughout all screens (single family, thin strokes).
 - "q.b." rendered as a tenue pill (border background, ink-muted text), not bare text.
 - **Dependency noted**: department micro-icons in the shopping list require the `category` attribute on `ingredient` (ADR §7). Grouping by department is active where `category` is set; the micro-icons themselves are not yet implemented.
+
+---
+
+## Unit enum (FR-5, v0.6)
+
+`lib/core/unit.dart` — closed set of units: `grammi` (g), `chilogrammi` (kg), `millilitri` (ml), `litri` (l), `pezzo` (pz). Each unit derives its `roundingKind` (`weight`, `volume`, `whole`), removing the need for the user to pick a rounding strategy separately.
+
+- **Storage**: the canonical short form (`g`, `kg`, `ml`, `l`, `pz`) in the `unit` TEXT column.
+- **Migration**: `IngredientRepository.migrateUnitsToEnum()` runs at startup (idempotent). Maps common aliases (`gr` → `g`, `grammi` → `g`, `pezzi` → `pz`, etc.). Unrecognized values are logged and mapped to `pz` as fallback.
+- **UI**: ingredient form uses a dropdown selector (no free text).
+- **Aggregation**: uses the enum dbValue as key — no more "g" vs "gr" mismatch.
+
+---
+
+## Difficulty & time on dishes (FR-14, v0.6)
+
+`lib/core/dish_enums.dart` — two optional single-choice ordered scales:
+- **Difficulty**: `facile`, `medio`, `difficile`
+- **Time estimate**: `veloce`, `medio`, `lento`
+
+Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supabase migration `00009`).
+
+**Old attributes archived**: the `tag` rows with `group = 'attributo'` and their `dish_tag` links remain in the database but are no longer shown in the UI. They are recoverable if a free-form tagging feature is reintroduced. The tags screen now manages only portate ("Vocabolario portate").
+
+**Filters**: the dish catalog filters by portata + difficulty + time (FR-15).
 
 ---
 

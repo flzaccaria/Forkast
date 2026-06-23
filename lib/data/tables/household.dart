@@ -6,6 +6,7 @@ class Households extends Table {
   IntColumn get defaultGuests => integer().withDefault(const Constant(4))();
   IntColumn get weekStartDay => integer().withDefault(const Constant(0))();
   BoolColumn get autoRegen => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get seededAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

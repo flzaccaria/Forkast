@@ -11,7 +11,7 @@ PreferredSizeWidget forkastAppBar(BuildContext context, {List<Widget>? actions})
     title: SvgPicture.asset(
       'assets/forkast-wordmark.svg',
       height: 28,
-      colorFilter: ColorFilter.mode(tokens.ink, BlendMode.srcIn),
+      theme: SvgTheme(currentColor: tokens.ink),
     ),
     actions: [
       if (actions != null) ...actions,

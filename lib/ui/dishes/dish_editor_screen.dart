@@ -1,5 +1,7 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
+import '../../core/dish_enums.dart';
 import '../../core/qty_format.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
@@ -10,9 +12,10 @@ import '../theme.dart';
 import '../settings/ingredient_form.dart';
 import 'confirm_delete_dish.dart';
 
-/// Dish editor: name + ingredient rows in base 4 (FR-2) + tags (FR-14).
-/// For "quanto basta" ingredients the quantity is not required (FR-6).
-/// When [dishId] is set it works in edit mode, preloading the existing data.
+/// Dish editor: name + portata + difficulty + time + ingredient rows in base 4
+/// (FR-2, FR-14). For "quanto basta" ingredients the quantity is not required
+/// (FR-6). When [dishId] is set it works in edit mode, preloading the existing
+/// data.
 class DishEditorScreen extends StatefulWidget {
   const DishEditorScreen({super.key, this.dishId});
 
@@ -30,7 +33,8 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   final _nameController = TextEditingController();
   final _rows = <_IngredientRow>[];
   String? _portataId;
-  final _attributeIds = <String>{};
+  Difficulty? _difficulty;
+  TimeEstimate? _timeEstimate;
   bool _saving = false;
   bool _loading = false;
   bool _loaded = false;
@@ -60,6 +64,8 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     if (!mounted) return;
     setState(() {
       _nameController.text = dish?.name ?? '';
+      _difficulty = Difficulty.tryParse(dish?.difficulty);
+      _timeEstimate = TimeEstimate.tryParse(dish?.timeEstimate);
       for (final r in rows) {
         final ing = catalog[r.ingredientId];
         if (ing == null) continue;
@@ -73,8 +79,6 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       for (final t in tags) {
         if (t.tagGroup == TagGroup.portata) {
           _portataId = t.id;
-        } else {
-          _attributeIds.add(t.id);
         }
       }
       _loading = false;
@@ -151,17 +155,24 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
 
     final tagIds = <String>[
       if (_portataId != null) _portataId!,
-      ..._attributeIds,
     ];
 
     setState(() => _saving = true);
     try {
       if (_isEditing) {
         await _dishRepo.update(widget.dishId!,
-            name: name, ingredients: drafts, tagIds: tagIds);
+            name: name,
+            ingredients: drafts,
+            tagIds: tagIds,
+            difficulty: Value(_difficulty?.dbValue),
+            timeEstimate: Value(_timeEstimate?.dbValue));
       } else {
         await _dishRepo.create(
-            name: name, ingredients: drafts, tagIds: tagIds);
+            name: name,
+            ingredients: drafts,
+            tagIds: tagIds,
+            difficulty: _difficulty?.dbValue,
+            timeEstimate: _timeEstimate?.dbValue);
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -231,18 +242,46 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             textCapitalization: TextCapitalization.sentences,
           ),
           const SizedBox(height: 24),
-          _TagSection(
+
+          // Portata (single choice, optional)
+          _PortataSection(
             tagRepo: _tagRepo,
             portataId: _portataId,
-            attributeIds: _attributeIds,
             onPortataChanged: (id) => setState(() => _portataId = id),
-            onAttributeToggled: (id, selected) => setState(() {
-              if (selected) {
-                _attributeIds.add(id);
-              } else {
-                _attributeIds.remove(id);
-              }
-            }),
+          ),
+          const SizedBox(height: 16),
+
+          // Difficulty (FR-14)
+          Text('Difficoltà', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final d in Difficulty.values)
+                ChoiceChip(
+                  label: Text(d.label),
+                  selected: _difficulty == d,
+                  onSelected: (sel) =>
+                      setState(() => _difficulty = sel ? d : null),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Time estimate (FR-14)
+          Text('Tempo', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final t in TimeEstimate.values)
+                ChoiceChip(
+                  label: Text(t.label),
+                  selected: _timeEstimate == t,
+                  onSelected: (sel) =>
+                      setState(() => _timeEstimate = sel ? t : null),
+                ),
+            ],
           ),
 
           // --- Breathing room between sections ---
@@ -263,7 +302,6 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
               ),
             ],
           ),
-          // Persistent reminder (brief §6)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
@@ -353,22 +391,17 @@ class _IngredientRow {
   final TextEditingController qtyController;
 }
 
-/// Dish tag selection (FR-14): one portata (single choice, optional) and
-/// multiple attributes.
-class _TagSection extends StatelessWidget {
-  const _TagSection({
+/// Portata selection (FR-14): single choice, optional.
+class _PortataSection extends StatelessWidget {
+  const _PortataSection({
     required this.tagRepo,
     required this.portataId,
-    required this.attributeIds,
     required this.onPortataChanged,
-    required this.onAttributeToggled,
   });
 
   final TagRepository tagRepo;
   final String? portataId;
-  final Set<String> attributeIds;
   final ValueChanged<String?> onPortataChanged;
-  final void Function(String id, bool selected) onAttributeToggled;
 
   @override
   Widget build(BuildContext context) {
@@ -382,7 +415,10 @@ class _TagSection extends StatelessWidget {
           builder: (context, snapshot) {
             final tags = snapshot.data ?? const [];
             if (tags.isEmpty) {
-              return const _NoTagsHint();
+              return Text(
+                'Nessuna portata definita. Aggiungile in Impostazioni → Tag dei piatti.',
+                style: Theme.of(context).textTheme.bodySmall,
+              );
             }
             return Wrap(
               spacing: 8,
@@ -398,42 +434,7 @@ class _TagSection extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 16),
-        Text('Attributi', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        StreamBuilder<List<Tag>>(
-          stream: tagRepo.watchByGroup(TagGroup.attributo),
-          builder: (context, snapshot) {
-            final tags = snapshot.data ?? const [];
-            if (tags.isEmpty) {
-              return const _NoTagsHint();
-            }
-            return Wrap(
-              spacing: 8,
-              children: [
-                for (final tag in tags)
-                  FilterChip(
-                    label: Text(tag.name),
-                    selected: attributeIds.contains(tag.id),
-                    onSelected: (sel) => onAttributeToggled(tag.id, sel),
-                  ),
-              ],
-            );
-          },
-        ),
       ],
-    );
-  }
-}
-
-class _NoTagsHint extends StatelessWidget {
-  const _NoTagsHint();
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      'Nessun tag definito. Aggiungili in Impostazioni → Tag dei piatti.',
-      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 }

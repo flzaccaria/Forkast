@@ -45,6 +45,12 @@ class $HouseholdsTable extends Households
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("auto_regen" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _seededAtMeta =
+      const VerificationMeta('seededAt');
+  @override
+  late final GeneratedColumn<DateTime> seededAt = GeneratedColumn<DateTime>(
+      'seeded_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -58,8 +64,16 @@ class $HouseholdsTable extends Households
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, name, defaultGuests, weekStartDay, autoRegen, createdAt, updatedAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        defaultGuests,
+        weekStartDay,
+        autoRegen,
+        seededAt,
+        createdAt,
+        updatedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -95,6 +109,10 @@ class $HouseholdsTable extends Households
       context.handle(_autoRegenMeta,
           autoRegen.isAcceptableOrUnknown(data['auto_regen']!, _autoRegenMeta));
     }
+    if (data.containsKey('seeded_at')) {
+      context.handle(_seededAtMeta,
+          seededAt.isAcceptableOrUnknown(data['seeded_at']!, _seededAtMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -126,6 +144,8 @@ class $HouseholdsTable extends Households
           .read(DriftSqlType.int, data['${effectivePrefix}week_start_day'])!,
       autoRegen: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}auto_regen'])!,
+      seededAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}seeded_at']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -145,6 +165,7 @@ class Household extends DataClass implements Insertable<Household> {
   final int defaultGuests;
   final int weekStartDay;
   final bool autoRegen;
+  final DateTime? seededAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Household(
@@ -153,6 +174,7 @@ class Household extends DataClass implements Insertable<Household> {
       required this.defaultGuests,
       required this.weekStartDay,
       required this.autoRegen,
+      this.seededAt,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -165,6 +187,9 @@ class Household extends DataClass implements Insertable<Household> {
     map['default_guests'] = Variable<int>(defaultGuests);
     map['week_start_day'] = Variable<int>(weekStartDay);
     map['auto_regen'] = Variable<bool>(autoRegen);
+    if (!nullToAbsent || seededAt != null) {
+      map['seeded_at'] = Variable<DateTime>(seededAt);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -177,6 +202,9 @@ class Household extends DataClass implements Insertable<Household> {
       defaultGuests: Value(defaultGuests),
       weekStartDay: Value(weekStartDay),
       autoRegen: Value(autoRegen),
+      seededAt: seededAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seededAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -191,6 +219,7 @@ class Household extends DataClass implements Insertable<Household> {
       defaultGuests: serializer.fromJson<int>(json['defaultGuests']),
       weekStartDay: serializer.fromJson<int>(json['weekStartDay']),
       autoRegen: serializer.fromJson<bool>(json['autoRegen']),
+      seededAt: serializer.fromJson<DateTime?>(json['seededAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -204,6 +233,7 @@ class Household extends DataClass implements Insertable<Household> {
       'defaultGuests': serializer.toJson<int>(defaultGuests),
       'weekStartDay': serializer.toJson<int>(weekStartDay),
       'autoRegen': serializer.toJson<bool>(autoRegen),
+      'seededAt': serializer.toJson<DateTime?>(seededAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -215,6 +245,7 @@ class Household extends DataClass implements Insertable<Household> {
           int? defaultGuests,
           int? weekStartDay,
           bool? autoRegen,
+          Value<DateTime?> seededAt = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Household(
@@ -223,6 +254,7 @@ class Household extends DataClass implements Insertable<Household> {
         defaultGuests: defaultGuests ?? this.defaultGuests,
         weekStartDay: weekStartDay ?? this.weekStartDay,
         autoRegen: autoRegen ?? this.autoRegen,
+        seededAt: seededAt.present ? seededAt.value : this.seededAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -237,6 +269,7 @@ class Household extends DataClass implements Insertable<Household> {
           ? data.weekStartDay.value
           : this.weekStartDay,
       autoRegen: data.autoRegen.present ? data.autoRegen.value : this.autoRegen,
+      seededAt: data.seededAt.present ? data.seededAt.value : this.seededAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -250,6 +283,7 @@ class Household extends DataClass implements Insertable<Household> {
           ..write('defaultGuests: $defaultGuests, ')
           ..write('weekStartDay: $weekStartDay, ')
           ..write('autoRegen: $autoRegen, ')
+          ..write('seededAt: $seededAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -257,8 +291,8 @@ class Household extends DataClass implements Insertable<Household> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, name, defaultGuests, weekStartDay, autoRegen, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, name, defaultGuests, weekStartDay,
+      autoRegen, seededAt, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -268,6 +302,7 @@ class Household extends DataClass implements Insertable<Household> {
           other.defaultGuests == this.defaultGuests &&
           other.weekStartDay == this.weekStartDay &&
           other.autoRegen == this.autoRegen &&
+          other.seededAt == this.seededAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -278,6 +313,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
   final Value<int> defaultGuests;
   final Value<int> weekStartDay;
   final Value<bool> autoRegen;
+  final Value<DateTime?> seededAt;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -287,6 +323,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     this.defaultGuests = const Value.absent(),
     this.weekStartDay = const Value.absent(),
     this.autoRegen = const Value.absent(),
+    this.seededAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -297,6 +334,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     this.defaultGuests = const Value.absent(),
     this.weekStartDay = const Value.absent(),
     this.autoRegen = const Value.absent(),
+    this.seededAt = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -309,6 +347,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     Expression<int>? defaultGuests,
     Expression<int>? weekStartDay,
     Expression<bool>? autoRegen,
+    Expression<DateTime>? seededAt,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -319,6 +358,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       if (defaultGuests != null) 'default_guests': defaultGuests,
       if (weekStartDay != null) 'week_start_day': weekStartDay,
       if (autoRegen != null) 'auto_regen': autoRegen,
+      if (seededAt != null) 'seeded_at': seededAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -331,6 +371,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       Value<int>? defaultGuests,
       Value<int>? weekStartDay,
       Value<bool>? autoRegen,
+      Value<DateTime?>? seededAt,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -340,6 +381,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       defaultGuests: defaultGuests ?? this.defaultGuests,
       weekStartDay: weekStartDay ?? this.weekStartDay,
       autoRegen: autoRegen ?? this.autoRegen,
+      seededAt: seededAt ?? this.seededAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -364,6 +406,9 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     if (autoRegen.present) {
       map['auto_regen'] = Variable<bool>(autoRegen.value);
     }
+    if (seededAt.present) {
+      map['seeded_at'] = Variable<DateTime>(seededAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -384,6 +429,7 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
           ..write('defaultGuests: $defaultGuests, ')
           ..write('weekStartDay: $weekStartDay, ')
           ..write('autoRegen: $autoRegen, ')
+          ..write('seededAt: $seededAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -1664,6 +1710,18 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _difficultyMeta =
+      const VerificationMeta('difficulty');
+  @override
+  late final GeneratedColumn<String> difficulty = GeneratedColumn<String>(
+      'difficulty', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _timeEstimateMeta =
+      const VerificationMeta('timeEstimate');
+  @override
+  late final GeneratedColumn<String> timeEstimate = GeneratedColumn<String>(
+      'time_estimate', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1678,7 +1736,7 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, householdId, name, createdAt, updatedAt];
+      [id, householdId, name, difficulty, timeEstimate, createdAt, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1708,6 +1766,18 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('difficulty')) {
+      context.handle(
+          _difficultyMeta,
+          difficulty.isAcceptableOrUnknown(
+              data['difficulty']!, _difficultyMeta));
+    }
+    if (data.containsKey('time_estimate')) {
+      context.handle(
+          _timeEstimateMeta,
+          timeEstimate.isAcceptableOrUnknown(
+              data['time_estimate']!, _timeEstimateMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -1735,6 +1805,10 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
           .read(DriftSqlType.string, data['${effectivePrefix}household_id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      difficulty: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}difficulty']),
+      timeEstimate: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}time_estimate']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -1752,12 +1826,16 @@ class Dish extends DataClass implements Insertable<Dish> {
   final String id;
   final String householdId;
   final String name;
+  final String? difficulty;
+  final String? timeEstimate;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Dish(
       {required this.id,
       required this.householdId,
       required this.name,
+      this.difficulty,
+      this.timeEstimate,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -1766,6 +1844,12 @@ class Dish extends DataClass implements Insertable<Dish> {
     map['id'] = Variable<String>(id);
     map['household_id'] = Variable<String>(householdId);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || difficulty != null) {
+      map['difficulty'] = Variable<String>(difficulty);
+    }
+    if (!nullToAbsent || timeEstimate != null) {
+      map['time_estimate'] = Variable<String>(timeEstimate);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1776,6 +1860,12 @@ class Dish extends DataClass implements Insertable<Dish> {
       id: Value(id),
       householdId: Value(householdId),
       name: Value(name),
+      difficulty: difficulty == null && nullToAbsent
+          ? const Value.absent()
+          : Value(difficulty),
+      timeEstimate: timeEstimate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeEstimate),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1788,6 +1878,8 @@ class Dish extends DataClass implements Insertable<Dish> {
       id: serializer.fromJson<String>(json['id']),
       householdId: serializer.fromJson<String>(json['householdId']),
       name: serializer.fromJson<String>(json['name']),
+      difficulty: serializer.fromJson<String?>(json['difficulty']),
+      timeEstimate: serializer.fromJson<String?>(json['timeEstimate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1799,6 +1891,8 @@ class Dish extends DataClass implements Insertable<Dish> {
       'id': serializer.toJson<String>(id),
       'householdId': serializer.toJson<String>(householdId),
       'name': serializer.toJson<String>(name),
+      'difficulty': serializer.toJson<String?>(difficulty),
+      'timeEstimate': serializer.toJson<String?>(timeEstimate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1808,12 +1902,17 @@ class Dish extends DataClass implements Insertable<Dish> {
           {String? id,
           String? householdId,
           String? name,
+          Value<String?> difficulty = const Value.absent(),
+          Value<String?> timeEstimate = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Dish(
         id: id ?? this.id,
         householdId: householdId ?? this.householdId,
         name: name ?? this.name,
+        difficulty: difficulty.present ? difficulty.value : this.difficulty,
+        timeEstimate:
+            timeEstimate.present ? timeEstimate.value : this.timeEstimate,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1823,6 +1922,11 @@ class Dish extends DataClass implements Insertable<Dish> {
       householdId:
           data.householdId.present ? data.householdId.value : this.householdId,
       name: data.name.present ? data.name.value : this.name,
+      difficulty:
+          data.difficulty.present ? data.difficulty.value : this.difficulty,
+      timeEstimate: data.timeEstimate.present
+          ? data.timeEstimate.value
+          : this.timeEstimate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1834,6 +1938,8 @@ class Dish extends DataClass implements Insertable<Dish> {
           ..write('id: $id, ')
           ..write('householdId: $householdId, ')
           ..write('name: $name, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('timeEstimate: $timeEstimate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1841,7 +1947,8 @@ class Dish extends DataClass implements Insertable<Dish> {
   }
 
   @override
-  int get hashCode => Object.hash(id, householdId, name, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id, householdId, name, difficulty, timeEstimate, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1849,6 +1956,8 @@ class Dish extends DataClass implements Insertable<Dish> {
           other.id == this.id &&
           other.householdId == this.householdId &&
           other.name == this.name &&
+          other.difficulty == this.difficulty &&
+          other.timeEstimate == this.timeEstimate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1857,6 +1966,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
   final Value<String> id;
   final Value<String> householdId;
   final Value<String> name;
+  final Value<String?> difficulty;
+  final Value<String?> timeEstimate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1864,6 +1975,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     this.id = const Value.absent(),
     this.householdId = const Value.absent(),
     this.name = const Value.absent(),
+    this.difficulty = const Value.absent(),
+    this.timeEstimate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1872,6 +1985,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     required String id,
     required String householdId,
     required String name,
+    this.difficulty = const Value.absent(),
+    this.timeEstimate = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -1884,6 +1999,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     Expression<String>? id,
     Expression<String>? householdId,
     Expression<String>? name,
+    Expression<String>? difficulty,
+    Expression<String>? timeEstimate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1892,6 +2009,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       if (id != null) 'id': id,
       if (householdId != null) 'household_id': householdId,
       if (name != null) 'name': name,
+      if (difficulty != null) 'difficulty': difficulty,
+      if (timeEstimate != null) 'time_estimate': timeEstimate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1902,6 +2021,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       {Value<String>? id,
       Value<String>? householdId,
       Value<String>? name,
+      Value<String?>? difficulty,
+      Value<String?>? timeEstimate,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -1909,6 +2030,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       id: id ?? this.id,
       householdId: householdId ?? this.householdId,
       name: name ?? this.name,
+      difficulty: difficulty ?? this.difficulty,
+      timeEstimate: timeEstimate ?? this.timeEstimate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1926,6 +2049,12 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (difficulty.present) {
+      map['difficulty'] = Variable<String>(difficulty.value);
+    }
+    if (timeEstimate.present) {
+      map['time_estimate'] = Variable<String>(timeEstimate.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1945,6 +2074,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
           ..write('id: $id, ')
           ..write('householdId: $householdId, ')
           ..write('name: $name, ')
+          ..write('difficulty: $difficulty, ')
+          ..write('timeEstimate: $timeEstimate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -5931,6 +6062,7 @@ typedef $$HouseholdsTableCreateCompanionBuilder = HouseholdsCompanion Function({
   Value<int> defaultGuests,
   Value<int> weekStartDay,
   Value<bool> autoRegen,
+  Value<DateTime?> seededAt,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -5941,6 +6073,7 @@ typedef $$HouseholdsTableUpdateCompanionBuilder = HouseholdsCompanion Function({
   Value<int> defaultGuests,
   Value<int> weekStartDay,
   Value<bool> autoRegen,
+  Value<DateTime?> seededAt,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -5969,6 +6102,9 @@ class $$HouseholdsTableFilterComposer
 
   ColumnFilters<bool> get autoRegen => $composableBuilder(
       column: $table.autoRegen, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get seededAt => $composableBuilder(
+      column: $table.seededAt, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6003,6 +6139,9 @@ class $$HouseholdsTableOrderingComposer
   ColumnOrderings<bool> get autoRegen => $composableBuilder(
       column: $table.autoRegen, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get seededAt => $composableBuilder(
+      column: $table.seededAt, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6033,6 +6172,9 @@ class $$HouseholdsTableAnnotationComposer
 
   GeneratedColumn<bool> get autoRegen =>
       $composableBuilder(column: $table.autoRegen, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get seededAt =>
+      $composableBuilder(column: $table.seededAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6069,6 +6211,7 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             Value<int> defaultGuests = const Value.absent(),
             Value<int> weekStartDay = const Value.absent(),
             Value<bool> autoRegen = const Value.absent(),
+            Value<DateTime?> seededAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6079,6 +6222,7 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             defaultGuests: defaultGuests,
             weekStartDay: weekStartDay,
             autoRegen: autoRegen,
+            seededAt: seededAt,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6089,6 +6233,7 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             Value<int> defaultGuests = const Value.absent(),
             Value<int> weekStartDay = const Value.absent(),
             Value<bool> autoRegen = const Value.absent(),
+            Value<DateTime?> seededAt = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -6099,6 +6244,7 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             defaultGuests: defaultGuests,
             weekStartDay: weekStartDay,
             autoRegen: autoRegen,
+            seededAt: seededAt,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6744,6 +6890,8 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String id,
   required String householdId,
   required String name,
+  Value<String?> difficulty,
+  Value<String?> timeEstimate,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6752,6 +6900,8 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> id,
   Value<String> householdId,
   Value<String> name,
+  Value<String?> difficulty,
+  Value<String?> timeEstimate,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6774,6 +6924,12 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get difficulty => $composableBuilder(
+      column: $table.difficulty, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get timeEstimate => $composableBuilder(
+      column: $table.timeEstimate, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6800,6 +6956,13 @@ class $$DishesTableOrderingComposer
   ColumnOrderings<String> get name => $composableBuilder(
       column: $table.name, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get difficulty => $composableBuilder(
+      column: $table.difficulty, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get timeEstimate => $composableBuilder(
+      column: $table.timeEstimate,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6824,6 +6987,12 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get difficulty => $composableBuilder(
+      column: $table.difficulty, builder: (column) => column);
+
+  GeneratedColumn<String> get timeEstimate => $composableBuilder(
+      column: $table.timeEstimate, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6858,6 +7027,8 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> householdId = const Value.absent(),
             Value<String> name = const Value.absent(),
+            Value<String?> difficulty = const Value.absent(),
+            Value<String?> timeEstimate = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6866,6 +7037,8 @@ class $$DishesTableTableManager extends RootTableManager<
             id: id,
             householdId: householdId,
             name: name,
+            difficulty: difficulty,
+            timeEstimate: timeEstimate,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6874,6 +7047,8 @@ class $$DishesTableTableManager extends RootTableManager<
             required String id,
             required String householdId,
             required String name,
+            Value<String?> difficulty = const Value.absent(),
+            Value<String?> timeEstimate = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -6882,6 +7057,8 @@ class $$DishesTableTableManager extends RootTableManager<
             id: id,
             householdId: householdId,
             name: name,
+            difficulty: difficulty,
+            timeEstimate: timeEstimate,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,

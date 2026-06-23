@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Forkast wordmark — versione definitiva (variante 2) -->
-<!-- Marchio: colore primario corallo #D85A30. Per ricolorare via CSS, sostituire i fill con "currentColor". -->
-<!-- Testo "orkast": impostato come <text> in font-family sans, colore ink #2C2C2A. -->
-<!-- PER LA PRODUZIONE: convertire "orkast" in tracciati (outline) con il font di brand scelto, -->
-<!-- così il rendering è identico ovunque e non dipende dai font installati. -->
+<!-- Forkast wordmark — versione definitiva (variante 2), THEME-AWARE -->
+<!-- F-forchetta: SEMPRE corallo #D85A30 (fill esplicito, non cambia col tema). -->
+<!-- "orkast": fill="currentColor" -> segue il colore di testo del tema. -->
+<!--   Light: passare currentColor = ink #2C2C2A. -->
+<!--   Dark:  passare currentColor = avorio chiaro #F2EFE9. -->
+<!-- IMPORTANTE: NON applicare un colorFilter globale all'SVG: appiattirebbe -->
+<!-- anche la F a un colore unico (era il bug del wordmark tutto bianco in dark). -->
+<!-- PRODUZIONE: convertire "orkast" in tracciati col font di brand per un rendering identico ovunque. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="44 30 264 96" width="528" height="192" role="img" aria-label="Forkast">
   <title>Forkast</title>
-  <!-- F-forchetta -->
+  <!-- F-forchetta: corallo fisso -->
   <rect x="60" y="38" width="7" height="62" fill="#D85A30"/>
   <path d="M63.5 100 C63.5 110 56 115 51 112" fill="none" stroke="#D85A30" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
   <g fill="#D85A30">
@@ -15,6 +18,6 @@
     <rect x="60" y="56" width="46" height="7" rx="3"/>
     <rect x="60" y="65" width="46" height="7" rx="3"/>
   </g>
-  <!-- "orkast" -->
-  <text x="109" y="100" font-family="'Anthropic Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="60" font-weight="500" fill="#2C2C2A">orkast</text>
+  <!-- "orkast": segue il colore di testo del tema -->
+  <text x="109" y="100" font-family="'Anthropic Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="60" font-weight="500" fill="currentColor">orkast</text>
 </svg>

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
 import '../../core/reparto.dart';
+import '../../core/unit.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
 
@@ -41,20 +42,22 @@ class _IngredientFormState extends State<_IngredientForm> {
   final _formKey = GlobalKey<FormState>();
   late final _nameController = TextEditingController(
       text: widget.existing?.name ?? widget.initialName ?? '');
-  late final _unitController = TextEditingController(
-      text: widget.existing != null && !widget.existing!.isQb
-          ? widget.existing!.unit
-          : '');
   late bool _isQb = widget.existing?.isQb ?? false;
   late String? _category = widget.existing?.category;
-  late String _roundingKind = widget.existing?.roundingKind ?? 'weight';
+  late Unit _selectedUnit = _resolveInitialUnit();
   bool _saving = false;
 
-  /// On creation the unit is always editable; in edit mode it is locked if
-  /// the ingredient is already used (FR-16). Resolved in initState.
   bool _unitLocked = false;
 
   bool get _isEditing => widget.existing != null;
+
+  Unit _resolveInitialUnit() {
+    if (widget.existing == null) return Unit.grammi;
+    if (widget.existing!.isQb) return Unit.grammi;
+    return Unit.tryParse(widget.existing!.unit) ??
+        Unit.tryParseLoose(widget.existing!.unit) ??
+        Unit.grammi;
+  }
 
   @override
   void initState() {
@@ -69,7 +72,6 @@ class _IngredientFormState extends State<_IngredientForm> {
   @override
   void dispose() {
     _nameController.dispose();
-    _unitController.dispose();
     super.dispose();
   }
 
@@ -78,14 +80,15 @@ class _IngredientFormState extends State<_IngredientForm> {
     setState(() => _saving = true);
     try {
       final name = _nameController.text.trim();
-      final unit = _isQb ? 'q.b.' : _unitController.text.trim();
+      final unit = _isQb ? 'q.b.' : _selectedUnit.dbValue;
+      final roundingKind = _isQb ? null : _selectedUnit.roundingKind;
       if (_isEditing) {
         await widget.repo.update(
           widget.existing!.id,
           name: name,
           unit: unit,
           isQb: _unitLocked ? null : _isQb,
-          roundingKind: _unitLocked ? null : _roundingKind,
+          roundingKind: _unitLocked ? null : roundingKind,
           category: Value(_category),
         );
         if (mounted) Navigator.of(context).pop(widget.existing);
@@ -95,7 +98,7 @@ class _IngredientFormState extends State<_IngredientForm> {
           unit: unit,
           isQb: _isQb,
           category: _category,
-          roundingKind: _roundingKind,
+          roundingKind: roundingKind ?? 'weight',
         );
         if (mounted) Navigator.of(context).pop(created);
       }
@@ -134,19 +137,21 @@ class _IngredientFormState extends State<_IngredientForm> {
                   (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
             ),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _unitController,
-              enabled: unitEnabled,
+            DropdownButtonFormField<Unit>(
+              initialValue: _selectedUnit,
               decoration: InputDecoration(
-                labelText: 'Unità (es. g, ml, pz)',
+                labelText: 'Unità di misura',
                 helperText: _unitLocked
                     ? 'Bloccata: l\'ingrediente è già usato in un piatto'
                     : null,
               ),
-              validator: (v) {
-                if (_isQb || _unitLocked) return null;
-                return (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null;
-              },
+              items: [
+                for (final u in Unit.values)
+                  DropdownMenuItem(value: u, child: Text(u.label)),
+              ],
+              onChanged: unitEnabled
+                  ? (v) => setState(() => _selectedUnit = v!)
+                  : null,
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -155,31 +160,6 @@ class _IngredientFormState extends State<_IngredientForm> {
               value: _isQb,
               onChanged: _unitLocked ? null : (v) => setState(() => _isQb = v),
             ),
-            if (!_isQb) ...[
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: _roundingKind,
-                decoration: InputDecoration(
-                  labelText: 'Arrotondamento',
-                  helperText: _unitLocked
-                      ? 'Bloccato: l\'ingrediente è già usato in un piatto'
-                      : null,
-                ),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'whole', child: Text('Pezzo intero (↑ intero)')),
-                  DropdownMenuItem(
-                      value: 'weight',
-                      child: Text('Peso (↑ 10 g / 0,1 kg)')),
-                  DropdownMenuItem(
-                      value: 'volume',
-                      child: Text('Volume (↑ 10 ml / 0,1 l)')),
-                ],
-                onChanged: _unitLocked
-                    ? null
-                    : (v) => setState(() => _roundingKind = v!),
-              ),
-            ],
             const SizedBox(height: 8),
             DropdownButtonFormField<String?>(
               initialValue: _category,

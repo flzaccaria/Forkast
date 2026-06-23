@@ -9,6 +9,8 @@ import 'data/bootstrap.dart';
 import 'data/database.dart';
 import 'data/open_database.dart';
 import 'data/powersync_connector.dart';
+import 'data/repositories/ingredient_repository.dart';
+import 'data/seed_catalog.dart';
 import 'ui/app_scope.dart';
 import 'ui/app_shell.dart';
 import 'ui/theme.dart';
@@ -71,6 +73,12 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     final householdId = await ensureHousehold(db, deviceId);
 
     unawaited(powerSyncDb.connect(connector: SupabaseConnector()));
+
+    // Migrate free-text units to canonical enum values (FR-5, one-time).
+    unawaited(IngredientRepository(db, householdId).migrateUnitsToEnum());
+
+    // Seed the ingredient catalog for new households (P6, one-time).
+    unawaited(seedCatalogIfNeeded(db, householdId));
 
     return _Bootstrapped(db, householdId);
   }

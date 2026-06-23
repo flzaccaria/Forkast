@@ -77,6 +77,26 @@ void main() {
         throwsA(isA<AssertionError>()),
       );
     });
+
+    test('aggregates correctly with enum-canonical unit values (FR-5)', () {
+      final rows = aggregateList([
+        line(id: 'a', unit: 'g', roundingKind: 'weight', qtyBase4: 300, guests: 4),
+        line(id: 'a', unit: 'g', roundingKind: 'weight', qtyBase4: 200, guests: 6),
+      ]);
+      expect(rows.single.ingredientId, 'a');
+      expect(rows.single.unit, 'g');
+      // 300 + 200*(6/4) = 300 + 300 = 600, rounded to nearest 10 → 600
+      expect(rows.single.qty, 600);
+    });
+
+    test('enum unit "pz" aggregates with whole rounding', () {
+      final rows = aggregateList([
+        line(id: 'b', unit: 'pz', roundingKind: 'whole', qtyBase4: 4, guests: 6),
+        line(id: 'b', unit: 'pz', roundingKind: 'whole', qtyBase4: 2, guests: 2),
+      ]);
+      // 4*(6/4) + 2*(2/4) = 6 + 1 = 7, ceil → 7
+      expect(rows.single.qty, 7);
+    });
   });
 
   group('planHash', () {
