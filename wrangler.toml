@@ -5,3 +5,4 @@ main = "worker/index.js"
 [assets]
 directory = "./build/web"
 not_found_handling = "single-page-application"
+serve_directly = false
