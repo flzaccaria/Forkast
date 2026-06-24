@@ -6,4 +6,4 @@ main = "worker/index.js"
 directory = "./build/web"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
-serve_directly = false
+run_worker_first = true
