@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n_enums.dart';
 import '../../core/qty_format.dart';
 import '../../core/reparto.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/list_repository.dart';
 import '../../data/repositories/plan_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 
-/// Shopping list (FR-10/11/12/13/21) for the current week. Generated layer
-/// auto-regenerates when the plan changes (v0.6); manual items, overrides
-/// and checks persist.
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
 
@@ -50,6 +49,7 @@ class _ListScreenState extends State<ListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
       appBar: forkastAppBar(context),
@@ -68,8 +68,7 @@ class _ListScreenState extends State<ListScreen> {
                         color: tokens.inkMuted),
                     const SizedBox(height: 12),
                     Text(
-                      'Ancora niente in lista.\n'
-                      'Pianifica qualche cena e ci penso io.',
+                      l.listEmpty,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: tokens.inkMuted, fontSize: 15),
                     ),
@@ -83,7 +82,6 @@ class _ListScreenState extends State<ListScreen> {
             builder: (context, listSnap) {
               final list = listSnap.data;
               if (list == null) {
-                // Auto-generate on first visit (FR-21 v0.6).
                 _generate(weekPlan.id);
                 return const Center(child: CircularProgressIndicator());
               }
@@ -176,6 +174,7 @@ class _ListContentState extends State<_ListContent> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -191,7 +190,7 @@ class _ListContentState extends State<_ListContent> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addManual,
         icon: const Icon(Icons.add),
-        label: const Text('Voce manuale'),
+        label: Text(l.listManualTitle),
       ),
     );
   }
@@ -210,6 +209,7 @@ class _GeneratedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return StreamBuilder<List<GeneratedItemView>>(
       stream: repo.watchGeneratedItems(listId),
@@ -228,8 +228,7 @@ class _GeneratedSection extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Lo strato generato è vuoto: il piano di questa settimana '
-                'non ha piatti con ingredienti.',
+                l.listGeneratedEmpty,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: tokens.inkMuted),
               ),
@@ -242,7 +241,7 @@ class _GeneratedSection extends StatelessWidget {
           itemBuilder: (context, i) {
             final entry = entries[i];
             if (entry is _RepartoHeader) {
-              return _StickyDepartmentHeader(label: entry.label);
+              return _StickyDepartmentHeader(label: entry.label, dbKey: entry.dbKey);
             }
             final item = (entry as _RepartoItem).item;
             return _GeneratedRow(
@@ -268,7 +267,7 @@ class _GeneratedSection extends StatelessWidget {
     for (final item in sorted) {
       final label = item.category ?? repartoNonAssegnato;
       if (label != currentLabel) {
-        entries.add(_RepartoHeader(label));
+        entries.add(_RepartoHeader(label, item.category));
         currentLabel = label;
       }
       entries.add(_RepartoItem(item));
@@ -278,12 +277,14 @@ class _GeneratedSection extends StatelessWidget {
 }
 
 class _StickyDepartmentHeader extends StatelessWidget {
-  const _StickyDepartmentHeader({required this.label});
+  const _StickyDepartmentHeader({required this.label, this.dbKey});
 
   final String label;
+  final String? dbKey;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final primary = Theme.of(context).colorScheme.primary;
     return Container(
@@ -291,7 +292,7 @@ class _StickyDepartmentHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
       color: tokens.surfacePage,
       child: Text(
-        label.toUpperCase(),
+        localizedReparto(dbKey, l).toUpperCase(),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -316,6 +317,7 @@ class _GeneratedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final checked = item.checked;
     final removed = item.removed;
@@ -349,11 +351,11 @@ class _GeneratedRow extends StatelessWidget {
                     ),
                   ),
                   if (item.hasOverride && !removed)
-                    Text('modificato',
+                    Text(l.listModified,
                         style: TextStyle(
                             fontSize: 12, color: tokens.inkMuted)),
                   if (removed)
-                    Text('rimosso',
+                    Text(l.listRemoved,
                         style: TextStyle(
                             fontSize: 12, color: tokens.inkMuted)),
                 ],
@@ -375,6 +377,8 @@ class _QtyLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     if (item.isQb) {
       return Container(
@@ -384,7 +388,7 @@ class _QtyLabel extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          'q.b.',
+          l.qb,
           style: TextStyle(
             fontSize: 13,
             color: dimmed
@@ -397,7 +401,7 @@ class _QtyLabel extends StatelessWidget {
     final qty = item.displayQty;
     if (qty == null) return const SizedBox.shrink();
     return Text(
-      '${formatQty(qty)} ${item.unit}',
+      '${formatQty(qty, locale: locale)} ${item.unit}',
       style: TextStyle(
         fontSize: 13,
         color: dimmed ? tokens.inkMuted.withValues(alpha: 0.5) : tokens.inkMuted,
@@ -412,8 +416,9 @@ sealed class _RepartoEntry {
 }
 
 class _RepartoHeader extends _RepartoEntry {
-  const _RepartoHeader(this.label);
+  const _RepartoHeader(this.label, this.dbKey);
   final String label;
+  final String? dbKey;
 }
 
 class _RepartoItem extends _RepartoEntry {
@@ -429,6 +434,8 @@ class _ManualSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return StreamBuilder<List<ManualItemView>>(
       stream: repo.watchManualItems(listId),
@@ -447,7 +454,7 @@ class _ManualSection extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      'AGGIUNTE MANUALI',
+                      l.listManualAdds,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -467,7 +474,7 @@ class _ManualSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'manuale',
+                        l.listManualBadge,
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
@@ -528,7 +535,7 @@ class _ManualSection extends StatelessWidget {
                       ),
                       if (item.qty != null)
                         Text(
-                          '${formatQty(item.qty!)} ${item.unit ?? ''}'.trim(),
+                          '${formatQty(item.qty!, locale: locale)} ${item.unit ?? ''}'.trim(),
                           style: TextStyle(
                             fontSize: 13,
                             color: checked
@@ -570,13 +577,15 @@ class _GeneratedRowActions extends StatelessWidget {
   final VoidCallback onRestore;
 
   Future<void> _editQty(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final controller = TextEditingController(
-      text: item.displayQty != null ? formatQty(item.displayQty!) : '',
+      text: item.displayQty != null ? formatQty(item.displayQty!, locale: locale) : '',
     );
     final value = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Quantità — ${item.name}'),
+        title: Text(l.listQtyDialogTitle(item.name)),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -586,7 +595,7 @@ class _GeneratedRowActions extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Annulla'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -594,7 +603,7 @@ class _GeneratedRowActions extends StatelessWidget {
                   controller.text.replaceAll(',', '.'));
               Navigator.of(ctx).pop(v);
             },
-            child: const Text('Salva'),
+            child: Text(l.save),
           ),
         ],
       ),
@@ -607,6 +616,7 @@ class _GeneratedRowActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -614,13 +624,13 @@ class _GeneratedRowActions extends StatelessWidget {
           if (!item.isQb && !item.removed)
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Modifica quantità'),
+              title: Text(l.listEditQty),
               onTap: () => _editQty(context),
             ),
           if (!item.removed)
             ListTile(
               leading: const Icon(Icons.delete_outline),
-              title: const Text('Rimuovi dalla lista'),
+              title: Text(l.listRemoveFromList),
               onTap: () {
                 onRemove();
                 Navigator.of(context).pop();
@@ -629,7 +639,7 @@ class _GeneratedRowActions extends StatelessWidget {
           if (item.hasOverride)
             ListTile(
               leading: const Icon(Icons.restart_alt_outlined),
-              title: const Text('Ripristina valore calcolato'),
+              title: Text(l.listRestoreCalculated),
               onTap: () {
                 onRestore();
                 Navigator.of(context).pop();
@@ -682,6 +692,7 @@ class _ManualItemFormState extends State<_ManualItemForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomInset),
@@ -691,15 +702,15 @@ class _ManualItemFormState extends State<_ManualItemForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Voce manuale',
+            Text(l.listManualTitle,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nome'),
+              decoration: InputDecoration(labelText: l.name),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
+                  (v == null || v.trim().isEmpty) ? l.required : null,
             ),
             const SizedBox(height: 8),
             Row(
@@ -709,22 +720,22 @@ class _ManualItemFormState extends State<_ManualItemForm> {
                     controller: _qtyController,
                     keyboardType: const TextInputType.numberWithOptions(
                         decimal: true),
-                    decoration: const InputDecoration(
-                        labelText: 'Quantità (opzionale)'),
+                    decoration: InputDecoration(
+                        labelText: l.listQtyLabel),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
                     controller: _unitController,
-                    decoration: const InputDecoration(
-                        labelText: 'Unità (opz.)'),
+                    decoration: InputDecoration(
+                        labelText: l.listUnitLabel),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: _save, child: const Text('Aggiungi')),
+            FilledButton(onPressed: _save, child: Text(l.listManualAdd)),
           ],
         ),
       ),

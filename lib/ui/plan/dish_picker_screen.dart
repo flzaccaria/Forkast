@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 
-/// Plan dish selection (FR-7): reuses the dish catalog in multiple-choice
-/// mode. Returns the ids of the chosen dishes to add to the evening.
-/// Already-assigned dishes are shown but disabled.
 class DishPickerScreen extends StatefulWidget {
   const DishPickerScreen({super.key, this.alreadySelected = const []});
 
@@ -38,15 +36,16 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aggiungi piatti'),
+        title: Text(l.pickerTitle),
         actions: [
           TextButton(
             onPressed: _selected.isEmpty
                 ? null
                 : () => Navigator.of(context).pop(_selected.toList()),
-            child: Text('Aggiungi (${_selected.length})'),
+            child: Text(l.pickerAddCount(_selected.length)),
           ),
         ],
       ),
@@ -56,7 +55,7 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
             padding: const EdgeInsets.all(12),
             child: SearchBar(
               controller: _searchController,
-              hintText: 'Cerca un piatto',
+              hintText: l.dishesSearchHint,
               leading: const Icon(Icons.search),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -73,8 +72,8 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
                   return Center(
                     child: Text(
                       _query.isEmpty
-                          ? 'Nessun piatto nel catalogo.'
-                          : 'Nessun piatto trovato.',
+                          ? l.pickerEmptyCatalog
+                          : l.dishesNoResults,
                     ),
                   );
                 }
@@ -87,7 +86,7 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
                     return CheckboxListTile(
                       title: Text(dish.name),
                       subtitle:
-                          alreadyAdded ? const Text('Già in questa cena') : null,
+                          alreadyAdded ? Text(l.pickerAlreadyInDinner) : null,
                       value: alreadyAdded || _selected.contains(dish.id),
                       onChanged: alreadyAdded
                           ? null

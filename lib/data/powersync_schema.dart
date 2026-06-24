@@ -31,6 +31,8 @@ const forkastSchema = Schema([
     Column.integer('is_qb'),
     Column.text('category'),
     Column.text('rounding_kind'),
+    Column.text('seed_key'),
+    Column.integer('name_modified'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ], indexes: [
@@ -52,6 +54,8 @@ const forkastSchema = Schema([
     Column.text('name'),
     Column.text('difficulty'),
     Column.text('time_estimate'),
+    Column.text('seed_key'),
+    Column.integer('name_modified'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ], indexes: [

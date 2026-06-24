@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:powersync/powersync.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 
-/// Sync status between devices (screen map / ADR-001).
-/// Local-first: the UI never depends on the network, this is informational only.
 class SyncStatusScreen extends StatelessWidget {
   const SyncStatusScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final powerSync = AppScope.of(context).database.powerSync;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sincronizzazione')),
+      appBar: AppBar(title: Text(l.syncTitle)),
       body: powerSync == null
-          ? const Center(child: Text('Sincronizzazione non disponibile.'))
+          ? Center(child: Text(l.syncUnavailable))
           : StreamBuilder<SyncStatus>(
               stream: powerSync.statusStream,
               initialData: powerSync.currentStatus,
@@ -36,27 +36,28 @@ class _StatusView extends StatelessWidget {
   final SyncStatus status;
 
   ({IconData icon, String label, Color color}) _connection(BuildContext c) {
+    final l = AppLocalizations.of(c);
     final scheme = Theme.of(c).colorScheme;
     if (status.connected) {
-      return (icon: Icons.cloud_done, label: 'Connesso', color: Colors.green);
+      return (icon: Icons.cloud_done, label: l.syncConnected, color: Colors.green);
     }
     if (status.connecting) {
       return (
         icon: Icons.cloud_sync,
-        label: 'Connessione in corso…',
+        label: l.syncConnecting,
         color: scheme.secondary
       );
     }
     return (
       icon: Icons.cloud_off,
-      label: 'Offline',
+      label: l.syncOffline,
       color: scheme.outline,
     );
   }
 
-  String _lastSynced() {
+  String _lastSynced(AppLocalizations l) {
     final at = status.lastSyncedAt;
-    if (at == null) return 'Mai';
+    if (at == null) return l.syncNever;
     final local = at.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(local.day)}/${two(local.month)} '
@@ -65,6 +66,7 @@ class _StatusView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final conn = _connection(context);
     final error = status.downloadError ?? status.uploadError;
     return ListView(
@@ -73,40 +75,39 @@ class _StatusView extends StatelessWidget {
           leading: Icon(conn.icon, color: conn.color),
           title: Text(conn.label),
           subtitle: Text(status.hasSynced == true
-              ? 'Dati sincronizzati almeno una volta'
-              : 'In attesa della prima sincronizzazione'),
+              ? l.syncSyncedOnce
+              : l.syncWaitingFirst),
         ),
         const Divider(height: 1),
         ListTile(
           leading: const Icon(Icons.schedule),
-          title: const Text('Ultima sincronizzazione'),
-          trailing: Text(_lastSynced()),
+          title: Text(l.syncLastSync),
+          trailing: Text(_lastSynced(l)),
         ),
         ListTile(
           leading: const Icon(Icons.download),
-          title: const Text('Download'),
-          trailing: Text(status.downloading ? 'In corso…' : 'Inattivo'),
+          title: Text(l.syncDownload),
+          trailing: Text(status.downloading ? l.syncInProgress : l.syncIdle),
         ),
         ListTile(
           leading: const Icon(Icons.upload),
-          title: const Text('Upload'),
-          trailing: Text(status.uploading ? 'In corso…' : 'Inattivo'),
+          title: Text(l.syncUpload),
+          trailing: Text(status.uploading ? l.syncInProgress : l.syncIdle),
         ),
         if (error != null) ...[
           const Divider(height: 1),
           ListTile(
             leading: Icon(Icons.error_outline,
                 color: Theme.of(context).colorScheme.error),
-            title: const Text('Ultimo errore'),
+            title: Text(l.syncLastError),
             subtitle: Text(error.toString()),
           ),
         ],
-        const Padding(
-          padding: EdgeInsets.all(16),
+        Padding(
+          padding: const EdgeInsets.all(16),
           child: Text(
-            'L\'app funziona anche offline: le modifiche restano sul '
-            'dispositivo e si sincronizzano appena torna la rete.',
-            style: TextStyle(fontStyle: FontStyle.italic),
+            l.syncOfflineNote,
+            style: const TextStyle(fontStyle: FontStyle.italic),
           ),
         ),
       ],

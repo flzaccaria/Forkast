@@ -1,0 +1,653 @@
+{
+  "pomodori-freschi": {
+    "it": "Pomodori freschi"
+  },
+  "pomodorini": {
+    "it": "Pomodorini"
+  },
+  "insalata": {
+    "it": "Insalata"
+  },
+  "rucola": {
+    "it": "Rucola"
+  },
+  "carote": {
+    "it": "Carote"
+  },
+  "cipolle": {
+    "it": "Cipolle"
+  },
+  "cipolla-rossa": {
+    "it": "Cipolla rossa"
+  },
+  "aglio": {
+    "it": "Aglio"
+  },
+  "patate": {
+    "it": "Patate"
+  },
+  "zucchine": {
+    "it": "Zucchine"
+  },
+  "melanzane": {
+    "it": "Melanzane"
+  },
+  "peperoni": {
+    "it": "Peperoni"
+  },
+  "sedano": {
+    "it": "Sedano"
+  },
+  "finocchi": {
+    "it": "Finocchi"
+  },
+  "spinaci": {
+    "it": "Spinaci"
+  },
+  "broccoli": {
+    "it": "Broccoli"
+  },
+  "cavolfiore": {
+    "it": "Cavolfiore"
+  },
+  "verza": {
+    "it": "Verza"
+  },
+  "funghi-champignon": {
+    "it": "Funghi champignon"
+  },
+  "zucca": {
+    "it": "Zucca"
+  },
+  "fagiolini": {
+    "it": "Fagiolini"
+  },
+  "piselli-freschi": {
+    "it": "Piselli freschi"
+  },
+  "asparagi": {
+    "it": "Asparagi"
+  },
+  "radicchio": {
+    "it": "Radicchio"
+  },
+  "cetrioli": {
+    "it": "Cetrioli"
+  },
+  "porri": {
+    "it": "Porri"
+  },
+  "bietola": {
+    "it": "Bietola"
+  },
+  "basilico": {
+    "it": "Basilico"
+  },
+  "prezzemolo": {
+    "it": "Prezzemolo"
+  },
+  "rosmarino": {
+    "it": "Rosmarino"
+  },
+  "salvia": {
+    "it": "Salvia"
+  },
+  "peperoncino-fresco": {
+    "it": "Peperoncino fresco"
+  },
+  "zenzero": {
+    "it": "Zenzero"
+  },
+  "limoni": {
+    "it": "Limoni"
+  },
+  "arance": {
+    "it": "Arance"
+  },
+  "mele": {
+    "it": "Mele"
+  },
+  "banane": {
+    "it": "Banane"
+  },
+  "pere": {
+    "it": "Pere"
+  },
+  "fragole": {
+    "it": "Fragole"
+  },
+  "uva": {
+    "it": "Uva"
+  },
+  "pesche": {
+    "it": "Pesche"
+  },
+  "kiwi": {
+    "it": "Kiwi"
+  },
+  "melone": {
+    "it": "Melone"
+  },
+  "mandarini": {
+    "it": "Mandarini"
+  },
+  "ciliegie": {
+    "it": "Ciliegie"
+  },
+  "mirtilli": {
+    "it": "Mirtilli"
+  },
+  "avocado": {
+    "it": "Avocado"
+  },
+  "carne-macinata-di-manzo": {
+    "it": "Carne macinata di manzo"
+  },
+  "carne-macinata-mista": {
+    "it": "Carne macinata mista"
+  },
+  "petto-di-pollo": {
+    "it": "Petto di pollo"
+  },
+  "cosce-di-pollo": {
+    "it": "Cosce di pollo"
+  },
+  "pollo-intero": {
+    "it": "Pollo intero"
+  },
+  "fettine-di-vitello": {
+    "it": "Fettine di vitello"
+  },
+  "bistecca-di-manzo": {
+    "it": "Bistecca di manzo"
+  },
+  "arrosto-di-maiale": {
+    "it": "Arrosto di maiale"
+  },
+  "salsicce": {
+    "it": "Salsicce"
+  },
+  "costine-di-maiale": {
+    "it": "Costine di maiale"
+  },
+  "spezzatino-di-manzo": {
+    "it": "Spezzatino di manzo"
+  },
+  "fettine-di-tacchino": {
+    "it": "Fettine di tacchino"
+  },
+  "coniglio": {
+    "it": "Coniglio"
+  },
+  "braciole-di-maiale": {
+    "it": "Braciole di maiale"
+  },
+  "lonza-di-maiale": {
+    "it": "Lonza di maiale"
+  },
+  "salmone": {
+    "it": "Salmone"
+  },
+  "tonno-fresco": {
+    "it": "Tonno fresco"
+  },
+  "orata": {
+    "it": "Orata"
+  },
+  "branzino": {
+    "it": "Branzino"
+  },
+  "gamberi": {
+    "it": "Gamberi"
+  },
+  "calamari": {
+    "it": "Calamari"
+  },
+  "cozze": {
+    "it": "Cozze"
+  },
+  "vongole": {
+    "it": "Vongole"
+  },
+  "merluzzo": {
+    "it": "Merluzzo"
+  },
+  "platessa": {
+    "it": "Platessa"
+  },
+  "seppie": {
+    "it": "Seppie"
+  },
+  "polpo": {
+    "it": "Polpo"
+  },
+  "sgombro": {
+    "it": "Sgombro"
+  },
+  "trota": {
+    "it": "Trota"
+  },
+  "prosciutto-crudo": {
+    "it": "Prosciutto crudo"
+  },
+  "prosciutto-cotto": {
+    "it": "Prosciutto cotto"
+  },
+  "mortadella": {
+    "it": "Mortadella"
+  },
+  "salame": {
+    "it": "Salame"
+  },
+  "speck": {
+    "it": "Speck"
+  },
+  "pancetta": {
+    "it": "Pancetta"
+  },
+  "bresaola": {
+    "it": "Bresaola"
+  },
+  "parmigiano-reggiano": {
+    "it": "Parmigiano Reggiano"
+  },
+  "grana-padano": {
+    "it": "Grana Padano"
+  },
+  "pecorino": {
+    "it": "Pecorino"
+  },
+  "mozzarella": {
+    "it": "Mozzarella"
+  },
+  "mozzarella-di-bufala": {
+    "it": "Mozzarella di bufala"
+  },
+  "gorgonzola": {
+    "it": "Gorgonzola"
+  },
+  "stracchino": {
+    "it": "Stracchino"
+  },
+  "ricotta": {
+    "it": "Ricotta"
+  },
+  "scamorza": {
+    "it": "Scamorza"
+  },
+  "fontina": {
+    "it": "Fontina"
+  },
+  "mascarpone": {
+    "it": "Mascarpone"
+  },
+  "latte": {
+    "it": "Latte"
+  },
+  "latte-parzialmente-scremato": {
+    "it": "Latte parzialmente scremato"
+  },
+  "uova": {
+    "it": "Uova"
+  },
+  "burro": {
+    "it": "Burro"
+  },
+  "yogurt-bianco": {
+    "it": "Yogurt bianco"
+  },
+  "yogurt-greco": {
+    "it": "Yogurt greco"
+  },
+  "panna-fresca": {
+    "it": "Panna fresca"
+  },
+  "panna-da-cucina": {
+    "it": "Panna da cucina"
+  },
+  "latte-di-soia": {
+    "it": "Latte di soia"
+  },
+  "pane": {
+    "it": "Pane"
+  },
+  "panini-per-hamburger": {
+    "it": "Panini per hamburger"
+  },
+  "pane-in-cassetta": {
+    "it": "Pane in cassetta"
+  },
+  "baguette": {
+    "it": "Baguette"
+  },
+  "grissini": {
+    "it": "Grissini"
+  },
+  "crackers": {
+    "it": "Crackers"
+  },
+  "fette-biscottate": {
+    "it": "Fette biscottate"
+  },
+  "pangrattato": {
+    "it": "Pangrattato"
+  },
+  "piadina": {
+    "it": "Piadina"
+  },
+  "tortillas": {
+    "it": "Tortillas"
+  },
+  "base-per-pizza": {
+    "it": "Base per pizza"
+  },
+  "pasta-spaghetti": {
+    "it": "Pasta spaghetti"
+  },
+  "pasta-penne": {
+    "it": "Pasta penne"
+  },
+  "pasta-fusilli": {
+    "it": "Pasta fusilli"
+  },
+  "riso": {
+    "it": "Riso"
+  },
+  "riso-basmati": {
+    "it": "Riso basmati"
+  },
+  "orzo": {
+    "it": "Orzo"
+  },
+  "farro": {
+    "it": "Farro"
+  },
+  "cous-cous": {
+    "it": "Cous cous"
+  },
+  "farina-di-mais-per-polenta": {
+    "it": "Farina di mais per polenta"
+  },
+  "gnocchi": {
+    "it": "Gnocchi"
+  },
+  "farina-00": {
+    "it": "Farina 00"
+  },
+  "farina-integrale": {
+    "it": "Farina integrale"
+  },
+  "zucchero": {
+    "it": "Zucchero"
+  },
+  "zucchero-di-canna": {
+    "it": "Zucchero di canna"
+  },
+  "lievito-per-dolci": {
+    "it": "Lievito per dolci"
+  },
+  "lievito-di-birra": {
+    "it": "Lievito di birra"
+  },
+  "cacao-amaro": {
+    "it": "Cacao amaro"
+  },
+  "cioccolato-fondente": {
+    "it": "Cioccolato fondente"
+  },
+  "vanillina": {
+    "it": "Vanillina"
+  },
+  "passata-di-pomodoro": {
+    "it": "Passata di pomodoro"
+  },
+  "pomodori-pelati": {
+    "it": "Pomodori pelati"
+  },
+  "pomodori-a-pezzi-in-barattolo": {
+    "it": "Pomodori a pezzi in barattolo"
+  },
+  "concentrato-di-pomodoro": {
+    "it": "Concentrato di pomodoro"
+  },
+  "tonno-in-scatola": {
+    "it": "Tonno in scatola"
+  },
+  "mais-in-scatola": {
+    "it": "Mais in scatola"
+  },
+  "fagioli-in-scatola": {
+    "it": "Fagioli in scatola"
+  },
+  "ceci-in-scatola": {
+    "it": "Ceci in scatola"
+  },
+  "lenticchie": {
+    "it": "Lenticchie"
+  },
+  "olive": {
+    "it": "Olive"
+  },
+  "capperi": {
+    "it": "Capperi"
+  },
+  "acciughe-sottolio": {
+    "it": "Acciughe sottolio"
+  },
+  "dado-da-brodo": {
+    "it": "Dado da brodo"
+  },
+  "olio-extravergine-di-oliva": {
+    "it": "Olio extravergine di oliva"
+  },
+  "olio-di-semi": {
+    "it": "Olio di semi"
+  },
+  "aceto": {
+    "it": "Aceto"
+  },
+  "aceto-balsamico": {
+    "it": "Aceto balsamico"
+  },
+  "sale-fino": {
+    "it": "Sale fino"
+  },
+  "sale-grosso": {
+    "it": "Sale grosso"
+  },
+  "pepe-nero": {
+    "it": "Pepe nero"
+  },
+  "senape": {
+    "it": "Senape"
+  },
+  "maionese": {
+    "it": "Maionese"
+  },
+  "ketchup": {
+    "it": "Ketchup"
+  },
+  "salsa-di-soia": {
+    "it": "Salsa di soia"
+  },
+  "miele": {
+    "it": "Miele"
+  },
+  "marmellata": {
+    "it": "Marmellata"
+  },
+  "crema-spalmabile-alla-nocciola": {
+    "it": "Crema spalmabile alla nocciola"
+  },
+  "origano": {
+    "it": "Origano"
+  },
+  "cannella": {
+    "it": "Cannella"
+  },
+  "noce-moscata": {
+    "it": "Noce moscata"
+  },
+  "curcuma": {
+    "it": "Curcuma"
+  },
+  "paprika": {
+    "it": "Paprika"
+  },
+  "curry": {
+    "it": "Curry"
+  },
+  "peperoncino-in-polvere": {
+    "it": "Peperoncino in polvere"
+  },
+  "alloro": {
+    "it": "Alloro"
+  },
+  "zafferano": {
+    "it": "Zafferano"
+  },
+  "noci": {
+    "it": "Noci"
+  },
+  "mandorle": {
+    "it": "Mandorle"
+  },
+  "pinoli": {
+    "it": "Pinoli"
+  },
+  "uvetta": {
+    "it": "Uvetta"
+  },
+  "caffe": {
+    "it": "Caffe"
+  },
+  "te": {
+    "it": "Te"
+  },
+  "cereali": {
+    "it": "Cereali"
+  },
+  "biscotti": {
+    "it": "Biscotti"
+  },
+  "piselli-surgelati": {
+    "it": "Piselli surgelati"
+  },
+  "spinaci-surgelati": {
+    "it": "Spinaci surgelati"
+  },
+  "minestrone-surgelato": {
+    "it": "Minestrone surgelato"
+  },
+  "bastoncini-di-pesce": {
+    "it": "Bastoncini di pesce"
+  },
+  "gamberi-surgelati": {
+    "it": "Gamberi surgelati"
+  },
+  "patatine-fritte-surgelate": {
+    "it": "Patatine fritte surgelate"
+  },
+  "pizza-surgelata": {
+    "it": "Pizza surgelata"
+  },
+  "gelato": {
+    "it": "Gelato"
+  },
+  "verdure-miste-surgelate": {
+    "it": "Verdure miste surgelate"
+  },
+  "filetti-di-merluzzo-surgelati": {
+    "it": "Filetti di merluzzo surgelati"
+  },
+  "acqua-naturale": {
+    "it": "Acqua naturale"
+  },
+  "acqua-frizzante": {
+    "it": "Acqua frizzante"
+  },
+  "vino-rosso": {
+    "it": "Vino rosso"
+  },
+  "vino-bianco": {
+    "it": "Vino bianco"
+  },
+  "birra": {
+    "it": "Birra"
+  },
+  "succo-di-arancia": {
+    "it": "Succo di arancia"
+  },
+  "bibita-gassata": {
+    "it": "Bibita gassata"
+  },
+  "detersivo-per-piatti": {
+    "it": "Detersivo per piatti"
+  },
+  "detersivo-per-lavatrice": {
+    "it": "Detersivo per lavatrice"
+  },
+  "carta-igienica": {
+    "it": "Carta igienica"
+  },
+  "rotolo-da-cucina": {
+    "it": "Rotolo da cucina"
+  },
+  "sacchetti-per-la-spazzatura": {
+    "it": "Sacchetti per la spazzatura"
+  },
+  "pellicola-trasparente": {
+    "it": "Pellicola trasparente"
+  },
+  "carta-da-forno": {
+    "it": "Carta da forno"
+  },
+  "rotolo-di-alluminio": {
+    "it": "Rotolo di alluminio"
+  },
+  "spugne": {
+    "it": "Spugne"
+  },
+  "ammorbidente": {
+    "it": "Ammorbidente"
+  },
+  "candeggina": {
+    "it": "Candeggina"
+  },
+  "dentifricio": {
+    "it": "Dentifricio"
+  },
+  "spazzolino": {
+    "it": "Spazzolino"
+  },
+  "sapone": {
+    "it": "Sapone"
+  },
+  "shampoo": {
+    "it": "Shampoo"
+  },
+  "bagnoschiuma": {
+    "it": "Bagnoschiuma"
+  },
+  "deodorante": {
+    "it": "Deodorante"
+  },
+  "rasoi": {
+    "it": "Rasoi"
+  },
+  "fazzoletti-di-carta": {
+    "it": "Fazzoletti di carta"
+  },
+  "cibo-per-gatti": {
+    "it": "Cibo per gatti"
+  },
+  "cibo-per-cani": {
+    "it": "Cibo per cani"
+  },
+  "pile": {
+    "it": "Pile"
+  },
+  "lampadine": {
+    "it": "Lampadine"
+  }
+}

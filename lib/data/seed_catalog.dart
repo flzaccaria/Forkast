@@ -12,10 +12,9 @@ const _uuid = Uuid();
 /// household (P6). The guard is [Household.seededAt]: once set, the seed is
 /// never re-run — not on restart, not on a paired device.
 ///
-/// Call after [ensureHousehold] and after PowerSync has started connecting
-/// (so the household row may arrive from sync). If the household row is not
-/// yet local (first launch), the ingredient-count check is the fallback
-/// guard against duplicates.
+/// Each seeded ingredient receives a stable `seed_key` (slug) from the CSV.
+/// The seed_key enables display-time localization (L2): UI shows the translated
+/// name when available, falling back to the stored Italian name.
 ///
 /// Pass [csvOverride] in tests to avoid [rootBundle] (unavailable in unit tests).
 Future<void> seedCatalogIfNeeded(
@@ -23,18 +22,14 @@ Future<void> seedCatalogIfNeeded(
   String householdId, {
   String? csvOverride,
 }) async {
-  // Fast path: if ingredients already exist (previous seed or sync), skip.
   final count = await _ingredientCount(db, householdId);
   if (count > 0) return;
 
-  // Check seeded_at flag (protects paired devices whose household row arrives
-  // before the ingredient rows).
   final household = await (db.select(db.households)
         ..where((h) => h.id.equals(householdId)))
       .getSingleOrNull();
   if (household?.seededAt != null) return;
 
-  // Parse the CSV.
   final csv =
       csvOverride ?? await rootBundle.loadString('assets/seed_ingredienti.csv');
   final rows = parseSeedCsv(csv);
@@ -43,7 +38,6 @@ Future<void> seedCatalogIfNeeded(
   final now = DateTime.now().toUtc();
 
   await db.transaction(() async {
-    // Double-check inside the transaction (idempotency).
     final recheck = await _ingredientCount(db, householdId);
     if (recheck > 0) return;
 
@@ -62,13 +56,13 @@ Future<void> seedCatalogIfNeeded(
               isQb: Value(row.isQb),
               category: Value(row.category),
               roundingKind: Value(row.isQb ? null : unit.roundingKind),
+              seedKey: Value(row.seedKey),
               createdAt: now,
               updatedAt: now,
             ),
           );
     }
 
-    // Mark household as seeded (if the row exists locally).
     await (db.update(db.households)
           ..where((h) => h.id.equals(householdId)))
         .write(HouseholdsCompanion(
@@ -93,18 +87,19 @@ class SeedRow {
     required this.category,
     required this.unit,
     required this.isQb,
+    this.seedKey,
   });
 
   final String name;
   final String? category;
   final String unit;
   final bool isQb;
+  final String? seedKey;
 }
 
 List<SeedRow> parseSeedCsv(String csv) {
   final lines = csv.split('\n').where((l) => l.trim().isNotEmpty).toList();
   if (lines.isEmpty) return const [];
-  // Skip header.
   final rows = <SeedRow>[];
   for (var i = 1; i < lines.length; i++) {
     final parts = lines[i].split(',');
@@ -114,6 +109,7 @@ List<SeedRow> parseSeedCsv(String csv) {
       category: parts[1].trim().isEmpty ? null : parts[1].trim(),
       unit: parts[2].trim(),
       isQb: parts[3].trim().toLowerCase() == 'true',
+      seedKey: parts.length > 4 ? parts[4].trim() : null,
     ));
   }
   return rows;

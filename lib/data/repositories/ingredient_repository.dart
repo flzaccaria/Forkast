@@ -57,6 +57,8 @@ class IngredientRepository {
       isQb: isQb,
       category: category,
       roundingKind: roundingKind,
+      seedKey: null,
+      nameModified: false,
       createdAt: now,
       updatedAt: now,
     );
@@ -96,6 +98,16 @@ class IngredientRepository {
     Value<String?> category = const Value.absent(),
   }) async {
     final locked = await usageCount(ingredientId) > 0;
+
+    // L2: detect name change on a seeded entry → set nameModified.
+    Value<bool> nameModifiedPatch = const Value.absent();
+    final existing = await (_db.select(_db.ingredients)
+          ..where((i) => i.id.equals(ingredientId)))
+        .getSingleOrNull();
+    if (existing != null && existing.seedKey != null && existing.name != name) {
+      nameModifiedPatch = const Value(true);
+    }
+
     final patch = IngredientsCompanion(
       name: Value(name),
       unit: (locked || unit == null) ? const Value.absent() : Value(unit),
@@ -104,6 +116,7 @@ class IngredientRepository {
           ? const Value.absent()
           : Value(roundingKind),
       category: category,
+      nameModified: nameModifiedPatch,
       updatedAt: Value(DateTime.now().toUtc()),
     );
     await (_db.update(_db.ingredients)

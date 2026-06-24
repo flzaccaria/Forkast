@@ -2,20 +2,19 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
 import '../../core/dish_enums.dart';
+import '../../core/display_name.dart';
+import '../../core/l10n_enums.dart';
 import '../../core/qty_format.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/ingredient_repository.dart';
 import '../../data/repositories/tag_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../settings/ingredient_form.dart';
 import 'confirm_delete_dish.dart';
 
-/// Dish editor: name + portata + difficulty + time + ingredient rows in base 4
-/// (FR-2, FR-14). For "quanto basta" ingredients the quantity is not required
-/// (FR-6). When [dishId] is set it works in edit mode, preloading the existing
-/// data.
 class DishEditorScreen extends StatefulWidget {
   const DishEditorScreen({super.key, this.dishId});
 
@@ -54,6 +53,8 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     }
   }
 
+  String get _qtyLocale => Localizations.localeOf(context).toString();
+
   Future<void> _load() async {
     setState(() => _loading = true);
     final dishId = widget.dishId!;
@@ -72,7 +73,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         _rows.add(_IngredientRow(
           ingredient: ing,
           qtyController: TextEditingController(
-            text: r.qtyBase4 == null ? '' : formatQty(r.qtyBase4!),
+            text: r.qtyBase4 == null ? '' : formatQty(r.qtyBase4!, locale: _qtyLocale),
           ),
         ));
       }
@@ -121,10 +122,11 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inserisci il nome del piatto')),
+        SnackBar(content: Text(l.dishEditorNameRequired)),
       );
       return;
     }
@@ -140,9 +142,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         final qty = double.tryParse(r.qtyController.text.replaceAll(',', '.'));
         if (qty == null || qty <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text('Quantità non valida per ${r.ingredient.name}')),
+            SnackBar(content: Text(l.dishEditorInvalidQty(r.ingredient.name))),
           );
           return;
         }
@@ -179,13 +179,14 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Errore nel salvataggio del piatto')),
+          SnackBar(content: Text(l.dishEditorSaveError)),
         );
       }
     }
   }
 
   Future<void> _delete() async {
+    final l = AppLocalizations.of(context);
     setState(() => _saving = true);
     try {
       final deleted = await confirmAndDeleteDish(
@@ -200,7 +201,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Errore nell\'eliminazione del piatto')),
+          SnackBar(content: Text(l.dishEditorDeleteError)),
         );
       }
     }
@@ -209,41 +210,40 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Modifica piatto')),
+        appBar: AppBar(title: Text(l.dishEditorEditTitle)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Modifica piatto' : 'Nuovo piatto'),
+        title: Text(_isEditing ? l.dishEditorEditTitle : l.dishEditorNewTitle),
         actions: [
           if (_isEditing)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: _saving ? null : _delete,
-              tooltip: 'Elimina',
+              tooltip: l.delete,
             ),
           TextButton(
             onPressed: _saving ? null : _save,
-            child: const Text('Salva'),
+            child: Text(l.save),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          // --- Section: Name & tags ---
           TextField(
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Nome del piatto'),
+            decoration: InputDecoration(labelText: l.dishEditorNameLabel),
             textCapitalization: TextCapitalization.sentences,
           ),
           const SizedBox(height: 24),
 
-          // Portata (single choice, optional)
           _PortataSection(
             tagRepo: _tagRepo,
             portataId: _portataId,
@@ -251,15 +251,14 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Difficulty (FR-14)
-          Text('Difficoltà', style: Theme.of(context).textTheme.titleMedium),
+          Text(l.dishEditorDifficulty, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
             children: [
               for (final d in Difficulty.values)
                 ChoiceChip(
-                  label: Text(d.label),
+                  label: Text(d.localizedLabel(l)),
                   selected: _difficulty == d,
                   onSelected: (sel) =>
                       setState(() => _difficulty = sel ? d : null),
@@ -268,15 +267,14 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Time estimate (FR-14)
-          Text('Tempo', style: Theme.of(context).textTheme.titleMedium),
+          Text(l.dishEditorTime, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
             children: [
               for (final t in TimeEstimate.values)
                 ChoiceChip(
-                  label: Text(t.label),
+                  label: Text(t.localizedLabel(l)),
                   selected: _timeEstimate == t,
                   onSelected: (sel) =>
                       setState(() => _timeEstimate = sel ? t : null),
@@ -284,28 +282,26 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             ],
           ),
 
-          // --- Breathing room between sections ---
           const SizedBox(height: 32),
           Divider(color: tokens.border, height: 0.5),
           const SizedBox(height: 24),
 
-          // --- Section: Ingredients (base 4) ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Ingredienti',
+              Text(l.dishEditorIngredients,
                   style: Theme.of(context).textTheme.titleMedium),
               TextButton.icon(
                 onPressed: _pickIngredient,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Aggiungi'),
+                label: Text(l.add),
               ),
             ],
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              'Le quantità sono per 4 persone',
+              l.dishEditorQuantitiesNote,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -317,7 +313,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                'Nessun ingrediente aggiunto.',
+                l.dishEditorNoIngredients,
                 style: TextStyle(color: tokens.inkMuted),
               ),
             ),
@@ -328,13 +324,15 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   }
 
   Widget _buildRow(_IngredientRow row, ForkastTokens tokens) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              row.ingredient.name,
+              ingredientDisplayName(row.ingredient, locale),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -350,7 +348,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'q.b.',
+                l.qb,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -391,7 +389,6 @@ class _IngredientRow {
   final TextEditingController qtyController;
 }
 
-/// Portata selection (FR-14): single choice, optional.
 class _PortataSection extends StatelessWidget {
   const _PortataSection({
     required this.tagRepo,
@@ -405,10 +402,11 @@ class _PortataSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Portata', style: Theme.of(context).textTheme.titleMedium),
+        Text(l.dishEditorCourse, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         StreamBuilder<List<Tag>>(
           stream: tagRepo.watchByGroup(TagGroup.portata),
@@ -416,7 +414,7 @@ class _PortataSection extends StatelessWidget {
             final tags = snapshot.data ?? const [];
             if (tags.isEmpty) {
               return Text(
-                'Nessuna portata definita. Aggiungile in Impostazioni → Tag dei piatti.',
+                l.dishEditorNoCoursesDefined,
                 style: Theme.of(context).textTheme.bodySmall,
               );
             }
@@ -439,7 +437,6 @@ class _PortataSection extends StatelessWidget {
   }
 }
 
-/// Ingredient picker from the shared catalog (FR-3, 4, 5).
 class _IngredientPicker extends StatelessWidget {
   const _IngredientPicker({required this.ingredients, required this.repo});
 
@@ -455,6 +452,7 @@ class _IngredientPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return SafeArea(
       child: ListView(
@@ -462,7 +460,7 @@ class _IngredientPicker extends StatelessWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.add),
-            title: const Text('Crea nuovo ingrediente'),
+            title: Text(l.dishEditorCreateIngredient),
             onTap: () => _createNew(context),
           ),
           Divider(height: 0.5, color: tokens.border),
@@ -470,7 +468,7 @@ class _IngredientPicker extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               child: Text(
-                'Il catalogo è vuoto. Crea il primo ingrediente.',
+                l.dishEditorCatalogEmpty,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: tokens.inkMuted),
               ),
@@ -478,8 +476,8 @@ class _IngredientPicker extends StatelessWidget {
           else
             for (final ing in ingredients)
               ListTile(
-                title: Text(ing.name),
-                subtitle: Text(ing.isQb ? 'quanto basta' : ing.unit),
+                title: Text(ingredientDisplayName(ing, Localizations.localeOf(context).toString())),
+                subtitle: Text(ing.isQb ? l.quantoBasta : ing.unit),
                 onTap: () => Navigator.of(context).pop(ing),
               ),
         ],
