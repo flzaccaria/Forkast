@@ -51,9 +51,11 @@ void main() {
         household_id TEXT,
         name TEXT,
         unit TEXT,
-        is_qb INTEGER,
+        is_qb INTEGER DEFAULT 0,
         category TEXT,
         rounding_kind TEXT,
+        seed_key TEXT,
+        name_modified INTEGER DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
       )''');

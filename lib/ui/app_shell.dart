@@ -21,10 +21,10 @@ class _AppShellState extends State<AppShell> {
   bool _pairingHandled = false;
 
   static const _screens = [
+    IngredientsScreen(),
     DishesScreen(),
     PlanScreen(),
     ListScreen(),
-    IngredientsScreen(),
   ];
 
   @override
@@ -55,6 +55,11 @@ class _AppShellState extends State<AppShell> {
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
         destinations: [
           NavigationDestination(
+            icon: const Icon(Icons.kitchen_outlined),
+            selectedIcon: const Icon(Icons.kitchen),
+            label: l.navIngredients,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.restaurant_menu_outlined),
             selectedIcon: const Icon(Icons.restaurant_menu),
             label: l.navDishes,
@@ -68,11 +73,6 @@ class _AppShellState extends State<AppShell> {
             icon: const Icon(Icons.shopping_bag_outlined),
             selectedIcon: const Icon(Icons.shopping_bag),
             label: l.navList,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.kitchen_outlined),
-            selectedIcon: const Icon(Icons.kitchen),
-            label: l.navIngredients,
           ),
         ],
       ),

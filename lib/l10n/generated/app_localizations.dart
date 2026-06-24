@@ -1107,6 +1107,132 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Senza reparto'**
   String get departmentUnassigned;
+
+  /// No description provided for @ingredientsSearchHint.
+  ///
+  /// In it, this message translates to:
+  /// **'Cerca un ingrediente'**
+  String get ingredientsSearchHint;
+
+  /// No description provided for @ingredientsNoResults.
+  ///
+  /// In it, this message translates to:
+  /// **'Nessun ingrediente trovato.'**
+  String get ingredientsNoResults;
+
+  /// No description provided for @ingredientsResultCount.
+  ///
+  /// In it, this message translates to:
+  /// **'{count, plural, =1{1 ingrediente} other{{count} ingredienti}}'**
+  String ingredientsResultCount(int count);
+
+  /// No description provided for @ingredientsFilterTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Filtri'**
+  String get ingredientsFilterTitle;
+
+  /// No description provided for @ingredientsFilterDepartment.
+  ///
+  /// In it, this message translates to:
+  /// **'Reparto'**
+  String get ingredientsFilterDepartment;
+
+  /// No description provided for @ingredientsFilterUnit.
+  ///
+  /// In it, this message translates to:
+  /// **'Unità'**
+  String get ingredientsFilterUnit;
+
+  /// No description provided for @ingredientsFilterQb.
+  ///
+  /// In it, this message translates to:
+  /// **'Quanto basta'**
+  String get ingredientsFilterQb;
+
+  /// No description provided for @ingredientsFilterQbYes.
+  ///
+  /// In it, this message translates to:
+  /// **'Solo q.b.'**
+  String get ingredientsFilterQbYes;
+
+  /// No description provided for @ingredientsFilterQbNo.
+  ///
+  /// In it, this message translates to:
+  /// **'Solo con quantità'**
+  String get ingredientsFilterQbNo;
+
+  /// No description provided for @ingredientsFilterUsage.
+  ///
+  /// In it, this message translates to:
+  /// **'Utilizzo'**
+  String get ingredientsFilterUsage;
+
+  /// No description provided for @ingredientsFilterUsed.
+  ///
+  /// In it, this message translates to:
+  /// **'Usati in almeno un piatto'**
+  String get ingredientsFilterUsed;
+
+  /// No description provided for @ingredientsFilterUnused.
+  ///
+  /// In it, this message translates to:
+  /// **'Non usati'**
+  String get ingredientsFilterUnused;
+
+  /// No description provided for @ingredientsFilterReset.
+  ///
+  /// In it, this message translates to:
+  /// **'Azzera filtri'**
+  String get ingredientsFilterReset;
+
+  /// No description provided for @ingredientsSortName.
+  ///
+  /// In it, this message translates to:
+  /// **'Nome'**
+  String get ingredientsSortName;
+
+  /// No description provided for @ingredientsSortDepartment.
+  ///
+  /// In it, this message translates to:
+  /// **'Reparto'**
+  String get ingredientsSortDepartment;
+
+  /// No description provided for @ingredientsSortUsage.
+  ///
+  /// In it, this message translates to:
+  /// **'Utilizzi'**
+  String get ingredientsSortUsage;
+
+  /// No description provided for @ingredientsSortAsc.
+  ///
+  /// In it, this message translates to:
+  /// **'A → Z'**
+  String get ingredientsSortAsc;
+
+  /// No description provided for @ingredientsSortDesc.
+  ///
+  /// In it, this message translates to:
+  /// **'Z → A'**
+  String get ingredientsSortDesc;
+
+  /// No description provided for @ingredientsViewGrouped.
+  ///
+  /// In it, this message translates to:
+  /// **'Per reparto'**
+  String get ingredientsViewGrouped;
+
+  /// No description provided for @ingredientsViewFlat.
+  ///
+  /// In it, this message translates to:
+  /// **'Lista piatta'**
+  String get ingredientsViewFlat;
+
+  /// No description provided for @ingredientsUsageCountLabel.
+  ///
+  /// In it, this message translates to:
+  /// **'{count, plural, =0{non usato} =1{1 piatto} other{{count} piatti}}'**
+  String ingredientsUsageCountLabel(int count);
 }
 
 class _AppLocalizationsDelegate

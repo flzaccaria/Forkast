@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/l10n_enums.dart';
 import '../../core/qty_format.dart';
 import '../../core/reparto.dart';
+import '../../core/seed_name_resolver.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/list_repository.dart';
@@ -11,6 +12,15 @@ import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
+
+String _resolvedName(GeneratedItemView item, String locale) {
+  return SeedNameResolver.instance.resolve(
+    storedName: item.name,
+    seedKey: item.seedKey,
+    nameModified: item.nameModified,
+    locale: locale,
+  );
+}
 
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
@@ -235,7 +245,8 @@ class _GeneratedSection extends StatelessWidget {
             ),
           );
         }
-        final entries = _groupByReparto(items);
+        final locale = Localizations.localeOf(context).toString();
+        final entries = _groupByReparto(items, locale);
         return SliverList.builder(
           itemCount: entries.length,
           itemBuilder: (context, i) {
@@ -256,11 +267,13 @@ class _GeneratedSection extends StatelessWidget {
     );
   }
 
-  List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items) {
+  List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items, String locale) {
     final sorted = [...items]..sort((a, b) {
         final byReparto = repartoSortIndex(a.category)
             .compareTo(repartoSortIndex(b.category));
-        return byReparto != 0 ? byReparto : a.name.compareTo(b.name);
+        return byReparto != 0
+            ? byReparto
+            : _resolvedName(a, locale).compareTo(_resolvedName(b, locale));
       });
     final entries = <_RepartoEntry>[];
     String? currentLabel;
@@ -318,6 +331,7 @@ class _GeneratedRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final checked = item.checked;
     final removed = item.removed;
@@ -342,7 +356,7 @@ class _GeneratedRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.name,
+                    _resolvedName(item, locale),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -585,7 +599,7 @@ class _GeneratedRowActions extends StatelessWidget {
     final value = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.listQtyDialogTitle(item.name)),
+        title: Text(l.listQtyDialogTitle(_resolvedName(item, locale))),
         content: TextField(
           controller: controller,
           autofocus: true,

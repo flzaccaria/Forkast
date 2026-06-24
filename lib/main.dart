@@ -94,6 +94,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
     unawaited(IngredientRepository(db, householdId).migrateUnitsToEnum());
 
     unawaited(seedCatalogIfNeeded(db, householdId));
+    unawaited(backfillSeedKeys(db, householdId));
 
     await SeedNameResolver.instance.load();
 

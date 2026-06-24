@@ -20,6 +20,7 @@ void main() {
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
       difficulty TEXT, time_estimate TEXT,
+      seed_key TEXT, name_modified INTEGER DEFAULT 0,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_tag (
       id TEXT PRIMARY KEY, dish_id TEXT, tag_id TEXT, household_id TEXT,
