@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../data/repositories/plan_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import 'dish_picker_screen.dart';
 
-/// Dinner of the day (FR-8/9): guests for the evening (overridable default)
-/// and assigned dishes. The evening is created lazily on the first edit.
 class DayScreen extends StatefulWidget {
   const DayScreen({
     super.key,
@@ -28,15 +28,9 @@ class DayScreen extends StatefulWidget {
 class _DayScreenState extends State<DayScreen> {
   late final PlanRepository _repo;
 
-  /// Id of the evening, resolved/created lazily.
   String? _planDayId;
   int _guests = 4;
   bool _loading = true;
-
-  static const _dayNames = [
-    'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì',
-    'Venerdì', 'Sabato', 'Domenica',
-  ];
 
   @override
   void didChangeDependencies() {
@@ -44,6 +38,13 @@ class _DayScreenState extends State<DayScreen> {
     final scope = AppScope.of(context);
     _repo = PlanRepository(scope.database, scope.householdId);
     _ensureDay();
+  }
+
+  String _dayTitle() {
+    final locale = Localizations.localeOf(context).toString();
+    final dayName = DateFormat.EEEE(locale).format(widget.date);
+    final capitalized = dayName[0].toUpperCase() + dayName.substring(1);
+    return '$capitalized ${widget.date.day}';
   }
 
   Future<void> _ensureDay() async {
@@ -91,16 +92,16 @@ class _DayScreenState extends State<DayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = '${_dayNames[widget.dayOfWeek - 1]} ${widget.date.day}';
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(title: Text(_dayTitle())),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
                 ListTile(
                   leading: const Icon(Icons.people_outlined),
-                  title: const Text('Commensali'),
+                  title: Text(l.dayGuests),
                   trailing: Text(
                     '$_guests',
                     style: Theme.of(context).textTheme.titleMedium,
@@ -116,12 +117,13 @@ class _DayScreenState extends State<DayScreen> {
           : FloatingActionButton.extended(
               onPressed: _addDishes,
               icon: const Icon(Icons.add),
-              label: const Text('Aggiungi piatto'),
+              label: Text(l.dayAddDish),
             ),
     );
   }
 
   Widget _buildDishes() {
+    final l = AppLocalizations.of(context);
     final id = _planDayId;
     if (id == null) return const SizedBox.shrink();
     return StreamBuilder<List<PlanDishEntry>>(
@@ -137,7 +139,7 @@ class _DayScreenState extends State<DayScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                'Nessun piatto per questa cena.\nTocca "Aggiungi piatto" per iniziare.',
+                l.dayEmptyState,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: tokens.inkMuted, fontSize: 15),
               ),
@@ -177,8 +179,9 @@ class _GuestsDialogState extends State<_GuestsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Commensali'),
+      title: Text(l.dayGuests),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -198,11 +201,11 @@ class _GuestsDialogState extends State<_GuestsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annulla'),
+          child: Text(l.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_value),
-          child: const Text('Conferma'),
+          child: Text(l.confirm),
         ),
       ],
     );

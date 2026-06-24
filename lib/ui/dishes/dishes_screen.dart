@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/dish_enums.dart';
+import '../../core/display_name.dart';
+import '../../core/l10n_enums.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/tag_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
@@ -48,6 +51,7 @@ class _DishesScreenState extends State<DishesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
       appBar: forkastAppBar(context),
@@ -57,7 +61,7 @@ class _DishesScreenState extends State<DishesScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: SearchBar(
               controller: _searchController,
-              hintText: 'Cerca un piatto',
+              hintText: l.dishesSearchHint,
               leading: Icon(Icons.search, color: tokens.inkMuted),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -91,9 +95,8 @@ class _DishesScreenState extends State<DishesScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Text(
                         _query.isEmpty
-                            ? 'Nessun piatto ancora.\n'
-                                'Tocca + per creare il primo.'
-                            : 'Nessun piatto trovato.',
+                            ? l.dishesEmptyState
+                            : l.dishesNoResults,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: tokens.inkMuted),
                       ),
@@ -156,15 +159,17 @@ class _DishRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final chips = <Widget>[];
     for (final tag in tags) {
       chips.add(_TagChip(tag: tag));
     }
     final diff = Difficulty.tryParse(dish.difficulty);
-    if (diff != null) chips.add(_SmallChip(label: diff.label));
+    if (diff != null) chips.add(_SmallChip(label: diff.localizedLabel(l)));
     final time = TimeEstimate.tryParse(dish.timeEstimate);
-    if (time != null) chips.add(_SmallChip(label: time.label));
+    if (time != null) chips.add(_SmallChip(label: time.localizedLabel(l)));
 
     return Dismissible(
       key: ValueKey(dish.id),
@@ -190,7 +195,7 @@ class _DishRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      dish.name,
+                      dishDisplayName(dish, locale),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -269,7 +274,6 @@ class _SmallChip extends StatelessWidget {
   }
 }
 
-/// Filter bar (FR-15): portata tags + difficulty + time.
 class _FilterBar extends StatelessWidget {
   const _FilterBar({
     required this.tagRepo,
@@ -291,6 +295,7 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return StreamBuilder<List<Tag>>(
       stream: tagRepo.watchByGroup(TagGroup.portata),
       builder: (context, snapshot) {
@@ -310,7 +315,7 @@ class _FilterBar extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
-                  label: const Text('Tutti'),
+                  label: Text(l.filterAll),
                   selected: selectedTagId == null &&
                       selectedDifficulty == null &&
                       selectedTime == null,
@@ -334,7 +339,7 @@ class _FilterBar extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(d.label),
+                    label: Text(d.localizedLabel(l)),
                     selected: selectedDifficulty == d,
                     onSelected: (sel) =>
                         onDifficultySelected(sel ? d : null),
@@ -344,7 +349,7 @@ class _FilterBar extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(t.label),
+                    label: Text(t.localizedLabel(l)),
                     selected: selectedTime == t,
                     onSelected: (sel) => onTimeSelected(sel ? t : null),
                   ),

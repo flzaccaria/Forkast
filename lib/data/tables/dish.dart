@@ -7,6 +7,8 @@ class Dishes extends Table {
   TextColumn get name => text()();
   TextColumn get difficulty => text().nullable()();
   TextColumn get timeEstimate => text().nullable()();
+  TextColumn get seedKey => text().nullable()();
+  BoolColumn get nameModified => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

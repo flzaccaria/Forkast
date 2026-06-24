@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/plan_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 import 'day_screen.dart';
 
-/// Weekly plan (FR-7): a navigable week of dinners, with dish names
-/// per day. Tapping a day opens "Dinner of the day".
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
 
@@ -21,16 +21,7 @@ class _PlanScreenState extends State<PlanScreen> {
   late final PlanRepository _repo;
   int _weekStartDay = DateTime.monday;
 
-  /// Any date within the displayed week.
   DateTime _reference = DateTime.now();
-
-  static const _monthNames = [
-    'gen', 'feb', 'mar', 'apr', 'mag', 'giu',
-    'lug', 'ago', 'set', 'ott', 'nov', 'dic',
-  ];
-  static const _shortDayNames = [
-    'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom',
-  ];
 
   int get _year => isoWeekYear(_reference);
   int get _week => isoWeekNumber(_reference);
@@ -52,7 +43,19 @@ class _PlanScreenState extends State<PlanScreen> {
 
   void _goToday() => setState(() => _reference = DateTime.now());
 
+  String _shortDayName(int dow) {
+    final locale = Localizations.localeOf(context).toString();
+    final date = DateTime(2024, 1, dow); // 2024-01-01 is Monday
+    return DateFormat.E(locale).format(date);
+  }
+
+  String _shortMonthName(DateTime date) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.MMM(locale).format(date);
+  }
+
   Future<void> _copyPreviousWeek() async {
+    final l = AppLocalizations.of(context);
     final prev = _reference.subtract(const Duration(days: 7));
     final fromYear = isoWeekYear(prev);
     final fromWeek = isoWeekNumber(prev);
@@ -60,7 +63,7 @@ class _PlanScreenState extends State<PlanScreen> {
     if (!await _repo.hasPlannedDishes(fromYear, fromWeek)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('La settimana precedente è vuota.')),
+          SnackBar(content: Text(l.planPrevWeekEmpty)),
         );
       }
       return;
@@ -72,22 +75,20 @@ class _PlanScreenState extends State<PlanScreen> {
       final choice = await showDialog<String>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Questa settimana non è vuota'),
-          content: const Text(
-              'Vuoi sostituire i piatti esistenti o aggiungere quelli della '
-              'settimana precedente?'),
+          title: Text(l.planWeekNotEmpty),
+          content: Text(l.planWeekNotEmptyMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annulla'),
+              child: Text(l.cancel),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop('merge'),
-              child: const Text('Aggiungi'),
+              child: Text(l.planMerge),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop('replace'),
-              child: const Text('Sostituisci'),
+              child: Text(l.planReplace),
             ),
           ],
         ),
@@ -105,7 +106,7 @@ class _PlanScreenState extends State<PlanScreen> {
     );
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settimana copiata.')),
+        SnackBar(content: Text(l.planWeekCopied)),
       );
     }
   }
@@ -127,19 +128,20 @@ class _PlanScreenState extends State<PlanScreen> {
   String _rangeLabel() {
     final first = dateOfIsoWeek(_year, _week, _weekStartDay);
     final last = first.add(const Duration(days: 6));
-    return '${first.day} ${_monthNames[first.month - 1]} – '
-        '${last.day} ${_monthNames[last.month - 1]}';
+    return '${first.day} ${_shortMonthName(first)} – '
+        '${last.day} ${_shortMonthName(last)}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final weekdays = orderedWeekdays(_weekStartDay);
     return Scaffold(
       appBar: forkastAppBar(context),
       body: Column(
         children: [
           _WeekHeader(
-            label: 'Settimana $_week · $_year',
+            label: l.planWeekLabel(_week, _year),
             range: _rangeLabel(),
             onPrev: () => _shiftWeek(-1),
             onNext: () => _shiftWeek(1),
@@ -180,11 +182,11 @@ class _PlanScreenState extends State<PlanScreen> {
     Map<int, DayOverview> overview, {
     required bool weekEmpty,
   }) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final today = DateTime.now();
     return Column(
       children: [
-        // "Copy previous week" — prominent only when the week is empty
         if (weekEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -193,7 +195,7 @@ class _PlanScreenState extends State<PlanScreen> {
               child: OutlinedButton.icon(
                 onPressed: _copyPreviousWeek,
                 icon: const Icon(Icons.copy_all_outlined, size: 18),
-                label: const Text('Copia settimana precedente'),
+                label: Text(l.planCopyPrevWeek),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: tokens.ink,
                   side: BorderSide(color: tokens.border),
@@ -219,7 +221,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   date.month == today.month &&
                   date.day == today.day;
               return _DayRow(
-                dayName: _shortDayNames[dow - 1],
+                dayName: _shortDayName(dow),
                 dayNumber: date.day,
                 isToday: isToday,
                 dishNames: ov?.dishNames ?? const [],
@@ -229,7 +231,6 @@ class _PlanScreenState extends State<PlanScreen> {
             },
           ),
         ),
-        // "Copy" in the overflow menu when week is NOT empty
         if (!weekEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -238,7 +239,7 @@ class _PlanScreenState extends State<PlanScreen> {
               child: TextButton.icon(
                 onPressed: _copyPreviousWeek,
                 icon: const Icon(Icons.copy_all_outlined, size: 16),
-                label: const Text('Copia settimana precedente'),
+                label: Text(l.planCopyPrevWeek),
                 style: TextButton.styleFrom(
                   foregroundColor: tokens.inkMuted,
                   textStyle: const TextStyle(fontSize: 13),
@@ -270,6 +271,7 @@ class _DayRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final primary = Theme.of(context).colorScheme.primary;
     return InkWell(
@@ -284,7 +286,6 @@ class _DayRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Day badge
             Container(
               width: 44,
               height: 44,
@@ -316,13 +317,12 @@ class _DayRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            // Dish names
             Expanded(
               child: dishNames.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(
-                        'Nessun piatto',
+                        l.planNoDishes,
                         style: TextStyle(
                           fontSize: 14,
                           color: tokens.inkMuted,
@@ -347,7 +347,7 @@ class _DayRow extends StatelessWidget {
                           ),
                         if (guests != null)
                           Text(
-                            '$guests ${guests == 1 ? "commensale" : "commensali"}',
+                            l.planGuests(guests!),
                             style: TextStyle(
                               fontSize: 13,
                               color: tokens.inkMuted,
@@ -381,6 +381,7 @@ class _WeekHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -407,7 +408,7 @@ class _WeekHeader extends StatelessWidget {
             icon: const Icon(Icons.chevron_right),
             onPressed: onNext,
           ),
-          TextButton(onPressed: onToday, child: const Text('Oggi')),
+          TextButton(onPressed: onToday, child: Text(l.planToday)),
         ],
       ),
     );

@@ -183,6 +183,30 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 
 ---
 
+## Localization (L1 + L2)
+
+**L1 — UI i18n (it/en/da).** All UI strings externalized via `flutter_localizations` + `intl` + `gen-l10n`. ARB files in `lib/l10n/` (source: `app_it.arb`). Generated code in `lib/l10n/generated/`. Run `flutter gen-l10n` after editing ARB files.
+
+- **Locale provider**: `lib/core/locale_provider.dart` — `LocaleNotifier` backed by `SharedPreferences`. Per-device, NOT synced. Two phones in the same household can use different languages.
+- **Language selector**: Settings screen → Language. Hot-swap via `ListenableBuilder` on the notifier; no restart needed.
+- **Enum labels localized**: `lib/core/l10n_enums.dart` — extension methods `localizedLabel(AppLocalizations l)` on `Unit`, `Difficulty`, `TimeEstimate`. Reparti: `localizedReparto(String? dbKey, AppLocalizations l)`.
+- **Numbers locale-aware**: `formatQty()` in `lib/core/qty_format.dart` now takes a `locale` parameter. Comma in it/da, dot in en.
+- **Weekday/month names**: use `intl` `DateFormat.EEEE(locale)` / `DateFormat.E(locale)` / `DateFormat.MMM(locale)` — no hardcoded names.
+- **System always metric**: no unit conversion. The `Unit` enum and its `dbValue` are language-neutral; only the display label is translated.
+
+**L2 — Localizable seeded content.**
+
+- **Schema**: `seed_key TEXT` and `name_modified BOOLEAN DEFAULT false` on both `ingredient` and `dish` tables (migration `00011`, drift, PowerSync schema).
+- **seed_key**: stable kebab-case slug assigned to each seeded entry. User-created entries have `seed_key = null`. Syncs across devices.
+- **Translation bundle**: `assets/seed_translations.json` — `{ "seed-key": { "it": "Nome", "en": "Name", "da": "Navn" } }`. Currently contains only Italian names; en/da translations are a data task to be completed separately.
+- **Display-time resolution** (`lib/core/seed_name_resolver.dart`): `SeedNameResolver.instance.resolve(storedName, seedKey, nameModified, locale)` — returns translated name for seeded items, stored name for user-created/modified items. Loaded at bootstrap.
+- **"Edit disconnects" rule**: when the user renames a seeded ingredient, `name_modified` is set to `true` in `IngredientRepository.update()`. The item stops auto-translating. Editing category/unit/qb does NOT disconnect.
+- **Aggregation identity**: shopping list aggregation and dish→ingredient references use `id` (UUID), never the display name string. Language changes cannot break or merge list rows.
+- **Seed CSV**: `assets/seed_ingredienti.csv` now has a `seed_key` column. `seed_catalog.dart` writes it on insert.
+- **Helper**: `lib/core/display_name.dart` — `ingredientDisplayName(ing, locale)`, `dishDisplayName(dish, locale)`.
+
+---
+
 ## Open points (flag, don't decide on your own)
 
 - None at the moment.

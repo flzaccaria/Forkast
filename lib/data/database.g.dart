@@ -834,6 +834,22 @@ class $IngredientsTable extends Ingredients
   late final GeneratedColumn<String> roundingKind = GeneratedColumn<String>(
       'rounding_kind', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _seedKeyMeta =
+      const VerificationMeta('seedKey');
+  @override
+  late final GeneratedColumn<String> seedKey = GeneratedColumn<String>(
+      'seed_key', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nameModifiedMeta =
+      const VerificationMeta('nameModified');
+  @override
+  late final GeneratedColumn<bool> nameModified = GeneratedColumn<bool>(
+      'name_modified', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("name_modified" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -855,6 +871,8 @@ class $IngredientsTable extends Ingredients
         isQb,
         category,
         roundingKind,
+        seedKey,
+        nameModified,
         createdAt,
         updatedAt
       ];
@@ -907,6 +925,16 @@ class $IngredientsTable extends Ingredients
           roundingKind.isAcceptableOrUnknown(
               data['rounding_kind']!, _roundingKindMeta));
     }
+    if (data.containsKey('seed_key')) {
+      context.handle(_seedKeyMeta,
+          seedKey.isAcceptableOrUnknown(data['seed_key']!, _seedKeyMeta));
+    }
+    if (data.containsKey('name_modified')) {
+      context.handle(
+          _nameModifiedMeta,
+          nameModified.isAcceptableOrUnknown(
+              data['name_modified']!, _nameModifiedMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -946,6 +974,10 @@ class $IngredientsTable extends Ingredients
           .read(DriftSqlType.string, data['${effectivePrefix}category']),
       roundingKind: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}rounding_kind']),
+      seedKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
+      nameModified: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -967,6 +999,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final bool isQb;
   final String? category;
   final String? roundingKind;
+  final String? seedKey;
+  final bool nameModified;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Ingredient(
@@ -977,6 +1011,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       required this.isQb,
       this.category,
       this.roundingKind,
+      this.seedKey,
+      required this.nameModified,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -993,6 +1029,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     if (!nullToAbsent || roundingKind != null) {
       map['rounding_kind'] = Variable<String>(roundingKind);
     }
+    if (!nullToAbsent || seedKey != null) {
+      map['seed_key'] = Variable<String>(seedKey);
+    }
+    map['name_modified'] = Variable<bool>(nameModified);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1011,6 +1051,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       roundingKind: roundingKind == null && nullToAbsent
           ? const Value.absent()
           : Value(roundingKind),
+      seedKey: seedKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seedKey),
+      nameModified: Value(nameModified),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1027,6 +1071,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       isQb: serializer.fromJson<bool>(json['isQb']),
       category: serializer.fromJson<String?>(json['category']),
       roundingKind: serializer.fromJson<String?>(json['roundingKind']),
+      seedKey: serializer.fromJson<String?>(json['seedKey']),
+      nameModified: serializer.fromJson<bool>(json['nameModified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1042,6 +1088,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'isQb': serializer.toJson<bool>(isQb),
       'category': serializer.toJson<String?>(category),
       'roundingKind': serializer.toJson<String?>(roundingKind),
+      'seedKey': serializer.toJson<String?>(seedKey),
+      'nameModified': serializer.toJson<bool>(nameModified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1055,6 +1103,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           bool? isQb,
           Value<String?> category = const Value.absent(),
           Value<String?> roundingKind = const Value.absent(),
+          Value<String?> seedKey = const Value.absent(),
+          bool? nameModified,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Ingredient(
@@ -1066,6 +1116,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         category: category.present ? category.value : this.category,
         roundingKind:
             roundingKind.present ? roundingKind.value : this.roundingKind,
+        seedKey: seedKey.present ? seedKey.value : this.seedKey,
+        nameModified: nameModified ?? this.nameModified,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1081,6 +1133,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       roundingKind: data.roundingKind.present
           ? data.roundingKind.value
           : this.roundingKind,
+      seedKey: data.seedKey.present ? data.seedKey.value : this.seedKey,
+      nameModified: data.nameModified.present
+          ? data.nameModified.value
+          : this.nameModified,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1096,6 +1152,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('isQb: $isQb, ')
           ..write('category: $category, ')
           ..write('roundingKind: $roundingKind, ')
+          ..write('seedKey: $seedKey, ')
+          ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1104,7 +1162,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
 
   @override
   int get hashCode => Object.hash(id, householdId, name, unit, isQb, category,
-      roundingKind, createdAt, updatedAt);
+      roundingKind, seedKey, nameModified, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1116,6 +1174,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.isQb == this.isQb &&
           other.category == this.category &&
           other.roundingKind == this.roundingKind &&
+          other.seedKey == this.seedKey &&
+          other.nameModified == this.nameModified &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1128,6 +1188,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<bool> isQb;
   final Value<String?> category;
   final Value<String?> roundingKind;
+  final Value<String?> seedKey;
+  final Value<bool> nameModified;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1139,6 +1201,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.isQb = const Value.absent(),
     this.category = const Value.absent(),
     this.roundingKind = const Value.absent(),
+    this.seedKey = const Value.absent(),
+    this.nameModified = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1151,6 +1215,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.isQb = const Value.absent(),
     this.category = const Value.absent(),
     this.roundingKind = const Value.absent(),
+    this.seedKey = const Value.absent(),
+    this.nameModified = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -1168,6 +1234,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<bool>? isQb,
     Expression<String>? category,
     Expression<String>? roundingKind,
+    Expression<String>? seedKey,
+    Expression<bool>? nameModified,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1180,6 +1248,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (isQb != null) 'is_qb': isQb,
       if (category != null) 'category': category,
       if (roundingKind != null) 'rounding_kind': roundingKind,
+      if (seedKey != null) 'seed_key': seedKey,
+      if (nameModified != null) 'name_modified': nameModified,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1194,6 +1264,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<bool>? isQb,
       Value<String?>? category,
       Value<String?>? roundingKind,
+      Value<String?>? seedKey,
+      Value<bool>? nameModified,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -1205,6 +1277,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       isQb: isQb ?? this.isQb,
       category: category ?? this.category,
       roundingKind: roundingKind ?? this.roundingKind,
+      seedKey: seedKey ?? this.seedKey,
+      nameModified: nameModified ?? this.nameModified,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1235,6 +1309,12 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (roundingKind.present) {
       map['rounding_kind'] = Variable<String>(roundingKind.value);
     }
+    if (seedKey.present) {
+      map['seed_key'] = Variable<String>(seedKey.value);
+    }
+    if (nameModified.present) {
+      map['name_modified'] = Variable<bool>(nameModified.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1257,6 +1337,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('isQb: $isQb, ')
           ..write('category: $category, ')
           ..write('roundingKind: $roundingKind, ')
+          ..write('seedKey: $seedKey, ')
+          ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -1722,6 +1804,22 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
   late final GeneratedColumn<String> timeEstimate = GeneratedColumn<String>(
       'time_estimate', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _seedKeyMeta =
+      const VerificationMeta('seedKey');
+  @override
+  late final GeneratedColumn<String> seedKey = GeneratedColumn<String>(
+      'seed_key', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nameModifiedMeta =
+      const VerificationMeta('nameModified');
+  @override
+  late final GeneratedColumn<bool> nameModified = GeneratedColumn<bool>(
+      'name_modified', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("name_modified" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1735,8 +1833,17 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, householdId, name, difficulty, timeEstimate, createdAt, updatedAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        householdId,
+        name,
+        difficulty,
+        timeEstimate,
+        seedKey,
+        nameModified,
+        createdAt,
+        updatedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1778,6 +1885,16 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
           timeEstimate.isAcceptableOrUnknown(
               data['time_estimate']!, _timeEstimateMeta));
     }
+    if (data.containsKey('seed_key')) {
+      context.handle(_seedKeyMeta,
+          seedKey.isAcceptableOrUnknown(data['seed_key']!, _seedKeyMeta));
+    }
+    if (data.containsKey('name_modified')) {
+      context.handle(
+          _nameModifiedMeta,
+          nameModified.isAcceptableOrUnknown(
+              data['name_modified']!, _nameModifiedMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -1809,6 +1926,10 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
           .read(DriftSqlType.string, data['${effectivePrefix}difficulty']),
       timeEstimate: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}time_estimate']),
+      seedKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
+      nameModified: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -1828,6 +1949,8 @@ class Dish extends DataClass implements Insertable<Dish> {
   final String name;
   final String? difficulty;
   final String? timeEstimate;
+  final String? seedKey;
+  final bool nameModified;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Dish(
@@ -1836,6 +1959,8 @@ class Dish extends DataClass implements Insertable<Dish> {
       required this.name,
       this.difficulty,
       this.timeEstimate,
+      this.seedKey,
+      required this.nameModified,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -1850,6 +1975,10 @@ class Dish extends DataClass implements Insertable<Dish> {
     if (!nullToAbsent || timeEstimate != null) {
       map['time_estimate'] = Variable<String>(timeEstimate);
     }
+    if (!nullToAbsent || seedKey != null) {
+      map['seed_key'] = Variable<String>(seedKey);
+    }
+    map['name_modified'] = Variable<bool>(nameModified);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1866,6 +1995,10 @@ class Dish extends DataClass implements Insertable<Dish> {
       timeEstimate: timeEstimate == null && nullToAbsent
           ? const Value.absent()
           : Value(timeEstimate),
+      seedKey: seedKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(seedKey),
+      nameModified: Value(nameModified),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1880,6 +2013,8 @@ class Dish extends DataClass implements Insertable<Dish> {
       name: serializer.fromJson<String>(json['name']),
       difficulty: serializer.fromJson<String?>(json['difficulty']),
       timeEstimate: serializer.fromJson<String?>(json['timeEstimate']),
+      seedKey: serializer.fromJson<String?>(json['seedKey']),
+      nameModified: serializer.fromJson<bool>(json['nameModified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1893,6 +2028,8 @@ class Dish extends DataClass implements Insertable<Dish> {
       'name': serializer.toJson<String>(name),
       'difficulty': serializer.toJson<String?>(difficulty),
       'timeEstimate': serializer.toJson<String?>(timeEstimate),
+      'seedKey': serializer.toJson<String?>(seedKey),
+      'nameModified': serializer.toJson<bool>(nameModified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1904,6 +2041,8 @@ class Dish extends DataClass implements Insertable<Dish> {
           String? name,
           Value<String?> difficulty = const Value.absent(),
           Value<String?> timeEstimate = const Value.absent(),
+          Value<String?> seedKey = const Value.absent(),
+          bool? nameModified,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Dish(
@@ -1913,6 +2052,8 @@ class Dish extends DataClass implements Insertable<Dish> {
         difficulty: difficulty.present ? difficulty.value : this.difficulty,
         timeEstimate:
             timeEstimate.present ? timeEstimate.value : this.timeEstimate,
+        seedKey: seedKey.present ? seedKey.value : this.seedKey,
+        nameModified: nameModified ?? this.nameModified,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1927,6 +2068,10 @@ class Dish extends DataClass implements Insertable<Dish> {
       timeEstimate: data.timeEstimate.present
           ? data.timeEstimate.value
           : this.timeEstimate,
+      seedKey: data.seedKey.present ? data.seedKey.value : this.seedKey,
+      nameModified: data.nameModified.present
+          ? data.nameModified.value
+          : this.nameModified,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1940,6 +2085,8 @@ class Dish extends DataClass implements Insertable<Dish> {
           ..write('name: $name, ')
           ..write('difficulty: $difficulty, ')
           ..write('timeEstimate: $timeEstimate, ')
+          ..write('seedKey: $seedKey, ')
+          ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1947,8 +2094,8 @@ class Dish extends DataClass implements Insertable<Dish> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, householdId, name, difficulty, timeEstimate, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, householdId, name, difficulty,
+      timeEstimate, seedKey, nameModified, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1958,6 +2105,8 @@ class Dish extends DataClass implements Insertable<Dish> {
           other.name == this.name &&
           other.difficulty == this.difficulty &&
           other.timeEstimate == this.timeEstimate &&
+          other.seedKey == this.seedKey &&
+          other.nameModified == this.nameModified &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1968,6 +2117,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
   final Value<String> name;
   final Value<String?> difficulty;
   final Value<String?> timeEstimate;
+  final Value<String?> seedKey;
+  final Value<bool> nameModified;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1977,6 +2128,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     this.name = const Value.absent(),
     this.difficulty = const Value.absent(),
     this.timeEstimate = const Value.absent(),
+    this.seedKey = const Value.absent(),
+    this.nameModified = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1987,6 +2140,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     required String name,
     this.difficulty = const Value.absent(),
     this.timeEstimate = const Value.absent(),
+    this.seedKey = const Value.absent(),
+    this.nameModified = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -2001,6 +2156,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     Expression<String>? name,
     Expression<String>? difficulty,
     Expression<String>? timeEstimate,
+    Expression<String>? seedKey,
+    Expression<bool>? nameModified,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -2011,6 +2168,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       if (name != null) 'name': name,
       if (difficulty != null) 'difficulty': difficulty,
       if (timeEstimate != null) 'time_estimate': timeEstimate,
+      if (seedKey != null) 'seed_key': seedKey,
+      if (nameModified != null) 'name_modified': nameModified,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2023,6 +2182,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       Value<String>? name,
       Value<String?>? difficulty,
       Value<String?>? timeEstimate,
+      Value<String?>? seedKey,
+      Value<bool>? nameModified,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -2032,6 +2193,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       name: name ?? this.name,
       difficulty: difficulty ?? this.difficulty,
       timeEstimate: timeEstimate ?? this.timeEstimate,
+      seedKey: seedKey ?? this.seedKey,
+      nameModified: nameModified ?? this.nameModified,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2056,6 +2219,12 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     if (timeEstimate.present) {
       map['time_estimate'] = Variable<String>(timeEstimate.value);
     }
+    if (seedKey.present) {
+      map['seed_key'] = Variable<String>(seedKey.value);
+    }
+    if (nameModified.present) {
+      map['name_modified'] = Variable<bool>(nameModified.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2076,6 +2245,8 @@ class DishesCompanion extends UpdateCompanion<Dish> {
           ..write('name: $name, ')
           ..write('difficulty: $difficulty, ')
           ..write('timeEstimate: $timeEstimate, ')
+          ..write('seedKey: $seedKey, ')
+          ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -6459,6 +6630,8 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   Value<bool> isQb,
   Value<String?> category,
   Value<String?> roundingKind,
+  Value<String?> seedKey,
+  Value<bool> nameModified,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6472,6 +6645,8 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<bool> isQb,
   Value<String?> category,
   Value<String?> roundingKind,
+  Value<String?> seedKey,
+  Value<bool> nameModified,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6506,6 +6681,12 @@ class $$IngredientsTableFilterComposer
 
   ColumnFilters<String> get roundingKind => $composableBuilder(
       column: $table.roundingKind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get seedKey => $composableBuilder(
+      column: $table.seedKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6545,6 +6726,13 @@ class $$IngredientsTableOrderingComposer
       column: $table.roundingKind,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get seedKey => $composableBuilder(
+      column: $table.seedKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6581,6 +6769,12 @@ class $$IngredientsTableAnnotationComposer
 
   GeneratedColumn<String> get roundingKind => $composableBuilder(
       column: $table.roundingKind, builder: (column) => column);
+
+  GeneratedColumn<String> get seedKey =>
+      $composableBuilder(column: $table.seedKey, builder: (column) => column);
+
+  GeneratedColumn<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -6619,6 +6813,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
             Value<String?> roundingKind = const Value.absent(),
+            Value<String?> seedKey = const Value.absent(),
+            Value<bool> nameModified = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6631,6 +6827,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             isQb: isQb,
             category: category,
             roundingKind: roundingKind,
+            seedKey: seedKey,
+            nameModified: nameModified,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6643,6 +6841,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<bool> isQb = const Value.absent(),
             Value<String?> category = const Value.absent(),
             Value<String?> roundingKind = const Value.absent(),
+            Value<String?> seedKey = const Value.absent(),
+            Value<bool> nameModified = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -6655,6 +6855,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             isQb: isQb,
             category: category,
             roundingKind: roundingKind,
+            seedKey: seedKey,
+            nameModified: nameModified,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6892,6 +7094,8 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String name,
   Value<String?> difficulty,
   Value<String?> timeEstimate,
+  Value<String?> seedKey,
+  Value<bool> nameModified,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6902,6 +7106,8 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> name,
   Value<String?> difficulty,
   Value<String?> timeEstimate,
+  Value<String?> seedKey,
+  Value<bool> nameModified,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6930,6 +7136,12 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<String> get timeEstimate => $composableBuilder(
       column: $table.timeEstimate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get seedKey => $composableBuilder(
+      column: $table.seedKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6963,6 +7175,13 @@ class $$DishesTableOrderingComposer
       column: $table.timeEstimate,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get seedKey => $composableBuilder(
+      column: $table.seedKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6993,6 +7212,12 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<String> get timeEstimate => $composableBuilder(
       column: $table.timeEstimate, builder: (column) => column);
+
+  GeneratedColumn<String> get seedKey =>
+      $composableBuilder(column: $table.seedKey, builder: (column) => column);
+
+  GeneratedColumn<bool> get nameModified => $composableBuilder(
+      column: $table.nameModified, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -7029,6 +7254,8 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
+            Value<String?> seedKey = const Value.absent(),
+            Value<bool> nameModified = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7039,6 +7266,8 @@ class $$DishesTableTableManager extends RootTableManager<
             name: name,
             difficulty: difficulty,
             timeEstimate: timeEstimate,
+            seedKey: seedKey,
+            nameModified: nameModified,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -7049,6 +7278,8 @@ class $$DishesTableTableManager extends RootTableManager<
             required String name,
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
+            Value<String?> seedKey = const Value.absent(),
+            Value<bool> nameModified = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -7059,6 +7290,8 @@ class $$DishesTableTableManager extends RootTableManager<
             name: name,
             difficulty: difficulty,
             timeEstimate: timeEstimate,
+            seedKey: seedKey,
+            nameModified: nameModified,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,

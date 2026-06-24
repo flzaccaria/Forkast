@@ -7,15 +7,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config.dart';
 import '../../data/pairing_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 
-/// Pairing of a second device (ADR-006). Two ways: "Mostra codice" on the
-/// inviting phone and "Inserisci codice" on the one that joins.
 class PairingScreen extends StatefulWidget {
   const PairingScreen({super.key, this.initialCode});
 
-  /// When non-null the "Inserisci codice" tab opens with this value
-  /// pre-filled (e.g. from a `?code=` deep-link).
   final String? initialCode;
 
   @override
@@ -33,17 +30,18 @@ class _PairingScreenState extends State<PairingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final hasInitialCode = widget.initialCode != null;
     return DefaultTabController(
       length: 2,
       initialIndex: hasInitialCode ? 1 : 0,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Abbina un dispositivo'),
-          bottom: const TabBar(
+          title: Text(l.pairingTitle),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Mostra codice'),
-              Tab(text: 'Inserisci codice'),
+              Tab(text: l.pairingShowCode),
+              Tab(text: l.pairingEnterCode),
             ],
           ),
         ),
@@ -61,8 +59,6 @@ class _PairingScreenState extends State<PairingScreen> {
   }
 }
 
-/// Inviting phone: generates and shows a code (text + QR) with a validity
-/// countdown.
 class _ShowCodeTab extends StatefulWidget {
   const _ShowCodeTab({required this.service});
 
@@ -86,6 +82,7 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   }
 
   Future<void> _generate() async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _loading = true;
       _error = null;
@@ -99,7 +96,7 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
       });
       _startCountdown();
     } catch (e) {
-      if (mounted) setState(() => _error = 'Impossibile generare il codice.');
+      if (mounted) setState(() => _error = l.pairingGenerateError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -117,8 +114,6 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
     });
   }
 
-  /// QR payload: PWA URL with `?code=` when APP_URL is configured,
-  /// otherwise the raw 6-digit code.
   static String _qrPayload(String code) {
     const base = AppConfig.appUrl;
     if (base.isEmpty) return code;
@@ -134,15 +129,15 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Genera un codice e inquadralo con l\'altro telefono, '
-              'oppure digitalo a mano.',
+            Text(
+              l.pairingShowCodeInstructions,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -162,7 +157,7 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
                     ),
               ),
               const SizedBox(height: 8),
-              Text('Scade tra $_countdownLabel',
+              Text(l.pairingExpiresIn(_countdownLabel),
                   style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 24),
             ],
@@ -174,7 +169,7 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
             FilledButton.icon(
               onPressed: _loading ? null : _generate,
               icon: const Icon(Icons.qr_code),
-              label: Text(_code == null ? 'Genera codice' : 'Genera nuovo codice'),
+              label: Text(_code == null ? l.pairingGenerate : l.pairingGenerateNew),
             ),
           ],
         ),
@@ -183,8 +178,6 @@ class _ShowCodeTabState extends State<_ShowCodeTab> {
   }
 }
 
-/// Joining phone: enters the code manually and adopts the household of whoever
-/// generated it.
 class _EnterCodeTab extends StatefulWidget {
   const _EnterCodeTab({required this.service, this.initialCode});
 
@@ -213,6 +206,7 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
   }
 
   Future<void> _redeem() async {
+    final l = AppLocalizations.of(context);
     final code = PairingService.normalizeCode(_controller.text);
     if (code.isEmpty) return;
     final appScope = AppScope.of(context);
@@ -227,15 +221,13 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
       if (!mounted) return;
       appScope.onHouseholdChanged?.call(householdId);
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Dispositivo abbinato. Sincronizzazione in corso…'),
-        ),
+        SnackBar(content: Text(l.pairingSuccess)),
       );
       navigator.pop();
     } on PairingException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Abbinamento non riuscito.');
+      if (mounted) setState(() => _error = l.pairingError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -243,13 +235,14 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Inserisci il codice mostrato sull\'altro telefono.',
+          Text(
+            l.pairingEnterCodeInstructions,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -283,7 +276,7 @@ class _EnterCodeTabState extends State<_EnterCodeTab> {
                     width: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Unisciti'),
+                : Text(l.pairingJoin),
           ),
         ],
       ),

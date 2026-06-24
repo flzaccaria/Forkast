@@ -8,6 +8,8 @@ class Ingredients extends Table {
   BoolColumn get isQb => boolean().withDefault(const Constant(false))();
   TextColumn get category => text().nullable()();
   TextColumn get roundingKind => text().nullable()();
+  TextColumn get seedKey => text().nullable()();
+  BoolColumn get nameModified => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

@@ -1,31 +1,48 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'core/clear_url_query.dart';
+import 'core/locale_provider.dart';
+import 'core/seed_name_resolver.dart';
 import 'data/bootstrap.dart';
 import 'data/database.dart';
 import 'data/open_database.dart';
 import 'data/powersync_connector.dart';
 import 'data/repositories/ingredient_repository.dart';
 import 'data/seed_catalog.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'ui/app_scope.dart';
 import 'ui/app_shell.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ForkastApp());
+  final prefs = await SharedPreferences.getInstance();
+  final localeNotifier = LocaleNotifier(prefs);
+  runApp(ForkastApp(localeNotifier: localeNotifier));
 }
 
 class ForkastApp extends StatelessWidget {
-  const ForkastApp({super.key});
+  const ForkastApp({super.key, required this.localeNotifier});
+
+  final LocaleNotifier localeNotifier;
 
   @override
   Widget build(BuildContext context) {
-    return const _BootstrapGate();
+    return LocaleScope(
+      notifier: localeNotifier,
+      child: ListenableBuilder(
+        listenable: localeNotifier,
+        builder: (context, _) => _BootstrapGate(
+          localeNotifier: localeNotifier,
+        ),
+      ),
+    );
   }
 }
 
@@ -37,7 +54,9 @@ class _Bootstrapped {
 }
 
 class _BootstrapGate extends StatefulWidget {
-  const _BootstrapGate();
+  const _BootstrapGate({required this.localeNotifier});
+
+  final LocaleNotifier localeNotifier;
 
   @override
   State<_BootstrapGate> createState() => _BootstrapGateState();
@@ -46,8 +65,6 @@ class _BootstrapGate extends StatefulWidget {
 class _BootstrapGateState extends State<_BootstrapGate> {
   late final Future<_Bootstrapped> _future = _bootstrap();
 
-  /// Active household overridden at runtime (e.g. after pairing). When
-  /// null, the one determined at bootstrap is used.
   String? _householdOverride;
 
   final String? _pairingCode = Uri.base.queryParameters['code'];
@@ -56,8 +73,8 @@ class _BootstrapGateState extends State<_BootstrapGate> {
   Future<_Bootstrapped> _bootstrap() async {
     if (!AppConfig.isConfigured) {
       throw StateError(
-        'Configurazione mancante. Lancia con --dart-define per '
-        'SUPABASE_URL, SUPABASE_ANON_KEY e POWERSYNC_URL.',
+        'Missing configuration. Launch with --dart-define for '
+        'SUPABASE_URL, SUPABASE_ANON_KEY and POWERSYNC_URL.',
       );
     }
 
@@ -74,13 +91,30 @@ class _BootstrapGateState extends State<_BootstrapGate> {
 
     unawaited(powerSyncDb.connect(connector: SupabaseConnector()));
 
-    // Migrate free-text units to canonical enum values (FR-5, one-time).
     unawaited(IngredientRepository(db, householdId).migrateUnitsToEnum());
 
-    // Seed the ingredient catalog for new households (P6, one-time).
     unawaited(seedCatalogIfNeeded(db, householdId));
 
+    await SeedNameResolver.instance.load();
+
     return _Bootstrapped(db, householdId);
+  }
+
+  MaterialApp _materialApp({required Widget home}) {
+    return MaterialApp(
+      title: 'Forkast',
+      theme: forkastLightTheme,
+      darkTheme: forkastDarkTheme,
+      locale: widget.localeNotifier.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: home,
+    );
   }
 
   @override
@@ -89,10 +123,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return MaterialApp(
-            title: 'Forkast',
-            theme: forkastLightTheme,
-            darkTheme: forkastDarkTheme,
+          return _materialApp(
             home: _BootstrapErrorScreen(
               error: snapshot.error!,
               stackTrace: snapshot.stackTrace,
@@ -100,10 +131,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
           );
         }
         if (!snapshot.hasData) {
-          return MaterialApp(
-            title: 'Forkast',
-            theme: forkastLightTheme,
-            darkTheme: forkastDarkTheme,
+          return _materialApp(
             home: const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             ),
@@ -119,10 +147,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
           householdId: _householdOverride ?? data.householdId,
           onHouseholdChanged: (id) =>
               setState(() => _householdOverride = id),
-          child: MaterialApp(
-            title: 'Forkast',
-            theme: forkastLightTheme,
-            darkTheme: forkastDarkTheme,
+          child: _materialApp(
             home: AppShell(pairingCode: _pairingCode),
           ),
         );
@@ -139,8 +164,9 @@ class _BootstrapErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Errore di avvio')),
+      appBar: AppBar(title: Text(l.bootstrapError)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

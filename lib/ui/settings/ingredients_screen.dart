@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../core/display_name.dart';
+import '../../core/l10n_enums.dart';
 import '../../core/reparto.dart';
 import '../../core/unit.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 import 'ingredient_form.dart';
 
-/// Ingredients catalog tab (FR-23): grouped by department, sortable by name.
 class IngredientsScreen extends StatefulWidget {
   const IngredientsScreen({super.key});
 
@@ -28,10 +30,11 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   Future<void> _addIngredient() async {
+    final l = AppLocalizations.of(context);
     final created = await showIngredientForm(context, repo: _repo);
     if (created != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingrediente aggiunto')),
+        SnackBar(content: Text(l.ingredientsAdded)),
       );
     }
   }
@@ -61,14 +64,15 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   Future<void> _showUsage(Ingredient ing) async {
+    final l = AppLocalizations.of(context);
     final dishes = await _repo.dishesUsing(ing.id);
     if (!mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('"${ing.name}" — dove è usato'),
+        title: Text(l.ingredientsUsageTitle(ing.name)),
         content: dishes.isEmpty
-            ? const Text('Non è usato in nessun piatto.')
+            ? Text(l.ingredientsNotUsed)
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +81,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Chiudi'),
+            child: Text(l.close),
           ),
         ],
       ),
@@ -85,17 +89,18 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   Future<void> _delete(Ingredient ing) async {
+    final l = AppLocalizations.of(context);
     final ok = await _repo.deleteIfUnused(ing.id);
     if (!ok) {
       final dishes = await _repo.dishesUsing(ing.id);
-      _snack('"${ing.name}" è usato in ${dishes.length} piatti: '
-          'rimuovilo prima da quei piatti.');
+      _snack(l.ingredientsUsedInCount(ing.name, dishes.length));
     } else {
-      _snack('"${ing.name}" eliminato.');
+      _snack(l.ingredientsDeleted(ing.name));
     }
   }
 
   Future<void> _merge(Ingredient source) async {
+    final l = AppLocalizations.of(context);
     final all = await _repo.watchAll().first;
     final candidates = all
         .where((i) =>
@@ -103,13 +108,13 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
         .toList();
     if (!mounted) return;
     if (candidates.isEmpty) {
-      _snack('Nessun ingrediente con la stessa unità da unire.');
+      _snack(l.ingredientsNoMergeCandidates);
       return;
     }
     final target = await showDialog<Ingredient>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text('Unisci "${source.name}" in…'),
+        title: Text(l.ingredientsMergeTitle(source.name)),
         children: [
           for (final c in candidates)
             SimpleDialogOption(
@@ -122,8 +127,8 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     if (target == null) return;
     final ok = await _repo.merge(sourceId: source.id, targetId: target.id);
     _snack(ok
-        ? '"${source.name}" unito in "${target.name}".'
-        : 'Unione non riuscita: le unità devono coincidere.');
+        ? l.ingredientsMergeSuccess(source.name, target.name)
+        : l.ingredientsMergeError);
   }
 
   List<_RepartoEntry> _groupByReparto(List<Ingredient> items) {
@@ -137,7 +142,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     for (final item in sorted) {
       final label = item.category ?? repartoNonAssegnato;
       if (label != currentLabel) {
-        entries.add(_RepartoHeader(label));
+        entries.add(_RepartoHeader(label, item.category));
         currentLabel = label;
       }
       entries.add(_RepartoItem(item));
@@ -146,7 +151,9 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Scaffold(
       appBar: forkastAppBar(context),
@@ -168,8 +175,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                         color: tokens.inkMuted),
                     const SizedBox(height: 12),
                     Text(
-                      'Nessun ingrediente ancora.\n'
-                      'Tocca + per aggiungere il primo.',
+                      l.ingredientsEmptyState,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: tokens.inkMuted, fontSize: 15),
                     ),
@@ -179,20 +185,21 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             );
           }
           final entries = _groupByReparto(items);
+          final locale = Localizations.localeOf(context).toString();
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: 80),
             itemCount: entries.length,
             itemBuilder: (context, i) {
               final entry = entries[i];
               if (entry is _RepartoHeader) {
-                return _StickyDepartmentHeader(label: entry.label);
+                return _StickyDepartmentHeader(label: entry.label, dbKey: entry.dbKey);
               }
               final ing = (entry as _RepartoItem).ingredient;
               return ListTile(
-                title: Text(ing.name),
+                title: Text(ingredientDisplayName(ing, locale)),
                 subtitle: Text(ing.isQb
-                    ? 'quanto basta'
-                    : Unit.tryParse(ing.unit)?.label ?? ing.unit),
+                    ? l.quantoBasta
+                    : Unit.tryParse(ing.unit)?.localizedLabel(l) ?? ing.unit),
                 trailing: ing.isQb
                     ? const Icon(Icons.all_inclusive_outlined, size: 18)
                     : null,
@@ -211,12 +218,14 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
 }
 
 class _StickyDepartmentHeader extends StatelessWidget {
-  const _StickyDepartmentHeader({required this.label});
+  const _StickyDepartmentHeader({required this.label, this.dbKey});
 
   final String label;
+  final String? dbKey;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final primary = Theme.of(context).colorScheme.primary;
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return Container(
@@ -224,7 +233,7 @@ class _StickyDepartmentHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
       color: tokens.surfacePage,
       child: Text(
-        label.toUpperCase(),
+        localizedReparto(dbKey, l).toUpperCase(),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -241,8 +250,9 @@ sealed class _RepartoEntry {
 }
 
 class _RepartoHeader extends _RepartoEntry {
-  const _RepartoHeader(this.label);
+  const _RepartoHeader(this.label, this.dbKey);
   final String label;
+  final String? dbKey;
 }
 
 class _RepartoItem extends _RepartoEntry {
@@ -267,6 +277,8 @@ class _IngredientActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     void run(VoidCallback action) {
       Navigator.of(context).pop();
       action();
@@ -277,31 +289,31 @@ class _IngredientActions extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: Text(ingredient.name,
+            title: Text(ingredientDisplayName(ingredient, locale),
                 style: Theme.of(context).textTheme.titleMedium),
             subtitle: Text(ingredient.isQb
-                ? 'quanto basta'
-                : Unit.tryParse(ingredient.unit)?.label ?? ingredient.unit),
+                ? l.quantoBasta
+                : Unit.tryParse(ingredient.unit)?.localizedLabel(l) ?? ingredient.unit),
           ),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('Modifica'),
+            title: Text(l.edit),
             onTap: () => run(onEdit),
           ),
           ListTile(
             leading: const Icon(Icons.restaurant_menu),
-            title: const Text('Dove è usato'),
+            title: Text(l.ingredientsUsage),
             onTap: () => run(onShowUsage),
           ),
           ListTile(
             leading: const Icon(Icons.merge_type),
-            title: const Text('Unisci doppione'),
+            title: Text(l.ingredientsMergeDuplicate),
             onTap: () => run(onMerge),
           ),
           ListTile(
             leading: const Icon(Icons.delete_outline),
-            title: const Text('Elimina'),
+            title: Text(l.delete),
             onTap: () => run(onDelete),
           ),
         ],

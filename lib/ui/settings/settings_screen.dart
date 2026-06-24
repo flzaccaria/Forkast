@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../core/locale_provider.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/household_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import 'pairing_screen.dart';
 import 'sync_status_screen.dart';
@@ -25,15 +28,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _repo = HouseholdRepository(scope.database, scope.householdId);
   }
 
-  static const _weekdayNames = {
-    1: 'Lunedì',
-    2: 'Martedì',
-    3: 'Mercoledì',
-    4: 'Giovedì',
-    5: 'Venerdì',
-    6: 'Sabato',
-    7: 'Domenica',
-  };
+  String _weekdayName(int dow, String locale) {
+    final date = DateTime(2024, 1, dow); // 2024-01-01 is Monday
+    return DateFormat.EEEE(locale).format(date);
+  }
 
   Future<void> _editDefaultGuests(int current) async {
     final value = await showDialog<int>(
@@ -44,10 +42,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _editWeekStart(int current) async {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final value = await showDialog<int>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Inizio settimana'),
+        title: Text(l.settingsWeekStart),
         children: [
           RadioGroup<int>(
             groupValue: current,
@@ -58,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 for (final wd in orderedWeekdays(1))
                   RadioListTile<int>(
                     value: wd,
-                    title: Text(_weekdayNames[wd]!),
+                    title: Text(_weekdayName(wd, locale)),
                   ),
               ],
             ),
@@ -71,19 +71,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final localeNotifier = LocaleScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Impostazioni')),
+      appBar: AppBar(title: Text(l.settingsTitle)),
       body: StreamBuilder<Household>(
         stream: _repo.watch(),
         builder: (context, snapshot) {
           final household = snapshot.data;
           return ListView(
             children: [
-              const _SectionHeader('Pianificazione'),
+              _SectionHeader(l.settingsPlanning),
               ListTile(
                 leading: const Icon(Icons.people_outlined),
-                title: const Text('Commensali predefiniti'),
-                subtitle: const Text('Valore iniziale di ogni nuova serata'),
+                title: Text(l.settingsDefaultGuests),
+                subtitle: Text(l.settingsDefaultGuestsSubtitle),
                 trailing: Text(
                   household?.defaultGuests.toString() ?? '—',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -94,31 +97,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_view_week_outlined),
-                title: const Text('Inizio settimana'),
+                title: Text(l.settingsWeekStart),
                 trailing: Text(
                   household == null
                       ? '—'
-                      : _weekdayNames[household.weekStartDay] ?? '—',
+                      : _weekdayName(household.weekStartDay, locale),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 onTap: household == null
                     ? null
                     : () => _editWeekStart(household.weekStartDay),
               ),
-              const _SectionHeader('Cataloghi'),
+              _SectionHeader(l.settingsCatalogs),
               ListTile(
                 leading: const Icon(Icons.label_outlined),
-                title: const Text('Vocabolario portate'),
+                title: Text(l.settingsCoursesVocabulary),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const TagsScreen()),
                 ),
               ),
-              const _SectionHeader('Dispositivi'),
+              _SectionHeader(l.settingsDevices),
               ListTile(
                 leading: const Icon(Icons.devices_outlined),
-                title: const Text('Abbina un dispositivo'),
-                subtitle: const Text('Condividi i dati con un secondo telefono'),
+                title: Text(l.settingsPairDevice),
+                subtitle: Text(l.settingsPairDeviceSubtitle),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const PairingScreen()),
@@ -126,18 +129,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.sync_outlined),
-                title: const Text('Sincronizzazione'),
-                subtitle: const Text('Stato della sincronizzazione tra dispositivi'),
+                title: Text(l.settingsSync),
+                subtitle: Text(l.settingsSyncSubtitle),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SyncStatusScreen()),
                 ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.language_outlined),
+                title: Text(l.settingsLanguage),
+                subtitle: Text(l.settingsLanguageSubtitle),
+                trailing: Text(
+                  _currentLanguageLabel(localeNotifier.locale, l),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                onTap: () => _showLanguagePicker(context),
               ),
             ],
           );
         },
       ),
     );
+  }
+
+  String _currentLanguageLabel(Locale? locale, AppLocalizations l) {
+    if (locale == null) return l.languageSystem;
+    return switch (locale.languageCode) {
+      'it' => l.languageIt,
+      'en' => l.languageEn,
+      'da' => l.languageDa,
+      _ => locale.languageCode,
+    };
+  }
+
+  Future<void> _showLanguagePicker(BuildContext context) async {
+    final localeNotifier = LocaleScope.of(context);
+    final l = AppLocalizations.of(context);
+    final current = localeNotifier.locale;
+    final sentinel = Object();
+
+    final result = await showDialog<Object?>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l.settingsLanguage),
+        children: [
+          for (final entry in <(Locale?, String)>[
+            (null, l.languageSystem),
+            (const Locale('it'), l.languageIt),
+            (const Locale('en'), l.languageEn),
+            (const Locale('da'), l.languageDa),
+          ])
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(ctx).pop(entry.$1 ?? sentinel),
+              child: Row(
+                children: [
+                  if ((entry.$1 == null && current == null) ||
+                      entry.$1?.languageCode == current?.languageCode)
+                    const Icon(Icons.check, size: 18)
+                  else
+                    const SizedBox(width: 18),
+                  const SizedBox(width: 12),
+                  Text(entry.$2),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (result == null) return; // dismissed
+    final Locale? chosen = result == sentinel ? null : result as Locale;
+    await localeNotifier.setLocale(chosen);
   }
 }
 
@@ -155,8 +218,9 @@ class _GuestsDialogState extends State<_GuestsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Commensali predefiniti'),
+      title: Text(l.settingsDefaultGuests),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -174,11 +238,11 @@ class _GuestsDialogState extends State<_GuestsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annulla'),
+          child: Text(l.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_value),
-          child: const Text('Salva'),
+          child: Text(l.save),
         ),
       ],
     );

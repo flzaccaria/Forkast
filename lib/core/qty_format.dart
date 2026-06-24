@@ -1,13 +1,20 @@
 import 'package:intl/intl.dart';
 
-final _intFmt = NumberFormat('#,##0', 'it_IT');
-final _decFmt = NumberFormat('#,##0.##', 'it_IT');
+final _fmtCache = <String, (NumberFormat, NumberFormat)>{};
 
-/// Formats a quantity for display: no trailing zeros, Italian decimal
-/// separator (virgola). Integers are shown without decimals.
-String formatQty(double qty) {
+(NumberFormat, NumberFormat) _fmts(String locale) =>
+    _fmtCache.putIfAbsent(locale, () => (
+          NumberFormat('#,##0', locale),
+          NumberFormat('#,##0.##', locale),
+        ));
+
+/// Formats a quantity for display using the given locale.
+/// No trailing zeros; decimal separator follows the locale
+/// (comma for it/da, dot for en).
+String formatQty(double qty, {String locale = 'it_IT'}) {
+  final (intFmt, decFmt) = _fmts(locale);
   if (qty == qty.roundToDouble()) {
-    return _intFmt.format(qty.toInt());
+    return intFmt.format(qty.toInt());
   }
-  return _decFmt.format(qty);
+  return decFmt.format(qty);
 }

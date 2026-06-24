@@ -1,15 +1,13 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 
+import '../../core/l10n_enums.dart';
 import '../../core/reparto.dart';
 import '../../core/unit.dart';
 import '../../data/database.dart';
 import '../../data/repositories/ingredient_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 
-/// Bottom sheet to create or edit a catalog entry (FR-4, 5, 6, 16).
-/// Reusable from the ingredient management and the dish editor ("create new"
-/// on the fly). In edit mode, if the ingredient is already used in a dish the
-/// unit is locked (FR-16). Returns the saved [Ingredient], or null if cancelled.
 Future<Ingredient?> showIngredientForm(
   BuildContext context, {
   required IngredientRepository repo,
@@ -76,6 +74,7 @@ class _IngredientFormState extends State<_IngredientForm> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
@@ -106,9 +105,7 @@ class _IngredientFormState extends State<_IngredientForm> {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('Errore: esiste già un ingrediente con questo nome?')),
+          SnackBar(content: Text(l.ingredientFormDuplicateError)),
         );
       }
     }
@@ -116,6 +113,7 @@ class _IngredientFormState extends State<_IngredientForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final unitEnabled = !_isQb && !_unitLocked;
     return Padding(
@@ -126,28 +124,28 @@ class _IngredientFormState extends State<_IngredientForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_isEditing ? 'Modifica ingrediente' : 'Nuovo ingrediente',
+            Text(_isEditing ? l.ingredientFormEditTitle : l.ingredientFormNewTitle,
                 style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nome'),
+              decoration: InputDecoration(labelText: l.name),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Obbligatorio' : null,
+                  (v == null || v.trim().isEmpty) ? l.required : null,
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<Unit>(
               initialValue: _selectedUnit,
               decoration: InputDecoration(
-                labelText: 'Unità di misura',
+                labelText: l.ingredientFormUnitLabel,
                 helperText: _unitLocked
-                    ? 'Bloccata: l\'ingrediente è già usato in un piatto'
+                    ? l.ingredientFormUnitLocked
                     : null,
               ),
               items: [
                 for (final u in Unit.values)
-                  DropdownMenuItem(value: u, child: Text(u.label)),
+                  DropdownMenuItem(value: u, child: Text(u.localizedLabel(l))),
               ],
               onChanged: unitEnabled
                   ? (v) => setState(() => _selectedUnit = v!)
@@ -155,25 +153,25 @@ class _IngredientFormState extends State<_IngredientForm> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Quanto basta'),
-              subtitle: const Text('Senza quantità, non riscalato'),
+              title: Text(l.ingredientFormQb),
+              subtitle: Text(l.ingredientFormQbSubtitle),
               value: _isQb,
               onChanged: _unitLocked ? null : (v) => setState(() => _isQb = v),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String?>(
               initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'Reparto',
-                helperText: 'Ordina la lista della spesa per reparto',
+              decoration: InputDecoration(
+                labelText: l.ingredientFormDepartment,
+                helperText: l.ingredientFormDepartmentHelper,
               ),
               items: [
-                const DropdownMenuItem<String?>(
+                DropdownMenuItem<String?>(
                   value: null,
-                  child: Text(repartoNonAssegnato),
+                  child: Text(localizedRepartoNonAssegnato(l)),
                 ),
                 for (final r in reparti)
-                  DropdownMenuItem<String?>(value: r, child: Text(r)),
+                  DropdownMenuItem<String?>(value: r, child: Text(localizedReparto(r, l))),
               ],
               onChanged: (v) => setState(() => _category = v),
             ),
@@ -186,7 +184,7 @@ class _IngredientFormState extends State<_IngredientForm> {
                       width: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Salva'),
+                  : Text(l.save),
             ),
           ],
         ),
