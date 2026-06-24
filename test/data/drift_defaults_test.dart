@@ -96,6 +96,8 @@ void main() {
         is_qb INTEGER,
         category TEXT,
         rounding_kind TEXT,
+        seed_key TEXT,
+        name_modified INTEGER DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
       )''');
@@ -106,6 +108,8 @@ void main() {
         name TEXT,
         difficulty TEXT,
         time_estimate TEXT,
+        seed_key TEXT,
+        name_modified INTEGER DEFAULT 0,
         created_at TEXT,
         updated_at TEXT
       )''');

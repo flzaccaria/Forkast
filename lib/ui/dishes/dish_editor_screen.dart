@@ -142,7 +142,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
         final qty = double.tryParse(r.qtyController.text.replaceAll(',', '.'));
         if (qty == null || qty <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l.dishEditorInvalidQty(r.ingredient.name))),
+            SnackBar(content: Text(l.dishEditorInvalidQty(ingredientDisplayName(r.ingredient, Localizations.localeOf(context).toString())))),
           );
           return;
         }

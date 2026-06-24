@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
@@ -63,6 +65,10 @@ class DishRepository {
   }
 
   /// Dishes with their resolved tags for the catalog list view.
+  ///
+  /// Combines two drift `.watch()` streams (dishes + tags) with
+  /// combineLatest semantics: emits whenever either stream fires,
+  /// using the latest value from each.
   Stream<List<DishWithTags>> watchAllWithTags({
     String query = '',
     String? tagId,
@@ -77,7 +83,7 @@ class DishRepository {
     );
     final tagTable = _db.tags;
     final dtTable = _db.dishTags;
-    final allTagsStream = (_db.select(dtTable).join([
+    final tagMapStream = (_db.select(dtTable).join([
       innerJoin(tagTable, tagTable.id.equalsExp(dtTable.tagId)),
     ])
           ..where(dtTable.householdId.equals(_householdId)))
@@ -91,16 +97,41 @@ class DishRepository {
       }
       return map;
     });
-    return dishStream.asyncExpand((dishes) {
-      return allTagsStream.map((tagMap) {
-        return dishes.map((dish) {
-          return DishWithTags(
-            dish: dish,
-            tags: tagMap[dish.id] ?? const [],
-          );
-        }).toList();
-      });
-    });
+
+    List<Dish>? lastDishes;
+    Map<String, List<Tag>>? lastTags;
+    StreamSubscription<List<Dish>>? dishSub;
+    StreamSubscription<Map<String, List<Tag>>>? tagSub;
+    late StreamController<List<DishWithTags>> controller;
+
+    List<DishWithTags> combine() => lastDishes!
+        .map((d) => DishWithTags(dish: d, tags: lastTags![d.id] ?? const []))
+        .toList();
+
+    controller = StreamController<List<DishWithTags>>(
+      onListen: () {
+        dishSub = dishStream.listen(
+          (dishes) {
+            lastDishes = dishes;
+            if (lastTags != null) controller.add(combine());
+          },
+          onError: controller.addError,
+        );
+        tagSub = tagMapStream.listen(
+          (tags) {
+            lastTags = tags;
+            if (lastDishes != null) controller.add(combine());
+          },
+          onError: controller.addError,
+        );
+      },
+      onCancel: () {
+        dishSub?.cancel();
+        tagSub?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
   /// Ingredient rows of a dish.

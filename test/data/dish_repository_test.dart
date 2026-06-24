@@ -18,10 +18,12 @@ void main() {
     await exec('''CREATE TABLE ingredient (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
       is_qb INTEGER, category TEXT, rounding_kind TEXT,
+      seed_key TEXT, name_modified INTEGER DEFAULT 0,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
       difficulty TEXT, time_estimate TEXT,
+      seed_key TEXT, name_modified INTEGER DEFAULT 0,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_ingredient (
       id TEXT PRIMARY KEY, dish_id TEXT, ingredient_id TEXT, household_id TEXT,
@@ -113,6 +115,29 @@ void main() {
 
     final tags = await db.select(db.dishTags).get();
     expect(tags.single.tagId, 'secondo'); // replaced, not accumulated
+  });
+
+  test('watchAllWithTags re-emits after local create', () async {
+    await seedIngredient('carne');
+
+    final emissions = <List<DishWithTags>>[];
+    final sub = repo.watchAllWithTags().listen(emissions.add);
+    // Allow initial query to fire.
+    await pumpEventQueue();
+    expect(emissions, hasLength(1));
+    expect(emissions.last, isEmpty);
+
+    // Create a dish — the stream must re-emit with the new dish.
+    await repo.create(
+      name: 'Carbonara',
+      ingredients: [DishIngredientDraft(ingredientId: 'carne', qtyBase4: 400)],
+    );
+    await pumpEventQueue();
+    expect(emissions, hasLength(2));
+    expect(emissions.last, hasLength(1));
+    expect(emissions.last.first.dish.name, 'Carbonara');
+
+    await sub.cancel();
   });
 
   test('delete removes dish, rows, tags and plan assignments', () async {

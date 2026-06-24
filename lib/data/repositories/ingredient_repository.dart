@@ -5,6 +5,13 @@ import 'package:uuid/uuid.dart';
 import '../../core/unit.dart';
 import '../database.dart';
 
+class IngredientWithUsage {
+  IngredientWithUsage(this.ingredient, this.usageCount);
+
+  final Ingredient ingredient;
+  final int usageCount;
+}
+
 /// Access to the ingredient catalog, always filtered by household (ADR-005).
 /// Local-first writes with client-generated UUIDs (ADR-003).
 class IngredientRepository {
@@ -22,6 +29,27 @@ class IngredientRepository {
           ..where((i) => i.householdId.equals(_householdId))
           ..orderBy([(i) => OrderingTerm(expression: i.name)]))
         .watch();
+  }
+
+  /// Stream of ingredients paired with their dish-usage count.
+  Stream<List<IngredientWithUsage>> watchAllWithUsage() {
+    final ing = _db.ingredients;
+    final di = _db.dishIngredients;
+    final cnt = di.id.count();
+
+    final query = _db.select(ing).join([
+      leftOuterJoin(di, di.ingredientId.equalsExp(ing.id)),
+    ])
+      ..where(ing.householdId.equals(_householdId))
+      ..groupBy([ing.id])
+      ..addColumns([cnt])
+      ..orderBy([OrderingTerm(expression: ing.name)]);
+
+    return query.watch().map((rows) => rows.map((row) {
+          final ingredient = row.readTable(ing);
+          final usageCount = row.read(cnt) ?? 0;
+          return IngredientWithUsage(ingredient, usageCount);
+        }).toList());
   }
 
   /// Creates a catalog entry and returns the inserted ingredient, so that

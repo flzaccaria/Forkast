@@ -187,5 +187,27 @@
   "departmentCasaCura": "Husholdning",
   "departmentPersonaCura": "Personlig pleje",
   "departmentAltro": "Andet",
-  "departmentUnassigned": "Ingen afdeling"
+  "departmentUnassigned": "Ingen afdeling",
+
+  "ingredientsSearchHint": "Søg efter en ingrediens",
+  "ingredientsNoResults": "Ingen ingredienser fundet.",
+  "ingredientsResultCount": "{count, plural, =1{1 ingrediens} other{{count} ingredienser}}",
+  "ingredientsFilterTitle": "Filtre",
+  "ingredientsFilterDepartment": "Afdeling",
+  "ingredientsFilterUnit": "Enhed",
+  "ingredientsFilterQb": "Efter smag",
+  "ingredientsFilterQbYes": "Kun efter smag",
+  "ingredientsFilterQbNo": "Kun med mængde",
+  "ingredientsFilterUsage": "Brug",
+  "ingredientsFilterUsed": "Bruges i mindst én ret",
+  "ingredientsFilterUnused": "Ikke brugt",
+  "ingredientsFilterReset": "Nulstil filtre",
+  "ingredientsSortName": "Navn",
+  "ingredientsSortDepartment": "Afdeling",
+  "ingredientsSortUsage": "Antal brug",
+  "ingredientsSortAsc": "A → Z",
+  "ingredientsSortDesc": "Z → A",
+  "ingredientsViewGrouped": "Efter afdeling",
+  "ingredientsViewFlat": "Flad liste",
+  "ingredientsUsageCountLabel": "{count, plural, =0{ikke brugt} =1{1 ret} other{{count} retter}}"
 }

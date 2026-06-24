@@ -567,4 +567,84 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get departmentUnassigned => 'Ingen afdeling';
+
+  @override
+  String get ingredientsSearchHint => 'Søg efter en ingrediens';
+
+  @override
+  String get ingredientsNoResults => 'Ingen ingredienser fundet.';
+
+  @override
+  String ingredientsResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredienser',
+      one: '1 ingrediens',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ingredientsFilterTitle => 'Filtre';
+
+  @override
+  String get ingredientsFilterDepartment => 'Afdeling';
+
+  @override
+  String get ingredientsFilterUnit => 'Enhed';
+
+  @override
+  String get ingredientsFilterQb => 'Efter smag';
+
+  @override
+  String get ingredientsFilterQbYes => 'Kun efter smag';
+
+  @override
+  String get ingredientsFilterQbNo => 'Kun med mængde';
+
+  @override
+  String get ingredientsFilterUsage => 'Brug';
+
+  @override
+  String get ingredientsFilterUsed => 'Bruges i mindst én ret';
+
+  @override
+  String get ingredientsFilterUnused => 'Ikke brugt';
+
+  @override
+  String get ingredientsFilterReset => 'Nulstil filtre';
+
+  @override
+  String get ingredientsSortName => 'Navn';
+
+  @override
+  String get ingredientsSortDepartment => 'Afdeling';
+
+  @override
+  String get ingredientsSortUsage => 'Antal brug';
+
+  @override
+  String get ingredientsSortAsc => 'A → Z';
+
+  @override
+  String get ingredientsSortDesc => 'Z → A';
+
+  @override
+  String get ingredientsViewGrouped => 'Efter afdeling';
+
+  @override
+  String get ingredientsViewFlat => 'Flad liste';
+
+  @override
+  String ingredientsUsageCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count retter',
+      one: '1 ret',
+      zero: 'ikke brugt',
+    );
+    return '$_temp0';
+  }
 }

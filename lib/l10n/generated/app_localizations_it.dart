@@ -572,4 +572,84 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get departmentUnassigned => 'Senza reparto';
+
+  @override
+  String get ingredientsSearchHint => 'Cerca un ingrediente';
+
+  @override
+  String get ingredientsNoResults => 'Nessun ingrediente trovato.';
+
+  @override
+  String ingredientsResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredienti',
+      one: '1 ingrediente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ingredientsFilterTitle => 'Filtri';
+
+  @override
+  String get ingredientsFilterDepartment => 'Reparto';
+
+  @override
+  String get ingredientsFilterUnit => 'Unità';
+
+  @override
+  String get ingredientsFilterQb => 'Quanto basta';
+
+  @override
+  String get ingredientsFilterQbYes => 'Solo q.b.';
+
+  @override
+  String get ingredientsFilterQbNo => 'Solo con quantità';
+
+  @override
+  String get ingredientsFilterUsage => 'Utilizzo';
+
+  @override
+  String get ingredientsFilterUsed => 'Usati in almeno un piatto';
+
+  @override
+  String get ingredientsFilterUnused => 'Non usati';
+
+  @override
+  String get ingredientsFilterReset => 'Azzera filtri';
+
+  @override
+  String get ingredientsSortName => 'Nome';
+
+  @override
+  String get ingredientsSortDepartment => 'Reparto';
+
+  @override
+  String get ingredientsSortUsage => 'Utilizzi';
+
+  @override
+  String get ingredientsSortAsc => 'A → Z';
+
+  @override
+  String get ingredientsSortDesc => 'Z → A';
+
+  @override
+  String get ingredientsViewGrouped => 'Per reparto';
+
+  @override
+  String get ingredientsViewFlat => 'Lista piatta';
+
+  @override
+  String ingredientsUsageCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count piatti',
+      one: '1 piatto',
+      zero: 'non usato',
+    );
+    return '$_temp0';
+  }
 }

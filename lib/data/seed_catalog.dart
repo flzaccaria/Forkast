@@ -72,6 +72,45 @@ Future<void> seedCatalogIfNeeded(
   });
 }
 
+/// Backfills [seedKey] for ingredients that were seeded before the L2
+/// localization feature added the column. Matches by exact Italian name from
+/// the CSV. Idempotent: only touches rows where seed_key IS NULL.
+Future<void> backfillSeedKeys(
+  AppDatabase db,
+  String householdId, {
+  String? csvOverride,
+}) async {
+  final missing = await (db.select(db.ingredients)
+        ..where((i) =>
+            i.householdId.equals(householdId) &
+            i.seedKey.isNull()))
+      .get();
+  if (missing.isEmpty) return;
+
+  final csv =
+      csvOverride ?? await rootBundle.loadString('assets/seed_ingredienti.csv');
+  final rows = parseSeedCsv(csv);
+  final nameToKey = <String, String>{};
+  for (final row in rows) {
+    if (row.seedKey != null && row.seedKey!.isNotEmpty) {
+      nameToKey[row.name] = row.seedKey!;
+    }
+  }
+
+  final now = DateTime.now().toUtc();
+  for (final ing in missing) {
+    final key = nameToKey[ing.name];
+    if (key != null) {
+      await (db.update(db.ingredients)
+            ..where((i) => i.id.equals(ing.id)))
+          .write(IngredientsCompanion(
+        seedKey: Value(key),
+        updatedAt: Value(now),
+      ));
+    }
+  }
+}
+
 Future<int> _ingredientCount(AppDatabase db, String householdId) async {
   final cnt = db.ingredients.id.count();
   final query = db.selectOnly(db.ingredients)

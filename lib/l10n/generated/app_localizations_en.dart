@@ -567,4 +567,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get departmentUnassigned => 'No department';
+
+  @override
+  String get ingredientsSearchHint => 'Search an ingredient';
+
+  @override
+  String get ingredientsNoResults => 'No ingredients found.';
+
+  @override
+  String ingredientsResultCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredients',
+      one: '1 ingredient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ingredientsFilterTitle => 'Filters';
+
+  @override
+  String get ingredientsFilterDepartment => 'Department';
+
+  @override
+  String get ingredientsFilterUnit => 'Unit';
+
+  @override
+  String get ingredientsFilterQb => 'To taste';
+
+  @override
+  String get ingredientsFilterQbYes => 'To taste only';
+
+  @override
+  String get ingredientsFilterQbNo => 'With quantity only';
+
+  @override
+  String get ingredientsFilterUsage => 'Usage';
+
+  @override
+  String get ingredientsFilterUsed => 'Used in at least one dish';
+
+  @override
+  String get ingredientsFilterUnused => 'Not used';
+
+  @override
+  String get ingredientsFilterReset => 'Clear filters';
+
+  @override
+  String get ingredientsSortName => 'Name';
+
+  @override
+  String get ingredientsSortDepartment => 'Department';
+
+  @override
+  String get ingredientsSortUsage => 'Usage count';
+
+  @override
+  String get ingredientsSortAsc => 'A → Z';
+
+  @override
+  String get ingredientsSortDesc => 'Z → A';
+
+  @override
+  String get ingredientsViewGrouped => 'By department';
+
+  @override
+  String get ingredientsViewFlat => 'Flat list';
+
+  @override
+  String ingredientsUsageCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dishes',
+      one: '1 dish',
+      zero: 'not used',
+    );
+    return '$_temp0';
+  }
 }

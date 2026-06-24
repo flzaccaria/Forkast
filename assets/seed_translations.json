@@ -1,653 +1,219 @@
 {
-  "pomodori-freschi": {
-    "it": "Pomodori freschi"
-  },
-  "pomodorini": {
-    "it": "Pomodorini"
-  },
-  "insalata": {
-    "it": "Insalata"
-  },
-  "rucola": {
-    "it": "Rucola"
-  },
-  "carote": {
-    "it": "Carote"
-  },
-  "cipolle": {
-    "it": "Cipolle"
-  },
-  "cipolla-rossa": {
-    "it": "Cipolla rossa"
-  },
-  "aglio": {
-    "it": "Aglio"
-  },
-  "patate": {
-    "it": "Patate"
-  },
-  "zucchine": {
-    "it": "Zucchine"
-  },
-  "melanzane": {
-    "it": "Melanzane"
-  },
-  "peperoni": {
-    "it": "Peperoni"
-  },
-  "sedano": {
-    "it": "Sedano"
-  },
-  "finocchi": {
-    "it": "Finocchi"
-  },
-  "spinaci": {
-    "it": "Spinaci"
-  },
-  "broccoli": {
-    "it": "Broccoli"
-  },
-  "cavolfiore": {
-    "it": "Cavolfiore"
-  },
-  "verza": {
-    "it": "Verza"
-  },
-  "funghi-champignon": {
-    "it": "Funghi champignon"
-  },
-  "zucca": {
-    "it": "Zucca"
-  },
-  "fagiolini": {
-    "it": "Fagiolini"
-  },
-  "piselli-freschi": {
-    "it": "Piselli freschi"
-  },
-  "asparagi": {
-    "it": "Asparagi"
-  },
-  "radicchio": {
-    "it": "Radicchio"
-  },
-  "cetrioli": {
-    "it": "Cetrioli"
-  },
-  "porri": {
-    "it": "Porri"
-  },
-  "bietola": {
-    "it": "Bietola"
-  },
-  "basilico": {
-    "it": "Basilico"
-  },
-  "prezzemolo": {
-    "it": "Prezzemolo"
-  },
-  "rosmarino": {
-    "it": "Rosmarino"
-  },
-  "salvia": {
-    "it": "Salvia"
-  },
-  "peperoncino-fresco": {
-    "it": "Peperoncino fresco"
-  },
-  "zenzero": {
-    "it": "Zenzero"
-  },
-  "limoni": {
-    "it": "Limoni"
-  },
-  "arance": {
-    "it": "Arance"
-  },
-  "mele": {
-    "it": "Mele"
-  },
-  "banane": {
-    "it": "Banane"
-  },
-  "pere": {
-    "it": "Pere"
-  },
-  "fragole": {
-    "it": "Fragole"
-  },
-  "uva": {
-    "it": "Uva"
-  },
-  "pesche": {
-    "it": "Pesche"
-  },
-  "kiwi": {
-    "it": "Kiwi"
-  },
-  "melone": {
-    "it": "Melone"
-  },
-  "mandarini": {
-    "it": "Mandarini"
-  },
-  "ciliegie": {
-    "it": "Ciliegie"
-  },
-  "mirtilli": {
-    "it": "Mirtilli"
-  },
-  "avocado": {
-    "it": "Avocado"
-  },
-  "carne-macinata-di-manzo": {
-    "it": "Carne macinata di manzo"
-  },
-  "carne-macinata-mista": {
-    "it": "Carne macinata mista"
-  },
-  "petto-di-pollo": {
-    "it": "Petto di pollo"
-  },
-  "cosce-di-pollo": {
-    "it": "Cosce di pollo"
-  },
-  "pollo-intero": {
-    "it": "Pollo intero"
-  },
-  "fettine-di-vitello": {
-    "it": "Fettine di vitello"
-  },
-  "bistecca-di-manzo": {
-    "it": "Bistecca di manzo"
-  },
-  "arrosto-di-maiale": {
-    "it": "Arrosto di maiale"
-  },
-  "salsicce": {
-    "it": "Salsicce"
-  },
-  "costine-di-maiale": {
-    "it": "Costine di maiale"
-  },
-  "spezzatino-di-manzo": {
-    "it": "Spezzatino di manzo"
-  },
-  "fettine-di-tacchino": {
-    "it": "Fettine di tacchino"
-  },
-  "coniglio": {
-    "it": "Coniglio"
-  },
-  "braciole-di-maiale": {
-    "it": "Braciole di maiale"
-  },
-  "lonza-di-maiale": {
-    "it": "Lonza di maiale"
-  },
-  "salmone": {
-    "it": "Salmone"
-  },
-  "tonno-fresco": {
-    "it": "Tonno fresco"
-  },
-  "orata": {
-    "it": "Orata"
-  },
-  "branzino": {
-    "it": "Branzino"
-  },
-  "gamberi": {
-    "it": "Gamberi"
-  },
-  "calamari": {
-    "it": "Calamari"
-  },
-  "cozze": {
-    "it": "Cozze"
-  },
-  "vongole": {
-    "it": "Vongole"
-  },
-  "merluzzo": {
-    "it": "Merluzzo"
-  },
-  "platessa": {
-    "it": "Platessa"
-  },
-  "seppie": {
-    "it": "Seppie"
-  },
-  "polpo": {
-    "it": "Polpo"
-  },
-  "sgombro": {
-    "it": "Sgombro"
-  },
-  "trota": {
-    "it": "Trota"
-  },
-  "prosciutto-crudo": {
-    "it": "Prosciutto crudo"
-  },
-  "prosciutto-cotto": {
-    "it": "Prosciutto cotto"
-  },
-  "mortadella": {
-    "it": "Mortadella"
-  },
-  "salame": {
-    "it": "Salame"
-  },
-  "speck": {
-    "it": "Speck"
-  },
-  "pancetta": {
-    "it": "Pancetta"
-  },
-  "bresaola": {
-    "it": "Bresaola"
-  },
-  "parmigiano-reggiano": {
-    "it": "Parmigiano Reggiano"
-  },
-  "grana-padano": {
-    "it": "Grana Padano"
-  },
-  "pecorino": {
-    "it": "Pecorino"
-  },
-  "mozzarella": {
-    "it": "Mozzarella"
-  },
-  "mozzarella-di-bufala": {
-    "it": "Mozzarella di bufala"
-  },
-  "gorgonzola": {
-    "it": "Gorgonzola"
-  },
-  "stracchino": {
-    "it": "Stracchino"
-  },
-  "ricotta": {
-    "it": "Ricotta"
-  },
-  "scamorza": {
-    "it": "Scamorza"
-  },
-  "fontina": {
-    "it": "Fontina"
-  },
-  "mascarpone": {
-    "it": "Mascarpone"
-  },
-  "latte": {
-    "it": "Latte"
-  },
-  "latte-parzialmente-scremato": {
-    "it": "Latte parzialmente scremato"
-  },
-  "uova": {
-    "it": "Uova"
-  },
-  "burro": {
-    "it": "Burro"
-  },
-  "yogurt-bianco": {
-    "it": "Yogurt bianco"
-  },
-  "yogurt-greco": {
-    "it": "Yogurt greco"
-  },
-  "panna-fresca": {
-    "it": "Panna fresca"
-  },
-  "panna-da-cucina": {
-    "it": "Panna da cucina"
-  },
-  "latte-di-soia": {
-    "it": "Latte di soia"
-  },
-  "pane": {
-    "it": "Pane"
-  },
-  "panini-per-hamburger": {
-    "it": "Panini per hamburger"
-  },
-  "pane-in-cassetta": {
-    "it": "Pane in cassetta"
-  },
-  "baguette": {
-    "it": "Baguette"
-  },
-  "grissini": {
-    "it": "Grissini"
-  },
-  "crackers": {
-    "it": "Crackers"
-  },
-  "fette-biscottate": {
-    "it": "Fette biscottate"
-  },
-  "pangrattato": {
-    "it": "Pangrattato"
-  },
-  "piadina": {
-    "it": "Piadina"
-  },
-  "tortillas": {
-    "it": "Tortillas"
-  },
-  "base-per-pizza": {
-    "it": "Base per pizza"
-  },
-  "pasta-spaghetti": {
-    "it": "Pasta spaghetti"
-  },
-  "pasta-penne": {
-    "it": "Pasta penne"
-  },
-  "pasta-fusilli": {
-    "it": "Pasta fusilli"
-  },
-  "riso": {
-    "it": "Riso"
-  },
-  "riso-basmati": {
-    "it": "Riso basmati"
-  },
-  "orzo": {
-    "it": "Orzo"
-  },
-  "farro": {
-    "it": "Farro"
-  },
-  "cous-cous": {
-    "it": "Cous cous"
-  },
-  "farina-di-mais-per-polenta": {
-    "it": "Farina di mais per polenta"
-  },
-  "gnocchi": {
-    "it": "Gnocchi"
-  },
-  "farina-00": {
-    "it": "Farina 00"
-  },
-  "farina-integrale": {
-    "it": "Farina integrale"
-  },
-  "zucchero": {
-    "it": "Zucchero"
-  },
-  "zucchero-di-canna": {
-    "it": "Zucchero di canna"
-  },
-  "lievito-per-dolci": {
-    "it": "Lievito per dolci"
-  },
-  "lievito-di-birra": {
-    "it": "Lievito di birra"
-  },
-  "cacao-amaro": {
-    "it": "Cacao amaro"
-  },
-  "cioccolato-fondente": {
-    "it": "Cioccolato fondente"
-  },
-  "vanillina": {
-    "it": "Vanillina"
-  },
-  "passata-di-pomodoro": {
-    "it": "Passata di pomodoro"
-  },
-  "pomodori-pelati": {
-    "it": "Pomodori pelati"
-  },
-  "pomodori-a-pezzi-in-barattolo": {
-    "it": "Pomodori a pezzi in barattolo"
-  },
-  "concentrato-di-pomodoro": {
-    "it": "Concentrato di pomodoro"
-  },
-  "tonno-in-scatola": {
-    "it": "Tonno in scatola"
-  },
-  "mais-in-scatola": {
-    "it": "Mais in scatola"
-  },
-  "fagioli-in-scatola": {
-    "it": "Fagioli in scatola"
-  },
-  "ceci-in-scatola": {
-    "it": "Ceci in scatola"
-  },
-  "lenticchie": {
-    "it": "Lenticchie"
-  },
-  "olive": {
-    "it": "Olive"
-  },
-  "capperi": {
-    "it": "Capperi"
-  },
-  "acciughe-sottolio": {
-    "it": "Acciughe sottolio"
-  },
-  "dado-da-brodo": {
-    "it": "Dado da brodo"
-  },
-  "olio-extravergine-di-oliva": {
-    "it": "Olio extravergine di oliva"
-  },
-  "olio-di-semi": {
-    "it": "Olio di semi"
-  },
-  "aceto": {
-    "it": "Aceto"
-  },
-  "aceto-balsamico": {
-    "it": "Aceto balsamico"
-  },
-  "sale-fino": {
-    "it": "Sale fino"
-  },
-  "sale-grosso": {
-    "it": "Sale grosso"
-  },
-  "pepe-nero": {
-    "it": "Pepe nero"
-  },
-  "senape": {
-    "it": "Senape"
-  },
-  "maionese": {
-    "it": "Maionese"
-  },
-  "ketchup": {
-    "it": "Ketchup"
-  },
-  "salsa-di-soia": {
-    "it": "Salsa di soia"
-  },
-  "miele": {
-    "it": "Miele"
-  },
-  "marmellata": {
-    "it": "Marmellata"
-  },
-  "crema-spalmabile-alla-nocciola": {
-    "it": "Crema spalmabile alla nocciola"
-  },
-  "origano": {
-    "it": "Origano"
-  },
-  "cannella": {
-    "it": "Cannella"
-  },
-  "noce-moscata": {
-    "it": "Noce moscata"
-  },
-  "curcuma": {
-    "it": "Curcuma"
-  },
-  "paprika": {
-    "it": "Paprika"
-  },
-  "curry": {
-    "it": "Curry"
-  },
-  "peperoncino-in-polvere": {
-    "it": "Peperoncino in polvere"
-  },
-  "alloro": {
-    "it": "Alloro"
-  },
-  "zafferano": {
-    "it": "Zafferano"
-  },
-  "noci": {
-    "it": "Noci"
-  },
-  "mandorle": {
-    "it": "Mandorle"
-  },
-  "pinoli": {
-    "it": "Pinoli"
-  },
-  "uvetta": {
-    "it": "Uvetta"
-  },
-  "caffe": {
-    "it": "Caffe"
-  },
-  "te": {
-    "it": "Te"
-  },
-  "cereali": {
-    "it": "Cereali"
-  },
-  "biscotti": {
-    "it": "Biscotti"
-  },
-  "piselli-surgelati": {
-    "it": "Piselli surgelati"
-  },
-  "spinaci-surgelati": {
-    "it": "Spinaci surgelati"
-  },
-  "minestrone-surgelato": {
-    "it": "Minestrone surgelato"
-  },
-  "bastoncini-di-pesce": {
-    "it": "Bastoncini di pesce"
-  },
-  "gamberi-surgelati": {
-    "it": "Gamberi surgelati"
-  },
-  "patatine-fritte-surgelate": {
-    "it": "Patatine fritte surgelate"
-  },
-  "pizza-surgelata": {
-    "it": "Pizza surgelata"
-  },
-  "gelato": {
-    "it": "Gelato"
-  },
-  "verdure-miste-surgelate": {
-    "it": "Verdure miste surgelate"
-  },
-  "filetti-di-merluzzo-surgelati": {
-    "it": "Filetti di merluzzo surgelati"
-  },
-  "acqua-naturale": {
-    "it": "Acqua naturale"
-  },
-  "acqua-frizzante": {
-    "it": "Acqua frizzante"
-  },
-  "vino-rosso": {
-    "it": "Vino rosso"
-  },
-  "vino-bianco": {
-    "it": "Vino bianco"
-  },
-  "birra": {
-    "it": "Birra"
-  },
-  "succo-di-arancia": {
-    "it": "Succo di arancia"
-  },
-  "bibita-gassata": {
-    "it": "Bibita gassata"
-  },
-  "detersivo-per-piatti": {
-    "it": "Detersivo per piatti"
-  },
-  "detersivo-per-lavatrice": {
-    "it": "Detersivo per lavatrice"
-  },
-  "carta-igienica": {
-    "it": "Carta igienica"
-  },
-  "rotolo-da-cucina": {
-    "it": "Rotolo da cucina"
-  },
-  "sacchetti-per-la-spazzatura": {
-    "it": "Sacchetti per la spazzatura"
-  },
-  "pellicola-trasparente": {
-    "it": "Pellicola trasparente"
-  },
-  "carta-da-forno": {
-    "it": "Carta da forno"
-  },
-  "rotolo-di-alluminio": {
-    "it": "Rotolo di alluminio"
-  },
-  "spugne": {
-    "it": "Spugne"
-  },
-  "ammorbidente": {
-    "it": "Ammorbidente"
-  },
-  "candeggina": {
-    "it": "Candeggina"
-  },
-  "dentifricio": {
-    "it": "Dentifricio"
-  },
-  "spazzolino": {
-    "it": "Spazzolino"
-  },
-  "sapone": {
-    "it": "Sapone"
-  },
-  "shampoo": {
-    "it": "Shampoo"
-  },
-  "bagnoschiuma": {
-    "it": "Bagnoschiuma"
-  },
-  "deodorante": {
-    "it": "Deodorante"
-  },
-  "rasoi": {
-    "it": "Rasoi"
-  },
-  "fazzoletti-di-carta": {
-    "it": "Fazzoletti di carta"
-  },
-  "cibo-per-gatti": {
-    "it": "Cibo per gatti"
-  },
-  "cibo-per-cani": {
-    "it": "Cibo per cani"
-  },
-  "pile": {
-    "it": "Pile"
-  },
-  "lampadine": {
-    "it": "Lampadine"
-  }
+  "pomodori-freschi": { "it": "Pomodori freschi", "en": "Fresh tomatoes", "da": "Friske tomater" },
+  "pomodorini": { "it": "Pomodorini", "en": "Cherry tomatoes", "da": "Cherrytomater" },
+  "insalata": { "it": "Insalata", "en": "Lettuce", "da": "Salat" },
+  "rucola": { "it": "Rucola", "en": "Rocket", "da": "Rucola" },
+  "carote": { "it": "Carote", "en": "Carrots", "da": "Gulerødder" },
+  "cipolle": { "it": "Cipolle", "en": "Onions", "da": "Løg" },
+  "cipolla-rossa": { "it": "Cipolla rossa", "en": "Red onion", "da": "Rødløg" },
+  "aglio": { "it": "Aglio", "en": "Garlic", "da": "Hvidløg" },
+  "patate": { "it": "Patate", "en": "Potatoes", "da": "Kartofler" },
+  "zucchine": { "it": "Zucchine", "en": "Courgettes", "da": "Squash" },
+  "melanzane": { "it": "Melanzane", "en": "Aubergines", "da": "Auberginer" },
+  "peperoni": { "it": "Peperoni", "en": "Peppers", "da": "Peberfrugter" },
+  "sedano": { "it": "Sedano", "en": "Celery", "da": "Selleri" },
+  "finocchi": { "it": "Finocchi", "en": "Fennel", "da": "Fennikel" },
+  "spinaci": { "it": "Spinaci", "en": "Spinach", "da": "Spinat" },
+  "broccoli": { "it": "Broccoli", "en": "Broccoli", "da": "Broccoli" },
+  "cavolfiore": { "it": "Cavolfiore", "en": "Cauliflower", "da": "Blomkål" },
+  "verza": { "it": "Verza", "en": "Savoy cabbage", "da": "Savoykål" },
+  "funghi-champignon": { "it": "Funghi champignon", "en": "Button mushrooms", "da": "Champignoner" },
+  "zucca": { "it": "Zucca", "en": "Pumpkin", "da": "Græskar" },
+  "fagiolini": { "it": "Fagiolini", "en": "Green beans", "da": "Grønne bønner" },
+  "piselli-freschi": { "it": "Piselli freschi", "en": "Fresh peas", "da": "Friske ærter" },
+  "asparagi": { "it": "Asparagi", "en": "Asparagus", "da": "Asparges" },
+  "radicchio": { "it": "Radicchio", "en": "Radicchio", "da": "Radicchio" },
+  "cetrioli": { "it": "Cetrioli", "en": "Cucumbers", "da": "Agurker" },
+  "porri": { "it": "Porri", "en": "Leeks", "da": "Porrer" },
+  "bietola": { "it": "Bietola", "en": "Swiss chard", "da": "Mangold" },
+  "basilico": { "it": "Basilico", "en": "Basil", "da": "Basilikum" },
+  "prezzemolo": { "it": "Prezzemolo", "en": "Parsley", "da": "Persille" },
+  "rosmarino": { "it": "Rosmarino", "en": "Rosemary", "da": "Rosmarin" },
+  "salvia": { "it": "Salvia", "en": "Sage", "da": "Salvie" },
+  "peperoncino-fresco": { "it": "Peperoncino fresco", "en": "Fresh chilli", "da": "Frisk chili" },
+  "zenzero": { "it": "Zenzero", "en": "Ginger", "da": "Ingefær" },
+  "limoni": { "it": "Limoni", "en": "Lemons", "da": "Citroner" },
+  "arance": { "it": "Arance", "en": "Oranges", "da": "Appelsiner" },
+  "mele": { "it": "Mele", "en": "Apples", "da": "Æbler" },
+  "banane": { "it": "Banane", "en": "Bananas", "da": "Bananer" },
+  "pere": { "it": "Pere", "en": "Pears", "da": "Pærer" },
+  "fragole": { "it": "Fragole", "en": "Strawberries", "da": "Jordbær" },
+  "uva": { "it": "Uva", "en": "Grapes", "da": "Vindruer" },
+  "pesche": { "it": "Pesche", "en": "Peaches", "da": "Ferskner" },
+  "kiwi": { "it": "Kiwi", "en": "Kiwi", "da": "Kiwi" },
+  "melone": { "it": "Melone", "en": "Melon", "da": "Melon" },
+  "mandarini": { "it": "Mandarini", "en": "Mandarins", "da": "Mandariner" },
+  "ciliegie": { "it": "Ciliegie", "en": "Cherries", "da": "Kirsebær" },
+  "mirtilli": { "it": "Mirtilli", "en": "Blueberries", "da": "Blåbær" },
+  "avocado": { "it": "Avocado", "en": "Avocado", "da": "Avocado" },
+  "carne-macinata-di-manzo": { "it": "Carne macinata di manzo", "en": "Minced beef", "da": "Hakket oksekød" },
+  "carne-macinata-mista": { "it": "Carne macinata mista", "en": "Mixed mince", "da": "Blandingsfars" },
+  "petto-di-pollo": { "it": "Petto di pollo", "en": "Chicken breast", "da": "Kyllingebryst" },
+  "cosce-di-pollo": { "it": "Cosce di pollo", "en": "Chicken thighs", "da": "Kyllingelår" },
+  "pollo-intero": { "it": "Pollo intero", "en": "Whole chicken", "da": "Hel kylling" },
+  "fettine-di-vitello": { "it": "Fettine di vitello", "en": "Veal cutlets", "da": "Kalveschnitzler" },
+  "bistecca-di-manzo": { "it": "Bistecca di manzo", "en": "Beef steak", "da": "Oksebøf" },
+  "arrosto-di-maiale": { "it": "Arrosto di maiale", "en": "Pork roast", "da": "Svinesteg" },
+  "salsicce": { "it": "Salsicce", "en": "Sausages", "da": "Pølser" },
+  "costine-di-maiale": { "it": "Costine di maiale", "en": "Pork ribs", "da": "Spareribs" },
+  "spezzatino-di-manzo": { "it": "Spezzatino di manzo", "en": "Beef stew meat", "da": "Oksegrydekød" },
+  "fettine-di-tacchino": { "it": "Fettine di tacchino", "en": "Turkey cutlets", "da": "Kalkunschnitzler" },
+  "coniglio": { "it": "Coniglio", "en": "Rabbit", "da": "Kanin" },
+  "braciole-di-maiale": { "it": "Braciole di maiale", "en": "Pork chops", "da": "Svinekotelet" },
+  "lonza-di-maiale": { "it": "Lonza di maiale", "en": "Pork loin", "da": "Svinemørbrad" },
+  "salmone": { "it": "Salmone", "en": "Salmon", "da": "Laks" },
+  "tonno-fresco": { "it": "Tonno fresco", "en": "Fresh tuna", "da": "Frisk tun" },
+  "orata": { "it": "Orata", "en": "Sea bream", "da": "Havbrasen" },
+  "branzino": { "it": "Branzino", "en": "Sea bass", "da": "Havbars" },
+  "gamberi": { "it": "Gamberi", "en": "Prawns", "da": "Rejer" },
+  "calamari": { "it": "Calamari", "en": "Squid", "da": "Blæksprutter" },
+  "cozze": { "it": "Cozze", "en": "Mussels", "da": "Muslinger" },
+  "vongole": { "it": "Vongole", "en": "Clams", "da": "Venusmuslinger" },
+  "merluzzo": { "it": "Merluzzo", "en": "Cod", "da": "Torsk" },
+  "platessa": { "it": "Platessa", "en": "Plaice", "da": "Rødspætte" },
+  "seppie": { "it": "Seppie", "en": "Cuttlefish", "da": "Sepia" },
+  "polpo": { "it": "Polpo", "en": "Octopus", "da": "Blæksprutte" },
+  "sgombro": { "it": "Sgombro", "en": "Mackerel", "da": "Makrel" },
+  "trota": { "it": "Trota", "en": "Trout", "da": "Ørred" },
+  "prosciutto-crudo": { "it": "Prosciutto crudo", "en": "Cured ham", "da": "Parmaskinke" },
+  "prosciutto-cotto": { "it": "Prosciutto cotto", "en": "Cooked ham", "da": "Kogt skinke" },
+  "mortadella": { "it": "Mortadella", "en": "Mortadella", "da": "Mortadella" },
+  "salame": { "it": "Salame", "en": "Salami", "da": "Salami" },
+  "speck": { "it": "Speck", "en": "Speck", "da": "Speck" },
+  "pancetta": { "it": "Pancetta", "en": "Pancetta", "da": "Pancetta" },
+  "bresaola": { "it": "Bresaola", "en": "Bresaola", "da": "Bresaola" },
+  "parmigiano-reggiano": { "it": "Parmigiano Reggiano", "en": "Parmesan", "da": "Parmesan" },
+  "grana-padano": { "it": "Grana Padano", "en": "Grana Padano", "da": "Grana Padano" },
+  "pecorino": { "it": "Pecorino", "en": "Pecorino", "da": "Pecorino" },
+  "mozzarella": { "it": "Mozzarella", "en": "Mozzarella", "da": "Mozzarella" },
+  "mozzarella-di-bufala": { "it": "Mozzarella di bufala", "en": "Buffalo mozzarella", "da": "Bøffelmozzarella" },
+  "gorgonzola": { "it": "Gorgonzola", "en": "Gorgonzola", "da": "Gorgonzola" },
+  "stracchino": { "it": "Stracchino", "en": "Stracchino", "da": "Stracchino" },
+  "ricotta": { "it": "Ricotta", "en": "Ricotta", "da": "Ricotta" },
+  "scamorza": { "it": "Scamorza", "en": "Scamorza", "da": "Scamorza" },
+  "fontina": { "it": "Fontina", "en": "Fontina", "da": "Fontina" },
+  "mascarpone": { "it": "Mascarpone", "en": "Mascarpone", "da": "Mascarpone" },
+  "latte": { "it": "Latte", "en": "Milk", "da": "Mælk" },
+  "latte-parzialmente-scremato": { "it": "Latte parzialmente scremato", "en": "Semi-skimmed milk", "da": "Letmælk" },
+  "uova": { "it": "Uova", "en": "Eggs", "da": "Æg" },
+  "burro": { "it": "Burro", "en": "Butter", "da": "Smør" },
+  "yogurt-bianco": { "it": "Yogurt bianco", "en": "Plain yoghurt", "da": "Naturyoghurt" },
+  "yogurt-greco": { "it": "Yogurt greco", "en": "Greek yoghurt", "da": "Græsk yoghurt" },
+  "panna-fresca": { "it": "Panna fresca", "en": "Fresh cream", "da": "Piskefløde" },
+  "panna-da-cucina": { "it": "Panna da cucina", "en": "Cooking cream", "da": "Madlavningsfløde" },
+  "latte-di-soia": { "it": "Latte di soia", "en": "Soy milk", "da": "Sojamælk" },
+  "pane": { "it": "Pane", "en": "Bread", "da": "Brød" },
+  "panini-per-hamburger": { "it": "Panini per hamburger", "en": "Burger buns", "da": "Burgerboller" },
+  "pane-in-cassetta": { "it": "Pane in cassetta", "en": "Sliced bread", "da": "Toastbrød" },
+  "baguette": { "it": "Baguette", "en": "Baguette", "da": "Baguette" },
+  "grissini": { "it": "Grissini", "en": "Breadsticks", "da": "Brødstænger" },
+  "crackers": { "it": "Crackers", "en": "Crackers", "da": "Knækbrød" },
+  "fette-biscottate": { "it": "Fette biscottate", "en": "Rusks", "da": "Tvebakker" },
+  "pangrattato": { "it": "Pangrattato", "en": "Breadcrumbs", "da": "Rasp" },
+  "piadina": { "it": "Piadina", "en": "Piadina", "da": "Piadina" },
+  "tortillas": { "it": "Tortillas", "en": "Tortillas", "da": "Tortillas" },
+  "base-per-pizza": { "it": "Base per pizza", "en": "Pizza base", "da": "Pizzabund" },
+  "pasta-spaghetti": { "it": "Pasta spaghetti", "en": "Spaghetti", "da": "Spaghetti" },
+  "pasta-penne": { "it": "Pasta penne", "en": "Penne", "da": "Penne" },
+  "pasta-fusilli": { "it": "Pasta fusilli", "en": "Fusilli", "da": "Fusilli" },
+  "riso": { "it": "Riso", "en": "Rice", "da": "Ris" },
+  "riso-basmati": { "it": "Riso basmati", "en": "Basmati rice", "da": "Basmatiris" },
+  "orzo": { "it": "Orzo", "en": "Barley", "da": "Byg" },
+  "farro": { "it": "Farro", "en": "Spelt", "da": "Spelt" },
+  "cous-cous": { "it": "Cous cous", "en": "Couscous", "da": "Couscous" },
+  "farina-di-mais-per-polenta": { "it": "Farina di mais per polenta", "en": "Polenta cornmeal", "da": "Polentamel" },
+  "gnocchi": { "it": "Gnocchi", "en": "Gnocchi", "da": "Gnocchi" },
+  "farina-00": { "it": "Farina 00", "en": "Plain flour", "da": "Hvedemel" },
+  "farina-integrale": { "it": "Farina integrale", "en": "Wholemeal flour", "da": "Fuldkornsmel" },
+  "zucchero": { "it": "Zucchero", "en": "Sugar", "da": "Sukker" },
+  "zucchero-di-canna": { "it": "Zucchero di canna", "en": "Brown sugar", "da": "Rørsukker" },
+  "lievito-per-dolci": { "it": "Lievito per dolci", "en": "Baking powder", "da": "Bagepulver" },
+  "lievito-di-birra": { "it": "Lievito di birra", "en": "Yeast", "da": "Gær" },
+  "cacao-amaro": { "it": "Cacao amaro", "en": "Cocoa powder", "da": "Kakaopulver" },
+  "cioccolato-fondente": { "it": "Cioccolato fondente", "en": "Dark chocolate", "da": "Mørk chokolade" },
+  "vanillina": { "it": "Vanillina", "en": "Vanilla", "da": "Vanilje" },
+  "passata-di-pomodoro": { "it": "Passata di pomodoro", "en": "Tomato passata", "da": "Tomatpassata" },
+  "pomodori-pelati": { "it": "Pomodori pelati", "en": "Peeled tomatoes", "da": "Flåede tomater" },
+  "pomodori-a-pezzi-in-barattolo": { "it": "Pomodori a pezzi in barattolo", "en": "Chopped tomatoes", "da": "Hakkede tomater" },
+  "concentrato-di-pomodoro": { "it": "Concentrato di pomodoro", "en": "Tomato paste", "da": "Tomatpuré" },
+  "tonno-in-scatola": { "it": "Tonno in scatola", "en": "Canned tuna", "da": "Tun på dåse" },
+  "mais-in-scatola": { "it": "Mais in scatola", "en": "Canned sweetcorn", "da": "Majs på dåse" },
+  "fagioli-in-scatola": { "it": "Fagioli in scatola", "en": "Canned beans", "da": "Bønner på dåse" },
+  "ceci-in-scatola": { "it": "Ceci in scatola", "en": "Canned chickpeas", "da": "Kikærter på dåse" },
+  "lenticchie": { "it": "Lenticchie", "en": "Lentils", "da": "Linser" },
+  "olive": { "it": "Olive", "en": "Olives", "da": "Oliven" },
+  "capperi": { "it": "Capperi", "en": "Capers", "da": "Kapers" },
+  "acciughe-sottolio": { "it": "Acciughe sottolio", "en": "Anchovies in oil", "da": "Ansjoser i olie" },
+  "dado-da-brodo": { "it": "Dado da brodo", "en": "Stock cube", "da": "Bouillonterning" },
+  "olio-extravergine-di-oliva": { "it": "Olio extravergine di oliva", "en": "Extra virgin olive oil", "da": "Ekstra jomfru olivenolie" },
+  "olio-di-semi": { "it": "Olio di semi", "en": "Seed oil", "da": "Rapsolie" },
+  "aceto": { "it": "Aceto", "en": "Vinegar", "da": "Eddike" },
+  "aceto-balsamico": { "it": "Aceto balsamico", "en": "Balsamic vinegar", "da": "Balsamico" },
+  "sale-fino": { "it": "Sale fino", "en": "Fine salt", "da": "Fint salt" },
+  "sale-grosso": { "it": "Sale grosso", "en": "Coarse salt", "da": "Groft salt" },
+  "pepe-nero": { "it": "Pepe nero", "en": "Black pepper", "da": "Sort peber" },
+  "senape": { "it": "Senape", "en": "Mustard", "da": "Sennep" },
+  "maionese": { "it": "Maionese", "en": "Mayonnaise", "da": "Mayonnaise" },
+  "ketchup": { "it": "Ketchup", "en": "Ketchup", "da": "Ketchup" },
+  "salsa-di-soia": { "it": "Salsa di soia", "en": "Soy sauce", "da": "Sojasovs" },
+  "miele": { "it": "Miele", "en": "Honey", "da": "Honning" },
+  "marmellata": { "it": "Marmellata", "en": "Jam", "da": "Marmelade" },
+  "crema-spalmabile-alla-nocciola": { "it": "Crema spalmabile alla nocciola", "en": "Hazelnut spread", "da": "Chokoladepålæg" },
+  "origano": { "it": "Origano", "en": "Oregano", "da": "Oregano" },
+  "cannella": { "it": "Cannella", "en": "Cinnamon", "da": "Kanel" },
+  "noce-moscata": { "it": "Noce moscata", "en": "Nutmeg", "da": "Muskatnød" },
+  "curcuma": { "it": "Curcuma", "en": "Turmeric", "da": "Gurkemeje" },
+  "paprika": { "it": "Paprika", "en": "Paprika", "da": "Paprika" },
+  "curry": { "it": "Curry", "en": "Curry", "da": "Karry" },
+  "peperoncino-in-polvere": { "it": "Peperoncino in polvere", "en": "Chilli powder", "da": "Chilipulver" },
+  "alloro": { "it": "Alloro", "en": "Bay leaves", "da": "Laurbærblade" },
+  "zafferano": { "it": "Zafferano", "en": "Saffron", "da": "Safran" },
+  "noci": { "it": "Noci", "en": "Walnuts", "da": "Valnødder" },
+  "mandorle": { "it": "Mandorle", "en": "Almonds", "da": "Mandler" },
+  "pinoli": { "it": "Pinoli", "en": "Pine nuts", "da": "Pinjekerner" },
+  "uvetta": { "it": "Uvetta", "en": "Raisins", "da": "Rosiner" },
+  "caffe": { "it": "Caffe", "en": "Coffee", "da": "Kaffe" },
+  "te": { "it": "Te", "en": "Tea", "da": "Te" },
+  "cereali": { "it": "Cereali", "en": "Cereals", "da": "Morgenmad" },
+  "biscotti": { "it": "Biscotti", "en": "Biscuits", "da": "Småkager" },
+  "piselli-surgelati": { "it": "Piselli surgelati", "en": "Frozen peas", "da": "Frosne ærter" },
+  "spinaci-surgelati": { "it": "Spinaci surgelati", "en": "Frozen spinach", "da": "Frossen spinat" },
+  "minestrone-surgelato": { "it": "Minestrone surgelato", "en": "Frozen minestrone", "da": "Frossen minestrone" },
+  "bastoncini-di-pesce": { "it": "Bastoncini di pesce", "en": "Fish fingers", "da": "Fiskepinde" },
+  "gamberi-surgelati": { "it": "Gamberi surgelati", "en": "Frozen prawns", "da": "Frosne rejer" },
+  "patatine-fritte-surgelate": { "it": "Patatine fritte surgelate", "en": "Frozen chips", "da": "Frosne pomfritter" },
+  "pizza-surgelata": { "it": "Pizza surgelata", "en": "Frozen pizza", "da": "Frossen pizza" },
+  "gelato": { "it": "Gelato", "en": "Ice cream", "da": "Is" },
+  "verdure-miste-surgelate": { "it": "Verdure miste surgelate", "en": "Frozen mixed vegetables", "da": "Frosne grøntsager" },
+  "filetti-di-merluzzo-surgelati": { "it": "Filetti di merluzzo surgelati", "en": "Frozen cod fillets", "da": "Frosne torskefileter" },
+  "acqua-naturale": { "it": "Acqua naturale", "en": "Still water", "da": "Kildevand" },
+  "acqua-frizzante": { "it": "Acqua frizzante", "en": "Sparkling water", "da": "Danskvand" },
+  "vino-rosso": { "it": "Vino rosso", "en": "Red wine", "da": "Rødvin" },
+  "vino-bianco": { "it": "Vino bianco", "en": "White wine", "da": "Hvidvin" },
+  "birra": { "it": "Birra", "en": "Beer", "da": "Øl" },
+  "succo-di-arancia": { "it": "Succo di arancia", "en": "Orange juice", "da": "Appelsinjuice" },
+  "bibita-gassata": { "it": "Bibita gassata", "en": "Fizzy drink", "da": "Sodavand" },
+  "detersivo-per-piatti": { "it": "Detersivo per piatti", "en": "Washing-up liquid", "da": "Opvaskemiddel" },
+  "detersivo-per-lavatrice": { "it": "Detersivo per lavatrice", "en": "Laundry detergent", "da": "Vaskemiddel" },
+  "carta-igienica": { "it": "Carta igienica", "en": "Toilet paper", "da": "Toiletpapir" },
+  "rotolo-da-cucina": { "it": "Rotolo da cucina", "en": "Kitchen roll", "da": "Køkkenrulle" },
+  "sacchetti-per-la-spazzatura": { "it": "Sacchetti per la spazzatura", "en": "Bin bags", "da": "Affaldsposer" },
+  "pellicola-trasparente": { "it": "Pellicola trasparente", "en": "Cling film", "da": "Husholdningsfilm" },
+  "carta-da-forno": { "it": "Carta da forno", "en": "Baking paper", "da": "Bagepapir" },
+  "rotolo-di-alluminio": { "it": "Rotolo di alluminio", "en": "Aluminium foil", "da": "Aluminiumsfolie" },
+  "spugne": { "it": "Spugne", "en": "Sponges", "da": "Svampe" },
+  "ammorbidente": { "it": "Ammorbidente", "en": "Fabric softener", "da": "Skyllemiddel" },
+  "candeggina": { "it": "Candeggina", "en": "Bleach", "da": "Klorin" },
+  "dentifricio": { "it": "Dentifricio", "en": "Toothpaste", "da": "Tandpasta" },
+  "spazzolino": { "it": "Spazzolino", "en": "Toothbrush", "da": "Tandbørste" },
+  "sapone": { "it": "Sapone", "en": "Soap", "da": "Sæbe" },
+  "shampoo": { "it": "Shampoo", "en": "Shampoo", "da": "Shampoo" },
+  "bagnoschiuma": { "it": "Bagnoschiuma", "en": "Shower gel", "da": "Shower gel" },
+  "deodorante": { "it": "Deodorante", "en": "Deodorant", "da": "Deodorant" },
+  "rasoi": { "it": "Rasoi", "en": "Razors", "da": "Barberblade" },
+  "fazzoletti-di-carta": { "it": "Fazzoletti di carta", "en": "Tissues", "da": "Papirlommetørklæder" },
+  "cibo-per-gatti": { "it": "Cibo per gatti", "en": "Cat food", "da": "Kattemad" },
+  "cibo-per-cani": { "it": "Cibo per cani", "en": "Dog food", "da": "Hundemad" },
+  "pile": { "it": "Pile", "en": "Batteries", "da": "Batterier" },
+  "lampadine": { "it": "Lampadine", "en": "Light bulbs", "da": "Pærer" }
 }

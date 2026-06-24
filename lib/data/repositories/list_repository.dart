@@ -17,6 +17,8 @@ class GeneratedItemView {
     required this.removed,
     required this.hasOverride,
     required this.checked,
+    this.seedKey,
+    this.nameModified = false,
   });
 
   final String ingredientId;
@@ -29,6 +31,8 @@ class GeneratedItemView {
   final bool removed;
   final bool hasOverride;
   final bool checked;
+  final String? seedKey;
+  final bool nameModified;
 
   /// Displayed quantity: the override takes precedence over the generated value.
   double? get displayQty => hasOverride ? overrideQty : generatedQty;
@@ -179,6 +183,7 @@ class ListRepository {
     return _db.customSelect(
       'SELECT g.ingredient_id AS ingredient_id, i.name AS name, '
       'g.unit AS unit, i.category AS category, g.qty AS qty, g.is_qb AS is_qb, '
+      'i.seed_key AS seed_key, i.name_modified AS name_modified, '
       'o.qty_override AS qty_override, o.removed AS removed, '
       'o.id AS override_id, c.checked AS checked '
       'FROM list_generated_row g '
@@ -210,6 +215,8 @@ class ListRepository {
           removed: (r.readNullable<int>('removed') ?? 0) != 0,
           hasOverride: hasOverride,
           checked: (r.readNullable<int>('checked') ?? 0) != 0,
+          seedKey: r.readNullable<String>('seed_key'),
+          nameModified: (r.readNullable<int>('name_modified') ?? 0) != 0,
         );
       }).toList();
     });
