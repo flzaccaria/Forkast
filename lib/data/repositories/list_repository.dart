@@ -112,6 +112,46 @@ class ListRepository {
     return planHash(await _gatherLines(weekPlanId));
   }
 
+  /// Reactive plan fingerprint: re-emits whenever the plan tables that feed
+  /// shopping list generation change (plan_day, plan_day_dish,
+  /// dish_ingredient, ingredient). Used by the list screen to trigger
+  /// automatic regeneration (FR-21 v0.6).
+  Stream<String> watchPlanHash(String weekPlanId) {
+    return _db
+        .customSelect(
+          'SELECT di.ingredient_id AS ingredient_id, i.unit AS unit, '
+          'i.rounding_kind AS rounding_kind, '
+          'i.is_qb AS is_qb, di.qty_base4 AS qty_base4, pd.guests AS guests '
+          'FROM plan_day pd '
+          'JOIN plan_day_dish pdd ON pdd.plan_day_id = pd.id '
+          'JOIN dish_ingredient di ON di.dish_id = pdd.dish_id '
+          'JOIN ingredient i ON i.id = di.ingredient_id '
+          'WHERE pd.week_plan_id = ?',
+          variables: [Variable.withString(weekPlanId)],
+          readsFrom: {
+            _db.planDays,
+            _db.planDayDishes,
+            _db.dishIngredients,
+            _db.ingredients,
+          },
+        )
+        .watch()
+        .map((rows) {
+      final lines = rows
+          .map((r) => ListLineInput(
+                ingredientId: r.read<String>('ingredient_id'),
+                unit: r.read<String>('unit'),
+                roundingKind:
+                    r.readNullable<String>('rounding_kind') ?? 'weight',
+                isQb: r.read<int>('is_qb') != 0,
+                qtyBase4: r.readNullable<double>('qty_base4'),
+                guests: r.read<int>('guests'),
+              ))
+          .toList();
+      return planHash(lines);
+    });
+  }
+
   /// Generates (or regenerates) the snapshot on an explicit user action,
   /// saving the plan hash. Replaces the generated rows; overrides, manual
   /// items and checks remain (FR-21).

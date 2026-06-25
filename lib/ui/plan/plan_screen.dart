@@ -19,7 +19,8 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  late final PlanRepository _repo;
+  late PlanRepository _repo;
+  late Stream<WeekPlan?> _weekPlanStream;
   int _weekStartDay = DateTime.monday;
 
   DateTime _reference = DateTime.now();
@@ -32,17 +33,27 @@ class _PlanScreenState extends State<PlanScreen> {
     super.didChangeDependencies();
     final scope = AppScope.of(context);
     _repo = PlanRepository(scope.database, scope.householdId);
+    _weekPlanStream = _repo.watchWeekPlan(_year, _week);
     _repo.weekStartDay().then((v) {
       if (mounted) setState(() => _weekStartDay = v);
     });
   }
 
-  void _shiftWeek(int deltaWeeks) {
-    setState(() => _reference =
-        _reference.add(Duration(days: 7 * deltaWeeks)));
+  void _refreshWeekStream() {
+    _weekPlanStream = _repo.watchWeekPlan(_year, _week);
   }
 
-  void _goToday() => setState(() => _reference = DateTime.now());
+  void _shiftWeek(int deltaWeeks) {
+    _reference = _reference.add(Duration(days: 7 * deltaWeeks));
+    _refreshWeekStream();
+    setState(() {});
+  }
+
+  void _goToday() {
+    _reference = DateTime.now();
+    _refreshWeekStream();
+    setState(() {});
+  }
 
   String _shortDayName(int dow) {
     final locale = Localizations.localeOf(context).toString();
@@ -154,7 +165,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           Expanded(
             child: StreamBuilder<WeekPlan?>(
-              stream: _repo.watchWeekPlan(_year, _week),
+              stream: _weekPlanStream,
               builder: (context, planSnap) {
                 final weekPlan = planSnap.data;
                 if (weekPlan == null) {

@@ -844,12 +844,11 @@ class $IngredientsTable extends Ingredients
       const VerificationMeta('nameModified');
   @override
   late final GeneratedColumn<bool> nameModified = GeneratedColumn<bool>(
-      'name_modified', aliasedName, false,
+      'name_modified', aliasedName, true,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("name_modified" IN (0, 1))'),
-      defaultValue: const Constant(false));
+          'CHECK ("name_modified" IN (0, 1))'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -977,7 +976,7 @@ class $IngredientsTable extends Ingredients
       seedKey: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
       nameModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified'])!,
+          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -1000,7 +999,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String? category;
   final String? roundingKind;
   final String? seedKey;
-  final bool nameModified;
+  final bool? nameModified;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Ingredient(
@@ -1012,7 +1011,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       this.category,
       this.roundingKind,
       this.seedKey,
-      required this.nameModified,
+      this.nameModified,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -1032,7 +1031,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     if (!nullToAbsent || seedKey != null) {
       map['seed_key'] = Variable<String>(seedKey);
     }
-    map['name_modified'] = Variable<bool>(nameModified);
+    if (!nullToAbsent || nameModified != null) {
+      map['name_modified'] = Variable<bool>(nameModified);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1054,7 +1055,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       seedKey: seedKey == null && nullToAbsent
           ? const Value.absent()
           : Value(seedKey),
-      nameModified: Value(nameModified),
+      nameModified: nameModified == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nameModified),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1072,7 +1075,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       category: serializer.fromJson<String?>(json['category']),
       roundingKind: serializer.fromJson<String?>(json['roundingKind']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
-      nameModified: serializer.fromJson<bool>(json['nameModified']),
+      nameModified: serializer.fromJson<bool?>(json['nameModified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1089,7 +1092,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'category': serializer.toJson<String?>(category),
       'roundingKind': serializer.toJson<String?>(roundingKind),
       'seedKey': serializer.toJson<String?>(seedKey),
-      'nameModified': serializer.toJson<bool>(nameModified),
+      'nameModified': serializer.toJson<bool?>(nameModified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1104,7 +1107,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           Value<String?> category = const Value.absent(),
           Value<String?> roundingKind = const Value.absent(),
           Value<String?> seedKey = const Value.absent(),
-          bool? nameModified,
+          Value<bool?> nameModified = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Ingredient(
@@ -1117,7 +1120,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         roundingKind:
             roundingKind.present ? roundingKind.value : this.roundingKind,
         seedKey: seedKey.present ? seedKey.value : this.seedKey,
-        nameModified: nameModified ?? this.nameModified,
+        nameModified:
+            nameModified.present ? nameModified.value : this.nameModified,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1189,7 +1193,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String?> category;
   final Value<String?> roundingKind;
   final Value<String?> seedKey;
-  final Value<bool> nameModified;
+  final Value<bool?> nameModified;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1265,7 +1269,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<String?>? category,
       Value<String?>? roundingKind,
       Value<String?>? seedKey,
-      Value<bool>? nameModified,
+      Value<bool?>? nameModified,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -1814,12 +1818,11 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
       const VerificationMeta('nameModified');
   @override
   late final GeneratedColumn<bool> nameModified = GeneratedColumn<bool>(
-      'name_modified', aliasedName, false,
+      'name_modified', aliasedName, true,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("name_modified" IN (0, 1))'),
-      defaultValue: const Constant(false));
+          'CHECK ("name_modified" IN (0, 1))'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1929,7 +1932,7 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
       seedKey: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
       nameModified: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified'])!,
+          .read(DriftSqlType.bool, data['${effectivePrefix}name_modified']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -1950,7 +1953,7 @@ class Dish extends DataClass implements Insertable<Dish> {
   final String? difficulty;
   final String? timeEstimate;
   final String? seedKey;
-  final bool nameModified;
+  final bool? nameModified;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Dish(
@@ -1960,7 +1963,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       this.difficulty,
       this.timeEstimate,
       this.seedKey,
-      required this.nameModified,
+      this.nameModified,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -1978,7 +1981,9 @@ class Dish extends DataClass implements Insertable<Dish> {
     if (!nullToAbsent || seedKey != null) {
       map['seed_key'] = Variable<String>(seedKey);
     }
-    map['name_modified'] = Variable<bool>(nameModified);
+    if (!nullToAbsent || nameModified != null) {
+      map['name_modified'] = Variable<bool>(nameModified);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -1998,7 +2003,9 @@ class Dish extends DataClass implements Insertable<Dish> {
       seedKey: seedKey == null && nullToAbsent
           ? const Value.absent()
           : Value(seedKey),
-      nameModified: Value(nameModified),
+      nameModified: nameModified == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nameModified),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2014,7 +2021,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       difficulty: serializer.fromJson<String?>(json['difficulty']),
       timeEstimate: serializer.fromJson<String?>(json['timeEstimate']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
-      nameModified: serializer.fromJson<bool>(json['nameModified']),
+      nameModified: serializer.fromJson<bool?>(json['nameModified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2029,7 +2036,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       'difficulty': serializer.toJson<String?>(difficulty),
       'timeEstimate': serializer.toJson<String?>(timeEstimate),
       'seedKey': serializer.toJson<String?>(seedKey),
-      'nameModified': serializer.toJson<bool>(nameModified),
+      'nameModified': serializer.toJson<bool?>(nameModified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2042,7 +2049,7 @@ class Dish extends DataClass implements Insertable<Dish> {
           Value<String?> difficulty = const Value.absent(),
           Value<String?> timeEstimate = const Value.absent(),
           Value<String?> seedKey = const Value.absent(),
-          bool? nameModified,
+          Value<bool?> nameModified = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Dish(
@@ -2053,7 +2060,8 @@ class Dish extends DataClass implements Insertable<Dish> {
         timeEstimate:
             timeEstimate.present ? timeEstimate.value : this.timeEstimate,
         seedKey: seedKey.present ? seedKey.value : this.seedKey,
-        nameModified: nameModified ?? this.nameModified,
+        nameModified:
+            nameModified.present ? nameModified.value : this.nameModified,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -2118,7 +2126,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
   final Value<String?> difficulty;
   final Value<String?> timeEstimate;
   final Value<String?> seedKey;
-  final Value<bool> nameModified;
+  final Value<bool?> nameModified;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -2183,7 +2191,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       Value<String?>? difficulty,
       Value<String?>? timeEstimate,
       Value<String?>? seedKey,
-      Value<bool>? nameModified,
+      Value<bool?>? nameModified,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -6631,7 +6639,7 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   Value<String?> category,
   Value<String?> roundingKind,
   Value<String?> seedKey,
-  Value<bool> nameModified,
+  Value<bool?> nameModified,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6646,7 +6654,7 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<String?> category,
   Value<String?> roundingKind,
   Value<String?> seedKey,
-  Value<bool> nameModified,
+  Value<bool?> nameModified,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6814,7 +6822,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> category = const Value.absent(),
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
-            Value<bool> nameModified = const Value.absent(),
+            Value<bool?> nameModified = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6842,7 +6850,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> category = const Value.absent(),
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
-            Value<bool> nameModified = const Value.absent(),
+            Value<bool?> nameModified = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -7095,7 +7103,7 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   Value<String?> difficulty,
   Value<String?> timeEstimate,
   Value<String?> seedKey,
-  Value<bool> nameModified,
+  Value<bool?> nameModified,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -7107,7 +7115,7 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String?> difficulty,
   Value<String?> timeEstimate,
   Value<String?> seedKey,
-  Value<bool> nameModified,
+  Value<bool?> nameModified,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -7255,7 +7263,7 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
-            Value<bool> nameModified = const Value.absent(),
+            Value<bool?> nameModified = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -7279,7 +7287,7 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
-            Value<bool> nameModified = const Value.absent(),
+            Value<bool?> nameModified = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),

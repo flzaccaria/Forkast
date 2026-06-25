@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_enums.dart';
@@ -30,8 +32,9 @@ class ListScreen extends StatefulWidget {
 }
 
 class _ListScreenState extends State<ListScreen> {
-  late final ListRepository _repo;
-  late final PlanRepository _planRepo;
+  late ListRepository _repo;
+  late PlanRepository _planRepo;
+  late Stream<WeekPlan?> _weekPlanStream;
 
   final _now = DateTime.now();
   int get _year => isoWeekYear(_now);
@@ -45,6 +48,7 @@ class _ListScreenState extends State<ListScreen> {
     final scope = AppScope.of(context);
     _repo = ListRepository(scope.database, scope.householdId);
     _planRepo = PlanRepository(scope.database, scope.householdId);
+    _weekPlanStream = _planRepo.watchWeekPlan(_year, _week);
   }
 
   Future<void> _generate(String weekPlanId) async {
@@ -64,7 +68,7 @@ class _ListScreenState extends State<ListScreen> {
     return Scaffold(
       appBar: forkastAppBar(context),
       body: StreamBuilder<WeekPlan?>(
-        stream: _planRepo.watchWeekPlan(_year, _week),
+        stream: _weekPlanStream,
         builder: (context, planSnap) {
           final weekPlan = planSnap.data;
           if (weekPlan == null) {
@@ -130,25 +134,52 @@ class _ListContent extends StatefulWidget {
 }
 
 class _ListContentState extends State<_ListContent> {
+  StreamSubscription<String>? _planHashSub;
+  late Stream<List<GeneratedItemView>> _generatedStream;
+
   @override
   void initState() {
     super.initState();
-    _autoRegenIfNeeded();
+    _generatedStream = widget.repo.watchGeneratedItems(widget.list.id);
+    _subscribePlanHash();
   }
 
   @override
   void didUpdateWidget(_ListContent old) {
     super.didUpdateWidget(old);
-    if (old.list.planHash != widget.list.planHash) {
+    if (old.list.id != widget.list.id) {
+      _generatedStream = widget.repo.watchGeneratedItems(widget.list.id);
+    }
+    if (old.weekPlanId != widget.weekPlanId) {
+      _planHashSub?.cancel();
+      _subscribePlanHash();
+    }
+    // After regeneration completes, re-check in case the plan changed
+    // while regeneration was in progress.
+    if (old.generating && !widget.generating) {
       _autoRegenIfNeeded();
     }
   }
 
+  void _subscribePlanHash() {
+    _planHashSub = widget.repo
+        .watchPlanHash(widget.weekPlanId)
+        .listen((_) => _autoRegenIfNeeded());
+  }
+
   Future<void> _autoRegenIfNeeded() async {
+    if (widget.generating) return;
     final current = await widget.repo.currentPlanHash(widget.weekPlanId);
+    if (!mounted) return;
     if (current != widget.list.planHash) {
       widget.onRegenerate();
     }
+  }
+
+  @override
+  void dispose() {
+    _planHashSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _addManual() async {
@@ -189,8 +220,9 @@ class _ListContentState extends State<_ListContent> {
       body: CustomScrollView(
         slivers: [
           _GeneratedSection(
-            repo: widget.repo,
+            stream: _generatedStream,
             listId: widget.list.id,
+            repo: widget.repo,
             onTapRow: _editGenerated,
           ),
           _ManualSection(repo: widget.repo, listId: widget.list.id),
@@ -208,13 +240,15 @@ class _ListContentState extends State<_ListContent> {
 
 class _GeneratedSection extends StatelessWidget {
   const _GeneratedSection({
-    required this.repo,
+    required this.stream,
     required this.listId,
+    required this.repo,
     required this.onTapRow,
   });
 
-  final ListRepository repo;
+  final Stream<List<GeneratedItemView>> stream;
   final String listId;
+  final ListRepository repo;
   final ValueChanged<GeneratedItemView> onTapRow;
 
   @override
@@ -222,7 +256,7 @@ class _GeneratedSection extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     return StreamBuilder<List<GeneratedItemView>>(
-      stream: repo.watchGeneratedItems(listId),
+      stream: stream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SliverToBoxAdapter(

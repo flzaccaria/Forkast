@@ -35,7 +35,8 @@ class IngredientsScreen extends StatefulWidget {
 }
 
 class _IngredientsScreenState extends State<IngredientsScreen> {
-  late final IngredientRepository _repo;
+  late IngredientRepository _repo;
+  late Stream<List<IngredientWithUsage>> _stream;
 
   // Search
   final _searchController = TextEditingController();
@@ -57,6 +58,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     super.didChangeDependencies();
     final scope = AppScope.of(context);
     _repo = IngredientRepository(scope.database, scope.householdId);
+    _stream = _repo.watchAllWithUsage();
   }
 
   @override
@@ -372,7 +374,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
           // Results
           Expanded(
             child: StreamBuilder<List<IngredientWithUsage>>(
-              stream: _repo.watchAllWithUsage(),
+              stream: _stream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());

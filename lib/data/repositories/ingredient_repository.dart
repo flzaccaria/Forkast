@@ -73,6 +73,7 @@ class IngredientRepository {
             isQb: Value(isQb),
             category: Value(category),
             roundingKind: Value(roundingKind),
+            nameModified: const Value(false),
             createdAt: now,
             updatedAt: now,
           ),

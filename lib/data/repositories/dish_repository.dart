@@ -174,6 +174,7 @@ class DishRepository {
               name: name,
               difficulty: Value(difficulty),
               timeEstimate: Value(timeEstimate),
+              nameModified: const Value(false),
               createdAt: now,
               updatedAt: now,
             ),

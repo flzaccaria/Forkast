@@ -156,7 +156,7 @@ class PlanRepository {
           dishId: d.id,
           dishName: d.name,
           seedKey: d.seedKey,
-          nameModified: d.nameModified,
+          nameModified: d.nameModified ?? false,
         );
       }).toList();
     });
