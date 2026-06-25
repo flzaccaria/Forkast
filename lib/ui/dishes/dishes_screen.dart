@@ -21,8 +21,9 @@ class DishesScreen extends StatefulWidget {
 }
 
 class _DishesScreenState extends State<DishesScreen> {
-  late final DishRepository _repo;
-  late final TagRepository _tagRepo;
+  late DishRepository _repo;
+  late TagRepository _tagRepo;
+  late Stream<List<DishWithTags>> _stream;
   final _searchController = TextEditingController();
   String _query = '';
   String? _filterTagId;
@@ -35,6 +36,16 @@ class _DishesScreenState extends State<DishesScreen> {
     final scope = AppScope.of(context);
     _repo = DishRepository(scope.database, scope.householdId);
     _tagRepo = TagRepository(scope.database, scope.householdId);
+    _refreshStream();
+  }
+
+  void _refreshStream() {
+    _stream = _repo.watchAllWithTags(
+      query: _query,
+      tagId: _filterTagId,
+      difficulty: _filterDifficulty?.dbValue,
+      timeEstimate: _filterTime?.dbValue,
+    );
   }
 
   @override
@@ -63,7 +74,11 @@ class _DishesScreenState extends State<DishesScreen> {
               controller: _searchController,
               hintText: l.dishesSearchHint,
               leading: Icon(Icons.search, color: tokens.inkMuted),
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: (v) {
+                _query = v;
+                _refreshStream();
+                setState(() {});
+              },
             ),
           ),
           _FilterBar(
@@ -71,19 +86,25 @@ class _DishesScreenState extends State<DishesScreen> {
             selectedTagId: _filterTagId,
             selectedDifficulty: _filterDifficulty,
             selectedTime: _filterTime,
-            onTagSelected: (id) => setState(() => _filterTagId = id),
-            onDifficultySelected: (d) =>
-                setState(() => _filterDifficulty = d),
-            onTimeSelected: (t) => setState(() => _filterTime = t),
+            onTagSelected: (id) {
+              _filterTagId = id;
+              _refreshStream();
+              setState(() {});
+            },
+            onDifficultySelected: (d) {
+              _filterDifficulty = d;
+              _refreshStream();
+              setState(() {});
+            },
+            onTimeSelected: (t) {
+              _filterTime = t;
+              _refreshStream();
+              setState(() {});
+            },
           ),
           Expanded(
             child: StreamBuilder<List<DishWithTags>>(
-              stream: _repo.watchAllWithTags(
-                query: _query,
-                tagId: _filterTagId,
-                difficulty: _filterDifficulty?.dbValue,
-                timeEstimate: _filterTime?.dbValue,
-              ),
+              stream: _stream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());

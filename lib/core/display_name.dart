@@ -24,7 +24,7 @@ String ingredientDisplayName(Ingredient ing, String locale) {
   return localizedSeedName(
     storedName: ing.name,
     seedKey: ing.seedKey,
-    nameModified: ing.nameModified,
+    nameModified: ing.nameModified ?? false,
     locale: locale,
   );
 }
@@ -35,7 +35,7 @@ String dishDisplayName(Dish dish, String locale) {
   return localizedSeedName(
     storedName: dish.name,
     seedKey: dish.seedKey,
-    nameModified: dish.nameModified,
+    nameModified: dish.nameModified ?? false,
     locale: locale,
   );
 }

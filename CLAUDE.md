@@ -228,3 +228,22 @@ flutter run              # avvio in debug su device/emulatore
 flutter test             # test (includere i test della regola di riscalo/arrotondamento)
 flutter analyze          # lint statico
 ```
+
+
+## Manutenzione (importante)
+
+Questa suite è **viva**: ogni feature o fix che tocca un'area qui sotto deve aggiungere/aggiornare un caso BT.
+
+**Convenzione per ogni nuovo caso:**
+- ID progressivo `BT-NN` nella sezione giusta.
+- Colonna **"Previene"**: il bug/feature che il caso protegge (così non viene cancellato per sbaglio e si capisce perché esiste).
+- Priorità: 🔴 = entra nello SMOKE SET (regressione critica, ogni deploy) · 🟡 = standard · ⚪ = opzionale.
+
+```
+Esiste una browser test suite manuale in docs/Forkast_Browser_Test_Suite.md per i comportamenti verificabili solo dal
+vivo (infrastruttura, header COOP/COEP, sync PowerSync, RLS, reattività degli stream, localizzazione, pairing
+multi-dispositivo). Regola: quando scrivi codice che tocca una di queste aree — schema/migration, powersync_connector,
+bootstrap, RLS/policy, bridge db.updates, rigenerazione lista, localizzazione, deploy/wrangler/header — aggiungi o
+aggiorna il caso BT corrispondente in quel file, con la colonna "Previene" che cita il bug/feature. Se il cambiamento
+introduce una regressione critica, marca il caso 🔴 (smoke set). Non rimuovere casi BT senza motivo esplicito.
+```
