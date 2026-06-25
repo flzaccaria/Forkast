@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/display_name.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -77,6 +78,7 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
                     ),
                   );
                 }
+                final locale = Localizations.localeOf(context).toString();
                 return ListView.separated(
                   itemCount: dishes.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
@@ -84,7 +86,7 @@ class _DishPickerScreenState extends State<DishPickerScreen> {
                     final dish = dishes[i];
                     final alreadyAdded = _already.contains(dish.id);
                     return CheckboxListTile(
-                      title: Text(dish.name),
+                      title: Text(dishDisplayName(dish, locale)),
                       subtitle:
                           alreadyAdded ? Text(l.pickerAlreadyInDinner) : null,
                       value: alreadyAdded || _selected.contains(dish.id),

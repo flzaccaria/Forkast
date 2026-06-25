@@ -3,19 +3,32 @@ import 'package:uuid/uuid.dart';
 
 import '../database.dart';
 
+/// Seed-translatable dish name carried by plan DTOs.
+class DishSeedInfo {
+  const DishSeedInfo({
+    required this.name,
+    this.seedKey,
+    this.nameModified = false,
+  });
+
+  final String name;
+  final String? seedKey;
+  final bool nameModified;
+}
+
 /// Summary of an evening for the weekly view.
 class DayOverview {
   DayOverview({
     required this.planDayId,
     required this.guests,
-    required this.dishCount,
-    this.dishNames = const [],
+    this.dishes = const [],
   });
 
   final String planDayId;
   final int guests;
-  final int dishCount;
-  final List<String> dishNames;
+  final List<DishSeedInfo> dishes;
+
+  int get dishCount => dishes.length;
 }
 
 /// A dish assigned to an evening, with the name resolved from the catalog.
@@ -24,11 +37,15 @@ class PlanDishEntry {
     required this.planDayDishId,
     required this.dishId,
     required this.dishName,
+    this.seedKey,
+    this.nameModified = false,
   });
 
   final String planDayDishId;
   final String dishId;
   final String dishName;
+  final String? seedKey;
+  final bool nameModified;
 }
 
 /// Weekly planning (FR-7/8/9). All filtered by household (ADR-005),
@@ -70,38 +87,54 @@ class PlanRepository {
         .watchSingleOrNull();
   }
 
-  /// Per-day summary (guests + dish count + dish names) of the week,
-  /// indexed by `dayOfWeek`. Reactive to changes on evenings and dishes.
+  /// Per-day summary (guests + dishes) of the week, indexed by `dayOfWeek`.
+  /// Reactive to changes on evenings and dishes. Carries seed data for
+  /// render-time name translation.
   Stream<Map<int, DayOverview>> watchWeekOverview(String weekPlanId) {
     return _db
         .customSelect(
           'SELECT pd.id AS id, pd.day_of_week AS day_of_week, '
-          'pd.guests AS guests, COUNT(pdd.id) AS dish_count, '
-          "COALESCE(GROUP_CONCAT(d.name, ', '), '') AS dish_names "
+          'pd.guests AS guests, '
+          'd.name AS dish_name, d.seed_key AS dish_seed_key, '
+          'd.name_modified AS dish_name_modified '
           'FROM plan_day pd '
           'LEFT JOIN plan_day_dish pdd ON pdd.plan_day_id = pd.id '
           'LEFT JOIN dish d ON d.id = pdd.dish_id '
           'WHERE pd.week_plan_id = ? '
-          'GROUP BY pd.id',
+          'ORDER BY pd.day_of_week, pdd.sort_order',
           variables: [Variable.withString(weekPlanId)],
           readsFrom: {_db.planDays, _db.planDayDishes, _db.dishes},
         )
         .watch()
         .map((rows) {
-      final map = <int, DayOverview>{};
+      final map = <int, _OverviewAccum>{};
       for (final row in rows) {
         final dow = row.read<int>('day_of_week');
-        final namesStr = row.read<String>('dish_names');
-        map[dow] = DayOverview(
-          planDayId: row.read<String>('id'),
-          guests: row.read<int>('guests'),
-          dishCount: row.read<int>('dish_count'),
-          dishNames: namesStr.isEmpty
-              ? const []
-              : namesStr.split(', '),
+        final accum = map.putIfAbsent(
+          dow,
+          () => _OverviewAccum(
+            planDayId: row.read<String>('id'),
+            guests: row.read<int>('guests'),
+          ),
         );
+        final dishName = row.readNullable<String>('dish_name');
+        if (dishName != null) {
+          accum.dishes.add(DishSeedInfo(
+            name: dishName,
+            seedKey: row.readNullable<String>('dish_seed_key'),
+            nameModified:
+                (row.readNullable<int>('dish_name_modified') ?? 0) == 1,
+          ));
+        }
       }
-      return map;
+      return {
+        for (final e in map.entries)
+          e.key: DayOverview(
+            planDayId: e.value.planDayId,
+            guests: e.value.guests,
+            dishes: e.value.dishes,
+          ),
+      };
     });
   }
 
@@ -122,6 +155,8 @@ class PlanRepository {
           planDayDishId: p.id,
           dishId: d.id,
           dishName: d.name,
+          seedKey: d.seedKey,
+          nameModified: d.nameModified,
         );
       }).toList();
     });
@@ -294,4 +329,12 @@ class PlanRepository {
       await addDishes(target.id, dishes.map((d) => d.dishId).toList());
     }
   }
+}
+
+class _OverviewAccum {
+  _OverviewAccum({required this.planDayId, required this.guests});
+
+  final String planDayId;
+  final int guests;
+  final List<DishSeedInfo> dishes = [];
 }
