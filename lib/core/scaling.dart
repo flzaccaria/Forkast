@@ -7,9 +7,9 @@ double scaleQty({required double qtyBase4, required int guests}) {
 const _smallWeightUnits = {'g', 'gr', 'grammi'};
 const _smallVolumeUnits = {'ml', 'millilitri'};
 
-double roundForUnit(double qty, String roundingKind, String unit) {
+double roundForUnit(double qty, String? roundingKind, String unit) {
   final u = unit.toLowerCase().trim();
-  switch (roundingKind) {
+  switch (roundingKind ?? 'weight') {
     case 'whole':
       return qty.ceilToDouble();
     case 'weight':
@@ -38,7 +38,7 @@ double _ceilTo(double value, double step) {
 double scaleAndRound({
   required double qtyBase4,
   required int guests,
-  required String roundingKind,
+  required String? roundingKind,
   required String unit,
 }) {
   return roundForUnit(
