@@ -69,7 +69,7 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 - **Quantities in base 4** (FR-2). Dishes define quantities for 4 people.
 - **Rescaling** (FR-11): `qty_finale = qty_base4 × (commensali ÷ 4)`, excluding `is_qb`.
 - **Aggregation** (FR-12): sum per catalog item; consistent because an item has a single unit.
-- **A SINGLE rounding rule**, in a **shared and tested module** (§5 ADR). E.g. whole-piece products → round up. It must be deterministic.
+- **A SINGLE rounding rule**, in a **shared and tested module** (§5 ADR). E.g. whole-piece products → round up. It must be deterministic. `rounding_kind` is nullable (migration `00012`); `roundForUnit` coalesces NULL to `'weight'`.
 - **Unit locked** (FR-16): not editable once the ingredient is used in ≥1 dish. Enforced **in the UI** (the forbidden action isn't even shown) + reconciliation in sync.
 - **Protected deletion** (FR-17): an ingredient in use cannot be deleted; show where it is used.
 - **Merging duplicates** (FR-18): only when units match.
@@ -160,7 +160,7 @@ Both operations use server-side `SECURITY DEFINER` functions because RLS blocks 
 
 ## Unit enum (FR-5, v0.6)
 
-`lib/core/unit.dart` — closed set of units: `grammi` (g), `chilogrammi` (kg), `millilitri` (ml), `litri` (l), `pezzo` (pz). Each unit derives its `roundingKind` (`weight`, `volume`, `whole`), removing the need for the user to pick a rounding strategy separately.
+`lib/core/unit.dart` — closed set of units: `grammi` (g), `chilogrammi` (kg), `millilitri` (ml), `litri` (l), `pezzo` (pz). Each unit derives its `roundingKind` (`weight`, `volume`, `whole`), removing the need for the user to pick a rounding strategy separately. `ingredient.rounding_kind` is nullable in both drift and Supabase (migration `00012`); `roundForUnit` and `scaleAndRound` coalesce NULL to `'weight'`.
 
 - **Storage**: the canonical short form (`g`, `kg`, `ml`, `l`, `pz`) in the `unit` TEXT column.
 - **Migration**: `IngredientRepository.migrateUnitsToEnum()` runs at startup (idempotent). Maps common aliases (`gr` → `g`, `grammi` → `g`, `pezzi` → `pz`, etc.). Unrecognized values are logged and mapped to `pz` as fallback.
