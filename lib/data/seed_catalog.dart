@@ -55,7 +55,7 @@ Future<void> seedCatalogIfNeeded(
               unit: row.isQb ? 'q.b.' : unit.dbValue,
               isQb: Value(row.isQb),
               category: Value(row.category),
-              roundingKind: Value(row.isQb ? null : unit.roundingKind),
+              roundingKind: Value(unit.roundingKind),
               seedKey: Value(row.seedKey),
               createdAt: now,
               updatedAt: now,
@@ -108,6 +108,28 @@ Future<void> backfillSeedKeys(
         updatedAt: Value(now),
       ));
     }
+  }
+}
+
+/// Backfills [roundingKind] for ingredients that were seeded with a NULL value
+/// (q.b. items before the fix). Supabase requires rounding_kind NOT NULL.
+/// Idempotent: only touches rows where rounding_kind IS NULL.
+Future<void> backfillRoundingKind(AppDatabase db, String householdId) async {
+  final missing = await (db.select(db.ingredients)
+        ..where((i) =>
+            i.householdId.equals(householdId) & i.roundingKind.isNull()))
+      .get();
+  if (missing.isEmpty) return;
+
+  final now = DateTime.now().toUtc();
+  for (final ing in missing) {
+    final unit = Unit.tryParse(ing.unit);
+    final kind = unit?.roundingKind ?? 'weight';
+    await (db.update(db.ingredients)..where((i) => i.id.equals(ing.id)))
+        .write(IngredientsCompanion(
+      roundingKind: Value(kind),
+      updatedAt: Value(now),
+    ));
   }
 }
 

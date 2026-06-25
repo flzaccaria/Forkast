@@ -95,6 +95,7 @@ class _BootstrapGateState extends State<_BootstrapGate> {
 
     unawaited(seedCatalogIfNeeded(db, householdId));
     unawaited(backfillSeedKeys(db, householdId));
+    unawaited(backfillRoundingKind(db, householdId));
 
     await SeedNameResolver.instance.load();
 

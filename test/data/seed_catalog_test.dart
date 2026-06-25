@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' hide isNotNull;
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
@@ -156,6 +156,47 @@ void main() {
           ..where((i) => i.householdId.equals(hid)))
         .get();
     expect(afterRestart.length, 2);
+  });
+
+  test('every seeded ingredient has non-null roundingKind', () async {
+    final hid = await _insertHousehold(db);
+    await seedCatalogIfNeeded(db, hid, csvOverride: _miniCsv);
+
+    final all = await (db.select(db.ingredients)
+          ..where((i) => i.householdId.equals(hid)))
+        .get();
+    for (final ing in all) {
+      expect(ing.roundingKind, isNotNull,
+          reason: '${ing.name} (isQb=${ing.isQb}) has null roundingKind');
+    }
+  });
+
+  test('backfillRoundingKind fixes null roundingKind', () async {
+    final hid = await _insertHousehold(db);
+    final now = DateTime.now().toUtc();
+    await db.into(db.ingredients).insert(IngredientsCompanion.insert(
+          id: 'qb-item',
+          householdId: hid,
+          name: 'Sale',
+          unit: 'q.b.',
+          isQb: const Value(true),
+          roundingKind: const Value(null),
+          createdAt: now,
+          updatedAt: now,
+        ));
+
+    final before = await (db.select(db.ingredients)
+          ..where((i) => i.id.equals('qb-item')))
+        .getSingle();
+    expect(before.roundingKind, isNull);
+
+    await backfillRoundingKind(db, hid);
+
+    final after = await (db.select(db.ingredients)
+          ..where((i) => i.id.equals('qb-item')))
+        .getSingle();
+    expect(after.roundingKind, isNotNull);
+    expect(after.roundingKind, 'weight');
   });
 
   test('parseSeedCsv parses correctly', () {
