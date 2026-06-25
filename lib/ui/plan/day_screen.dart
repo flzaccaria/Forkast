@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/display_name.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
@@ -151,8 +152,14 @@ class _DayScreenState extends State<DayScreen> {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, i) {
             final d = dishes[i];
+            final locale = Localizations.localeOf(context).toString();
             return ListTile(
-              title: Text(d.dishName),
+              title: Text(localizedSeedName(
+                storedName: d.dishName,
+                seedKey: d.seedKey,
+                nameModified: d.nameModified,
+                locale: locale,
+              )),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => _repo.removeDish(d.planDayDishId),

@@ -22,13 +22,17 @@ class SeedNameResolver {
     return _instance!;
   }
 
-  /// Test-only constructor that injects a pre-parsed bundle.
-  SeedNameResolver.testInstance(Map<String, dynamic> raw)
-      : _bundle = raw.map((key, val) => MapEntry(
-              key,
-              (val as Map<String, dynamic>)
-                  .map((k, v) => MapEntry(k, v as String)),
-            ));
+  /// Test-only: injects a pre-parsed bundle and installs it as [instance].
+  factory SeedNameResolver.testInstance(Map<String, dynamic> raw) {
+    final resolver = SeedNameResolver._()
+      .._bundle = raw.map((key, val) => MapEntry(
+                key,
+                (val as Map<String, dynamic>)
+                    .map((k, v) => MapEntry(k, v as String)),
+              ));
+    _instance = resolver;
+    return resolver;
+  }
 
   Future<void> load() async {
     if (_bundle != null) return;

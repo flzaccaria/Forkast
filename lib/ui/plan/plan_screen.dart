@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/display_name.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
 import '../../data/repositories/plan_repository.dart';
@@ -224,7 +225,7 @@ class _PlanScreenState extends State<PlanScreen> {
                 dayName: _shortDayName(dow),
                 dayNumber: date.day,
                 isToday: isToday,
-                dishNames: ov?.dishNames ?? const [],
+                dishes: ov?.dishes ?? const [],
                 guests: ov?.guests,
                 onTap: () => _openDay(dow),
               );
@@ -257,7 +258,7 @@ class _DayRow extends StatelessWidget {
     required this.dayName,
     required this.dayNumber,
     required this.isToday,
-    required this.dishNames,
+    required this.dishes,
     this.guests,
     required this.onTap,
   });
@@ -265,13 +266,14 @@ class _DayRow extends StatelessWidget {
   final String dayName;
   final int dayNumber;
   final bool isToday;
-  final List<String> dishNames;
+  final List<DishSeedInfo> dishes;
   final int? guests;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
     final primary = Theme.of(context).colorScheme.primary;
     return InkWell(
@@ -318,7 +320,7 @@ class _DayRow extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: dishNames.isEmpty
+              child: dishes.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: Text(
@@ -333,11 +335,16 @@ class _DayRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 2),
-                        for (final name in dishNames)
+                        for (final d in dishes)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 2),
                             child: Text(
-                              name,
+                              localizedSeedName(
+                                storedName: d.name,
+                                seedKey: d.seedKey,
+                                nameModified: d.nameModified,
+                                locale: locale,
+                              ),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
