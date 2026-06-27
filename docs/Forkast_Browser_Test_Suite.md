@@ -41,6 +41,10 @@ Prima di dare colpa al codice, conferma che il browser serve la build nuova:
 | **SM-5** | Crea un ingrediente → guarda Supabase tabella `ingredient` | La riga compare entro ~30s | coda upload bloccata |
 | **SM-6** | Network durante il primo sync: POST `/rest/v1/ingredient` | Status 201, **zero 400** | 23502 rounding_kind, RLS 403 |
 | **SM-7** | Crea un piatto | Compare nel catalogo entro ~2s **senza refresh** | reattività stream rotta |
+| **SM-8** | Ingrediente usato in un piatto → prova a eliminarlo | Eliminazione bloccata (snackbar) | FR-17 delete protetta |
+| **SM-9** | Ingrediente usato in un piatto → apri modifica | Dropdown unità disabilitato | FR-16 unità bloccata |
+| **SM-10** | Copia settimana precedente su vuota → Lista | Piatti copiati + Lista si rigenera | FR-19 copia settimana |
+| **SM-11** | Cambia ospiti 4→6 → Lista | Quantità riscalate senza refresh | ospiti → riscalo reattivo |
 
 Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima di testare le feature.
 
@@ -104,12 +108,16 @@ Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima 
 | BT-53 | 🔴 | Device B inserisce il codice → si unisce | B vede **solo** i dati di A (niente set vuoto "suo" in più) | doppio household |
 | BT-54 | 🔴 | Modifica su A → osserva B (e viceversa), senza refresh | Si propaga entro pochi secondi nei due sensi | bridge sync / coda |
 
-## 7. Eliminazione
+## 7. Eliminazione e protezioni (FR-16/17)
 
 | ID | Pri | Passi | Atteso | Previene |
 | --- | --- | --- | --- | --- |
 | BT-60 | 🟡 | Elimina un piatto (cestino nell'editor) → osserva l'altro device | Sparisce live su entrambi | propagazione delete |
 | BT-61 | 🟡 | Elimina un piatto che è in un piano | Avviso "usato in N cene" prima di procedere; poi la Lista mostra "Aggiorna" | delete protetta / FR-21 |
+| BT-62 | 🔴 | Crea un piatto con un ingrediente → vai in Ingredienti → prova a eliminare quell'ingrediente | Snackbar "Usato in N piatti", eliminazione bloccata | FR-17 delete protetta ingrediente |
+| BT-63 | 🟡 | Stesso ingrediente → tap "Dove è usato" | Mostra la lista dei piatti che lo usano | FR-17 info uso |
+| BT-64 | 🟡 | Crea una portata, assegnala a un piatto → prova a eliminarla | Snackbar "Usato in N piatti", eliminazione bloccata | FR-14 tag protetti |
+| BT-65 | 🟡 | Elimina una portata **non** usata in nessun piatto | Si elimina con successo | falso positivo su tag deletion |
 
 ## 8. Specifici web (bassa priorità)
 
@@ -118,6 +126,45 @@ Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima 
 | BT-70 | ⚪ | Modifica dati, poi F5 | I dati persistono al reload |
 | BT-71 | ⚪ | Due tab aperte, modifiche in entrambe | Nessuna perdita dati |
 | BT-72 | ⚪ | "Aggiungi a Home" (iPhone/Android), apri da lì | A tutto schermo, barra/titolo corretti |
+
+## 9. Ingredienti — vincoli e gestione (FR-16/18)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-80 | 🔴 | Crea un ingrediente (es. "Farina", g) → usalo in un piatto → torna in Ingredienti → apri la modifica | Il dropdown **unità** e il toggle **q.b.** sono disabilitati; helper text "unità bloccata" | FR-16 unità bloccata |
+| BT-81 | 🟡 | Crea un ingrediente **non** usato in nessun piatto → apri la modifica | Dropdown unità e toggle q.b. restano **abilitati** | falso positivo su unit lock |
+| BT-82 | 🟡 | Crea due ingredienti con la stessa unità (es. "Pomodoro A" pz, "Pomodoro B" pz), usa entrambi in un piatto → unisci A in B | Merge riuscito: A sparisce, B ha le quantità sommate nel piatto | FR-18 merge duplicati |
+| BT-83 | 🟡 | Crea due ingredienti con unità **diverse** (es. "Latte" ml, "Latte" pz) → prova a unire | Merge bloccato: snackbar "le unità devono coincidere" | FR-18 guard merge |
+
+## 10. Catalogo piatti — filtri (FR-14/15)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-90 | 🟡 | Crea un piatto con difficoltà "Facile" e tempo "Veloce", un altro con "Difficile" e "Lento" | Entrambi visibili nel catalogo con i badge corretti | difficoltà/tempo non salvati |
+| BT-91 | 🟡 | Nella barra filtri, seleziona difficoltà "Difficile" | Solo il piatto "Difficile" resta visibile | filtro difficoltà rotto |
+| BT-92 | 🟡 | Seleziona tempo "Veloce" | Solo il piatto "Veloce" resta visibile | filtro tempo rotto |
+| BT-93 | 🟡 | Assegna una portata (es. "Primo") a un piatto → filtra per quella portata | Solo i piatti con quella portata restano visibili | filtro portata rotto |
+| BT-94 | 🟡 | Combina due filtri (portata + difficoltà) | Intersezione: solo i piatti che soddisfano entrambi | filtri combinati |
+
+## 11. Piano settimanale — navigazione, ospiti, copia (FR-19/20)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-100 | 🟡 | Piano → freccia destra | Intestazione mostra la settimana successiva (numero ISO + date) | navigazione settimane |
+| BT-101 | 🟡 | Vai avanti di 3 settimane → tap "Oggi" | Torna alla settimana corrente | pulsante Oggi |
+| BT-102 | 🔴 | Pianifica 2 cene nella settimana corrente → vai alla settimana dopo (vuota) → "Copia settimana precedente" | I piatti e il numero ospiti compaiono nella nuova settimana; la Lista si aggiorna | FR-19 copia su vuoto |
+| BT-103 | 🟡 | Pianifica un piatto anche nella settimana di destinazione → "Copia settimana precedente" | Dialog chiede "Aggiungi" o "Sostituisci"; scegli Aggiungi → i piatti si sommano | FR-19 copia su non-vuoto |
+| BT-104 | 🔴 | Apri un giorno del piano → cambia ospiti da 4 a 6 → vai su Lista | Le quantità si riscalano (es. 600 g → 900 g per 6 ospiti) **senza refresh** | UI ospiti → riscalo reattivo |
+| BT-105 | 🟡 | Stesso di BT-104, poi rimetti ospiti a 4 | Le quantità tornano ai valori base | riscalo bidirezionale |
+
+## 12. Reparti e raggruppamento (FR-23)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-110 | 🟡 | Crea 3 ingredienti in reparti diversi (Ortofrutta, Carne, Dispensa) | Reparto visibile nella scheda ingrediente | reparto non salvato |
+| BT-111 | 🟡 | In Ingredienti, attiva "Raggruppa per reparto" | Le voci si raggruppano con intestazioni sticky per reparto, nell'ordine del percorso del supermercato | raggruppamento reparti |
+| BT-112 | 🟡 | Usa gli ingredienti in un piatto → vai alla Lista della spesa | Le righe sono raggruppate per reparto, stessa sequenza dei reparti | raggruppamento lista |
+| BT-113 | 🟡 | Crea un ingrediente **senza** reparto | Appare sotto "Senza reparto" (o in fondo alla lista) | fallback reparto null |
 
 ---
 
