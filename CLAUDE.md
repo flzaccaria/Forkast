@@ -49,7 +49,7 @@ Mandatory initial setup (ADR-002, ADR-008):
 
 Every table carries a `household_id`. Every insert uses a **client-generated UUID**.
 
-- `household` — container for all data.
+- `household` — container for all data. Owns settings: `default_guests` (FR-8, default 4), `week_start_day` (FR-20, `DateTime.weekday` convention, 0 = unset → falls back to Monday), `auto_regen` (FR-21), `seeded_at` (guard against re-seeding).
 - `membership` — links a device (tomorrow a user) to a household. Basis for pairing.
 - `ingredient` — shared catalog. Owns `unit` (from closed enum, FR-5) and the `is_qb` flag ("to taste").
 - `tag` — `portata` (course, single) group, with color and order. Old `attributo` tags archived in DB (v0.6).
@@ -77,6 +77,36 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 - **Regeneration automatic and invisible** (FR-21 v0.6): when the plan diverges from the saved fingerprint, the generated layer regenerates silently. No banner, no user action, no setting. Manual layer (checks, overrides, manual items) persists.
 
 > Offline-first note: cross-device invariants are **best-effort** (UI + reconciliation), not global transactions. This is an accepted limitation (§6 ADR). Do not promise transactional guarantees across devices.
+
+---
+
+## Repository layer
+
+All data access goes through `lib/data/repositories/`: `HouseholdRepository`, `IngredientRepository`, `DishRepository`, `TagRepository`, `PlanRepository`, `ListRepository`. Each repo takes `(AppDatabase, householdId)` and filters every query by household (ADR-005). Repositories own business rules (FR-16 unit lock, FR-17 protected delete, FR-18 merge). Never bypass them with raw drift queries in UI code.
+
+---
+
+## Household settings (FR-8/20/21)
+
+`HouseholdRepository` (`lib/data/repositories/household_repository.dart`) manages three household-level settings:
+
+- **Default guests** (FR-8): `setDefaultGuests(int)` — applied when a new `plan_day` is created. Range 1–99.
+- **Week start day** (FR-20): `setWeekStartDay(int)` — `DateTime.weekday` convention (1=Monday…7=Sunday). `orderedWeekdays()` in `lib/core/week.dart` uses this to reorder the 7-day grid in plan view. Schema default 0 falls back to Monday.
+- **Auto-regen** (FR-21): `setAutoRegen(bool)` — controls automatic list regeneration when plan hash diverges.
+
+UI: Settings screen (`lib/ui/settings/settings_screen.dart`) → Planning section → Default guests dialog (+/− buttons), Week start day radio dialog. Language picker at the bottom.
+
+---
+
+## Dish deletion flow
+
+`lib/ui/dishes/confirm_delete_dish.dart` — `confirmAndDeleteDish()` checks `DishRepository.plannedDinnerCount()` before confirming. If the dish is used in ≥1 planned dinner, shows the count in the dialog ("Usato in N cene"). On confirm, `DishRepository.delete()` cascades: removes `dish_ingredient`, `dish_tag`, `plan_day_dish` rows in a single transaction. The shopping list regenerates from the plan (ADR-004).
+
+---
+
+## Diacritics-insensitive search
+
+`lib/core/diacritics.dart` — `removeDiacritics(String)` strips accents for case- and accent-insensitive matching. Covers Latin-1/Latin Extended-A (Italian, Danish, English). Danish `æ/ø/å` mapped to `ae/oe/aa`. Used in ingredient search filters.
 
 ---
 
@@ -203,6 +233,8 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 - **"Edit disconnects" rule**: when the user renames a seeded ingredient, `name_modified` is set to `true` in `IngredientRepository.update()`. The item stops auto-translating. Editing category/unit/qb does NOT disconnect.
 - **Aggregation identity**: shopping list aggregation and dish→ingredient references use `id` (UUID), never the display name string. Language changes cannot break or merge list rows.
 - **Seed CSV**: `assets/seed_ingredienti.csv` now has a `seed_key` column. `seed_catalog.dart` writes it on insert.
+- **Seeding guard**: `household.seeded_at` — once set, the catalog seed never re-runs (not on restart, not on paired device). The check is `count > 0 || seededAt != null`.
+- **Startup backfills** (idempotent, run in `app_scope` or bootstrap): `backfillSeedKeys()` — matches existing ingredients by Italian name to assign `seed_key` for pre-L2 entries. `backfillRoundingKind()` — fills NULL `rounding_kind` from the unit enum (fixes q.b. items seeded before the fix).
 - **Helper**: `lib/core/display_name.dart` — `ingredientDisplayName(ing, locale)`, `dishDisplayName(dish, locale)`.
 
 ---
@@ -220,7 +252,16 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 
 ---
 
-## Commands (to complete once setup is done)
+## Test infrastructure
+
+- **Unit tests** in `test/`: organized by layer (`test/core/`, `test/data/`, root-level).
+- **`AppDatabase.forTesting(connection)`**: constructor that takes any drift `QueryExecutor` (typically in-memory SQLite). No PowerSync, no sync bridge. Allows testing repository logic with a real schema minus PowerSync's table management.
+- **Key test suites**: `scaling_test` (rounding/rescaling), `list_generation_test` (aggregation), `ingredient_rules_test` (FR-16/17/18), `plan_repository_test` (copy week), `tag_repository_test` (protected deletion), `powersync_connector_test` (fatal error classification), `seed_catalog_test`, `seed_name_resolver_test`, `display_name_test`, `qty_format_test`.
+- **Browser test suite** (manual): `docs/Forkast_Browser_Test_Suite.md` — E2E checklist for the deployed web app. Covers infra, sync, reactivity, calculation, two-layer list, localization, pairing, deletion, ingredient constraints, dish filters, plan navigation/copy/guests, reparti. See Manutenzione section below.
+
+---
+
+## Commands
 
 ```bash
 flutter pub get          # dipendenze
@@ -242,8 +283,10 @@ Questa suite è **viva**: ogni feature o fix che tocca un'area qui sotto deve ag
 ```
 Esiste una browser test suite manuale in docs/Forkast_Browser_Test_Suite.md per i comportamenti verificabili solo dal
 vivo (infrastruttura, header COOP/COEP, sync PowerSync, RLS, reattività degli stream, localizzazione, pairing
-multi-dispositivo). Regola: quando scrivi codice che tocca una di queste aree — schema/migration, powersync_connector,
-bootstrap, RLS/policy, bridge db.updates, rigenerazione lista, localizzazione, deploy/wrangler/header — aggiungi o
-aggiorna il caso BT corrispondente in quel file, con la colonna "Previene" che cita il bug/feature. Se il cambiamento
-introduce una regressione critica, marca il caso 🔴 (smoke set). Non rimuovere casi BT senza motivo esplicito.
+multi-dispositivo, vincoli ingredienti FR-16/17/18, filtri piatti FR-14/15, piano settimanale FR-19/20, reparti FR-23).
+Regola: quando scrivi codice che tocca una di queste aree — schema/migration, powersync_connector, bootstrap,
+RLS/policy, bridge db.updates, rigenerazione lista, localizzazione, deploy/wrangler/header, vincoli ingredienti,
+filtri piatti, copia settimana, ospiti, reparti — aggiungi o aggiorna il caso BT corrispondente in quel file, con la
+colonna "Previene" che cita il bug/feature. Se il cambiamento introduce una regressione critica, marca il caso
+🔴 (smoke set). Non rimuovere casi BT senza motivo esplicito.
 ```
