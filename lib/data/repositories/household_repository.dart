@@ -2,8 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../database.dart';
 
-/// Global household settings (FR-8/20/21): default guests, week start day,
-/// and automatic list regeneration.
+/// Global household settings (FR-8/20): default guests, week start day.
 /// Always filtered by household (ADR-005), local-first writes.
 class HouseholdRepository {
   HouseholdRepository(this._db, this._householdId);
@@ -32,11 +31,6 @@ class HouseholdRepository {
   /// (1 = Monday … 7 = Sunday).
   Future<void> setWeekStartDay(int weekday) {
     return _write(HouseholdsCompanion(weekStartDay: Value(weekday)));
-  }
-
-  /// Automatic list regeneration when the plan diverges (FR-21).
-  Future<void> setAutoRegen(bool value) {
-    return _write(HouseholdsCompanion(autoRegen: Value(value)));
   }
 
   Future<void> _write(HouseholdsCompanion patch) {

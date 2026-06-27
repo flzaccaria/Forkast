@@ -48,6 +48,7 @@
   "dishEditorNewTitle": "Nuovo piatto",
   "dishEditorEditTitle": "Modifica piatto",
   "dishEditorNameLabel": "Nome del piatto",
+  "dishEditorRecipeUrl": "Link alla ricetta",
   "dishEditorNameRequired": "Inserisci il nome del piatto",
   "dishEditorInvalidQty": "Quantità non valida per {name}",
   "@dishEditorInvalidQty": { "placeholders": { "name": { "type": "String" } } },
@@ -61,6 +62,9 @@
   "dishEditorCourse": "Portata",
   "dishEditorNoCoursesDefined": "Nessuna portata definita. Aggiungile in Impostazioni → Vocabolario portate.",
   "dishEditorCreateIngredient": "Crea nuovo ingrediente",
+  "dishEditorSimilarExisting": "Ingredienti simili esistenti",
+  "dishEditorSimilarExistingMessage": "Esistono già ingredienti simili nel catalogo:",
+  "dishEditorCreateAnyway": "Crea comunque",
   "dishEditorCatalogEmpty": "Il catalogo è vuoto. Crea il primo ingrediente.",
 
   "planPrevWeekEmpty": "La settimana precedente è vuota.",

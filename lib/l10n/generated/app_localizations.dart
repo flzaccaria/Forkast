@@ -352,6 +352,12 @@ abstract class AppLocalizations {
   /// **'Nome del piatto'**
   String get dishEditorNameLabel;
 
+  /// No description provided for @dishEditorRecipeUrl.
+  ///
+  /// In it, this message translates to:
+  /// **'Link alla ricetta'**
+  String get dishEditorRecipeUrl;
+
   /// No description provided for @dishEditorNameRequired.
   ///
   /// In it, this message translates to:
@@ -423,6 +429,24 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'Crea nuovo ingrediente'**
   String get dishEditorCreateIngredient;
+
+  /// No description provided for @dishEditorSimilarExisting.
+  ///
+  /// In it, this message translates to:
+  /// **'Ingredienti simili esistenti'**
+  String get dishEditorSimilarExisting;
+
+  /// No description provided for @dishEditorSimilarExistingMessage.
+  ///
+  /// In it, this message translates to:
+  /// **'Esistono già ingredienti simili nel catalogo:'**
+  String get dishEditorSimilarExistingMessage;
+
+  /// No description provided for @dishEditorCreateAnyway.
+  ///
+  /// In it, this message translates to:
+  /// **'Crea comunque'**
+  String get dishEditorCreateAnyway;
 
   /// No description provided for @dishEditorCatalogEmpty.
   ///

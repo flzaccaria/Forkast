@@ -140,6 +140,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get dishEditorNameLabel => 'Nome del piatto';
 
   @override
+  String get dishEditorRecipeUrl => 'Link alla ricetta';
+
+  @override
   String get dishEditorNameRequired => 'Inserisci il nome del piatto';
 
   @override
@@ -177,6 +180,16 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get dishEditorCreateIngredient => 'Crea nuovo ingrediente';
+
+  @override
+  String get dishEditorSimilarExisting => 'Ingredienti simili esistenti';
+
+  @override
+  String get dishEditorSimilarExistingMessage =>
+      'Esistono già ingredienti simili nel catalogo:';
+
+  @override
+  String get dishEditorCreateAnyway => 'Crea comunque';
 
   @override
   String get dishEditorCatalogEmpty =>

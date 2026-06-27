@@ -49,11 +49,11 @@ Mandatory initial setup (ADR-002, ADR-008):
 
 Every table carries a `household_id`. Every insert uses a **client-generated UUID**.
 
-- `household` — container for all data. Owns settings: `default_guests` (FR-8, default 4), `week_start_day` (FR-20, `DateTime.weekday` convention, 0 = unset → falls back to Monday), `auto_regen` (FR-21), `seeded_at` (guard against re-seeding).
+- `household` — container for all data. Owns settings: `default_guests` (FR-8, default 4), `week_start_day` (FR-20, `DateTime.weekday` convention, 0 = unset → falls back to Monday), `seeded_at` (guard against re-seeding). `auto_regen` removed in v0.7 (migration `00013`): regeneration is always automatic and invisible (FR-21 v0.6).
 - `membership` — links a device (tomorrow a user) to a household. Basis for pairing.
 - `ingredient` — shared catalog. Owns `unit` (from closed enum, FR-5) and the `is_qb` flag ("to taste").
 - `tag` — `portata` (course, single) group, with color and order. Old `attributo` tags archived in DB (v0.6).
-- `dish` + `dish_tag` — reusable dish; one course. Has optional `difficulty` and `time_estimate` fields (v0.6).
+- `dish` + `dish_tag` — reusable dish; one course. Has optional `difficulty`, `time_estimate`, and `recipe_url` (TEXT nullable, FR-14/P9, migration `00013`) fields.
 - `dish_ingredient` — ingredient row of the dish, `qty_base4` (ignored for `is_qb`).
 - `week_plan` → `plan_day` (with the evening's `guests`) → `plan_day_dish`.
 - `shopping_list` — snapshot context: week, `generated_at`, **fingerprint/hash of the source plan**.
@@ -86,13 +86,14 @@ All data access goes through `lib/data/repositories/`: `HouseholdRepository`, `I
 
 ---
 
-## Household settings (FR-8/20/21)
+## Household settings (FR-8/20)
 
-`HouseholdRepository` (`lib/data/repositories/household_repository.dart`) manages three household-level settings:
+`HouseholdRepository` (`lib/data/repositories/household_repository.dart`) manages two household-level settings:
 
 - **Default guests** (FR-8): `setDefaultGuests(int)` — applied when a new `plan_day` is created. Range 1–99.
 - **Week start day** (FR-20): `setWeekStartDay(int)` — `DateTime.weekday` convention (1=Monday…7=Sunday). `orderedWeekdays()` in `lib/core/week.dart` uses this to reorder the 7-day grid in plan view. Schema default 0 falls back to Monday.
-- **Auto-regen** (FR-21): `setAutoRegen(bool)` — controls automatic list regeneration when plan hash diverges.
+
+**Auto-regen removed** (v0.7): the `auto_regen` field and `setAutoRegen()` were removed (migration `00013`). Regeneration of the generated shopping list layer is always automatic and invisible when the plan hash diverges (FR-21 v0.6). There is no user-facing setting — `_autoRegenIfNeeded()` in `list_screen.dart` fires unconditionally.
 
 UI: Settings screen (`lib/ui/settings/settings_screen.dart`) → Planning section → Default guests dialog (+/− buttons), Week start day radio dialog. Language picker at the bottom.
 
@@ -181,7 +182,7 @@ Both operations use server-side `SECURITY DEFINER` functions because RLS blocks 
 
 - Centralized theme in `lib/ui/theme.dart` (light + dark). All colour/typography tokens flow from `ForkastTokens` extension and `ThemeData`. No hardcoded colours in screens.
 - Wordmark SVG (`assets/forkast-wordmark.svg`) in every screen's app bar via `lib/ui/widgets/forkast_app_bar.dart`.
-- Four-voice bottom nav (Piatti / Piano / Lista / Ingredienti) with outline icons, active state in `primary` (v0.6: Ingredienti tab added, FR-23).
+- Four-voice bottom nav in data-flow order: **Ingredienti / Piatti / Piano / Lista** (v0.7: reordered per FR-23). Default landing tab: **Piano** (index 2) — the order is narrative, the default follows daily use. Outline icons, active state in `primary`.
 - Outline icon family throughout all screens (single family, thin strokes).
 - "q.b." rendered as a tenue pill (border background, ink-muted text), not bare text.
 - **Dependency noted**: department micro-icons in the shopping list require the `category` attribute on `ingredient` (ADR §7). Grouping by department is active where `category` is set; the micro-icons themselves are not yet implemented.
@@ -210,6 +211,27 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 **Old attributes archived**: the `tag` rows with `group = 'attributo'` and their `dish_tag` links remain in the database but are no longer shown in the UI. They are recoverable if a free-form tagging feature is reintroduced. The tags screen now manages only portate ("Vocabolario portate").
 
 **Filters**: the dish catalog filters by portata + difficulty + time (FR-15).
+
+---
+
+## Recipe URL on dishes (FR-14/P9, v0.7)
+
+`dish.recipe_url` — optional TEXT column (Supabase/drift migration `00013`, PowerSync schema updated). Stores a link to an external recipe.
+
+- **Editor**: `DishEditorScreen` shows a URL text field below the name. When non-empty, a tap icon opens the URL in the external browser via `url_launcher`.
+- **Validation**: light — the field accepts any text; if it lacks a scheme prefix, `https://` is prepended before launching.
+- **Sync**: the field syncs like any other dish column (PowerSync ↔ Supabase). No special handling.
+
+---
+
+## Autocomplete in dish editor (D3, v0.7)
+
+The ingredient picker in `DishEditorScreen` (`_IngredientPicker`) provides:
+
+- **Search**: diacritics-insensitive substring matching on the localized display name, via `removeDiacritics()`.
+- **Fuzzy matching**: when creating a new ingredient, a Levenshtein distance check (threshold ≤ 2) finds similar existing entries and warns the user before creating a potential duplicate.
+- **Anti-duplicate**: creating a new ingredient is a deliberate action. If similar ingredients exist, a confirmation dialog lists them and the user must tap "Create anyway".
+- **No unit field on dish row**: the ingredient row in the dish editor inherits unit/qb from the catalog entry. Selecting an existing ingredient references the existing entry (no new catalog rows).
 
 ---
 
@@ -256,7 +278,7 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 
 - **Unit tests** in `test/`: organized by layer (`test/core/`, `test/data/`, root-level).
 - **`AppDatabase.forTesting(connection)`**: constructor that takes any drift `QueryExecutor` (typically in-memory SQLite). No PowerSync, no sync bridge. Allows testing repository logic with a real schema minus PowerSync's table management.
-- **Key test suites**: `scaling_test` (rounding/rescaling), `list_generation_test` (aggregation), `ingredient_rules_test` (FR-16/17/18), `plan_repository_test` (copy week), `tag_repository_test` (protected deletion), `powersync_connector_test` (fatal error classification), `seed_catalog_test`, `seed_name_resolver_test`, `display_name_test`, `qty_format_test`.
+- **Key test suites**: `scaling_test` (rounding/rescaling), `list_generation_test` (aggregation), `ingredient_rules_test` (FR-16/17/18), `plan_repository_test` (copy week), `tag_repository_test` (protected deletion), `powersync_connector_test` (fatal error classification), `seed_catalog_test`, `seed_name_resolver_test`, `display_name_test`, `qty_format_test`, `dish_repository_test` (CRUD + recipe_url), `household_repository_test` (settings), `ingredient_filter_test` (combined filters).
 - **Browser test suite** (manual): `docs/Forkast_Browser_Test_Suite.md` — E2E checklist for the deployed web app. Covers infra, sync, reactivity, calculation, two-layer list, localization, pairing, deletion, ingredient constraints, dish filters, plan navigation/copy/guests, reparti. See Manutenzione section below.
 
 ---

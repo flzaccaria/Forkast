@@ -27,7 +27,6 @@ Future<String> _insertHouseholdLocal(AppDatabase db, String deviceId) async {
         id: householdId,
         defaultGuests: const Value(4),
         weekStartDay: const Value(1),
-        autoRegen: const Value(false),
         createdAt: now,
         updatedAt: now,
       ),
@@ -73,7 +72,6 @@ void main() {
         name TEXT,
         default_guests INTEGER,
         week_start_day INTEGER,
-        auto_regen INTEGER,
         seeded_at TEXT,
         created_at TEXT,
         updated_at TEXT
@@ -108,6 +106,7 @@ void main() {
         name TEXT,
         difficulty TEXT,
         time_estimate TEXT,
+        recipe_url TEXT,
         seed_key TEXT,
         name_modified INTEGER DEFAULT 0,
         created_at TEXT,
@@ -138,8 +137,6 @@ void main() {
         .getSingle();
     expect(household.defaultGuests, 4);
     expect(household.weekStartDay, 1);
-    expect(household.autoRegen, false);
-
     final membership = await (db.select(db.memberships)
           ..where((m) => m.deviceId.equals('device-A')))
         .getSingle();

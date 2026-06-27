@@ -48,6 +48,7 @@
   "dishEditorNewTitle": "Ny ret",
   "dishEditorEditTitle": "Rediger ret",
   "dishEditorNameLabel": "Navn på ret",
+  "dishEditorRecipeUrl": "Opskriftslink",
   "dishEditorNameRequired": "Indtast retnavnet",
   "dishEditorInvalidQty": "Ugyldig mængde for {name}",
   "dishEditorSaveError": "Fejl ved gemning af ret",
@@ -60,6 +61,9 @@
   "dishEditorCourse": "Ret",
   "dishEditorNoCoursesDefined": "Ingen retter defineret. Tilføj dem i Indstillinger → Retterordforråd.",
   "dishEditorCreateIngredient": "Opret ny ingrediens",
+  "dishEditorSimilarExisting": "Lignende ingredienser findes",
+  "dishEditorSimilarExistingMessage": "Lignende ingredienser findes allerede i kataloget:",
+  "dishEditorCreateAnyway": "Opret alligevel",
   "dishEditorCatalogEmpty": "Kataloget er tomt. Opret den første ingrediens.",
 
   "planPrevWeekEmpty": "Den forrige uge er tom.",

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/diacritics.dart';
 import '../../core/dish_enums.dart';
 import '../../core/display_name.dart';
 import '../../core/l10n_enums.dart';
@@ -30,6 +32,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   late final TagRepository _tagRepo;
 
   final _nameController = TextEditingController();
+  final _recipeUrlController = TextEditingController();
   final _rows = <_IngredientRow>[];
   String? _portataId;
   Difficulty? _difficulty;
@@ -65,6 +68,7 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
     if (!mounted) return;
     setState(() {
       _nameController.text = dish?.name ?? '';
+      _recipeUrlController.text = dish?.recipeUrl ?? '';
       _difficulty = Difficulty.tryParse(dish?.difficulty);
       _timeEstimate = TimeEstimate.tryParse(dish?.timeEstimate);
       for (final r in rows) {
@@ -89,10 +93,20 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _recipeUrlController.dispose();
     for (final r in _rows) {
       r.qtyController.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _openRecipeUrl() async {
+    final url = _recipeUrlController.text.trim();
+    if (url.isEmpty) return;
+    final uri = Uri.tryParse(url.startsWith('http') ? url : 'https://$url');
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _pickIngredient() async {
@@ -157,6 +171,9 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
       if (_portataId != null) _portataId!,
     ];
 
+    final rawUrl = _recipeUrlController.text.trim();
+    final recipeUrl = rawUrl.isEmpty ? null : rawUrl;
+
     setState(() => _saving = true);
     try {
       if (_isEditing) {
@@ -165,14 +182,16 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             ingredients: drafts,
             tagIds: tagIds,
             difficulty: Value(_difficulty?.dbValue),
-            timeEstimate: Value(_timeEstimate?.dbValue));
+            timeEstimate: Value(_timeEstimate?.dbValue),
+            recipeUrl: Value(recipeUrl));
       } else {
         await _dishRepo.create(
             name: name,
             ingredients: drafts,
             tagIds: tagIds,
             difficulty: _difficulty?.dbValue,
-            timeEstimate: _timeEstimate?.dbValue);
+            timeEstimate: _timeEstimate?.dbValue,
+            recipeUrl: recipeUrl);
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -241,6 +260,23 @@ class _DishEditorScreenState extends State<DishEditorScreen> {
             controller: _nameController,
             decoration: InputDecoration(labelText: l.dishEditorNameLabel),
             textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 16),
+
+          TextField(
+            controller: _recipeUrlController,
+            decoration: InputDecoration(
+              labelText: l.dishEditorRecipeUrl,
+              hintText: 'https://...',
+              suffixIcon: _recipeUrlController.text.trim().isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.open_in_new, size: 20),
+                      onPressed: () => _openRecipeUrl(),
+                    )
+                  : null,
+            ),
+            keyboardType: TextInputType.url,
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 24),
 
@@ -437,14 +473,118 @@ class _PortataSection extends StatelessWidget {
   }
 }
 
-class _IngredientPicker extends StatelessWidget {
+class _IngredientPicker extends StatefulWidget {
   const _IngredientPicker({required this.ingredients, required this.repo});
 
   final List<Ingredient> ingredients;
   final IngredientRepository repo;
 
+  @override
+  State<_IngredientPicker> createState() => _IngredientPickerState();
+}
+
+class _IngredientPickerState extends State<_IngredientPicker> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Ingredient> _filtered(String locale) {
+    if (_query.isEmpty) return widget.ingredients;
+    final normalizedQuery = removeDiacritics(_query).toLowerCase();
+    return widget.ingredients.where((ing) {
+      final name = removeDiacritics(
+        ingredientDisplayName(ing, locale),
+      ).toLowerCase();
+      return name.contains(normalizedQuery);
+    }).toList();
+  }
+
+  List<Ingredient> _findSimilar(String query, String locale) {
+    if (query.length < 2) return const [];
+    final normalizedQuery = removeDiacritics(query).toLowerCase();
+    return widget.ingredients.where((ing) {
+      final name = removeDiacritics(
+        ingredientDisplayName(ing, locale),
+      ).toLowerCase();
+      if (name.contains(normalizedQuery) ||
+          normalizedQuery.contains(name)) {
+        return true;
+      }
+      return _editDistance(name, normalizedQuery) <= 2;
+    }).toList();
+  }
+
+  static int _editDistance(String a, String b) {
+    if (a.length > 8 || b.length > 8) {
+      final prefixA = a.substring(0, a.length.clamp(0, 6));
+      final prefixB = b.substring(0, b.length.clamp(0, 6));
+      return _levenshtein(prefixA, prefixB);
+    }
+    return _levenshtein(a, b);
+  }
+
+  static int _levenshtein(String a, String b) {
+    final m = a.length, n = b.length;
+    var prev = List.generate(n + 1, (j) => j);
+    for (var i = 1; i <= m; i++) {
+      final curr = List.filled(n + 1, 0);
+      curr[0] = i;
+      for (var j = 1; j <= n; j++) {
+        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+        curr[j] = [curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost]
+            .reduce((a, b) => a < b ? a : b);
+      }
+      prev = curr;
+    }
+    return prev[n];
+  }
+
   Future<void> _createNew(BuildContext context) async {
-    final created = await showIngredientForm(context, repo: repo);
+    final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final similar = _findSimilar(_query, locale);
+    if (similar.isNotEmpty && context.mounted) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.dishEditorSimilarExisting),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.dishEditorSimilarExistingMessage),
+              const SizedBox(height: 8),
+              for (final s in similar.take(5))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    '• ${ingredientDisplayName(s, locale)}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l.dishEditorCreateAnyway),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) return;
+    }
+    if (!context.mounted) return;
+    final created = await showIngredientForm(context, repo: widget.repo);
     if (created != null && context.mounted) {
       Navigator.of(context).pop(created);
     }
@@ -453,33 +593,56 @@ class _IngredientPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
     final tokens = Theme.of(context).extension<ForkastTokens>()!;
+    final filtered = _filtered(locale);
     return SafeArea(
-      child: ListView(
-        shrinkWrap: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            leading: const Icon(Icons.add),
-            title: Text(l.dishEditorCreateIngredient),
-            onTap: () => _createNew(context),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: SearchBar(
+              controller: _searchController,
+              hintText: l.ingredientsSearchHint,
+              leading: Icon(Icons.search, color: tokens.inkMuted),
+              autoFocus: true,
+              onChanged: (v) => setState(() => _query = v),
+            ),
           ),
           Divider(height: 0.5, color: tokens.border),
-          if (ingredients.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Text(
-                l.dishEditorCatalogEmpty,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: tokens.inkMuted),
-              ),
-            )
-          else
-            for (final ing in ingredients)
-              ListTile(
-                title: Text(ingredientDisplayName(ing, Localizations.localeOf(context).toString())),
-                subtitle: Text(ing.isQb ? l.quantoBasta : ing.unit),
-                onTap: () => Navigator.of(context).pop(ing),
-              ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.add),
+                  title: Text(l.dishEditorCreateIngredient),
+                  onTap: () => _createNew(context),
+                ),
+                Divider(height: 0.5, color: tokens.border),
+                if (filtered.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 24, horizontal: 16),
+                    child: Text(
+                      widget.ingredients.isEmpty
+                          ? l.dishEditorCatalogEmpty
+                          : l.ingredientsNoResults,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: tokens.inkMuted),
+                    ),
+                  )
+                else
+                  for (final ing in filtered)
+                    ListTile(
+                      title: Text(ingredientDisplayName(ing, locale)),
+                      subtitle: Text(ing.isQb ? l.quantoBasta : ing.unit),
+                      onTap: () => Navigator.of(context).pop(ing),
+                    ),
+              ],
+            ),
+          ),
         ],
       ),
     );

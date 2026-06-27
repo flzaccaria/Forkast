@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forkast/data/database.dart';
 import 'package:forkast/data/repositories/household_repository.dart';
 
-/// Global settings (FR-8/20/21) on a "PowerSync-style" schema (without
+/// Global settings (FR-8/20) on a "PowerSync-style" schema (without
 /// DEFAULT), to catch unapplied drift defaults.
 void main() {
   late AppDatabase db;
@@ -16,14 +16,13 @@ void main() {
     await db.customStatement('''
       CREATE TABLE household (
         id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-        week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT,
+        week_start_day INTEGER, seeded_at TEXT,
         created_at TEXT, updated_at TEXT)''');
     final now = DateTime.now().toUtc();
     await db.into(db.households).insert(HouseholdsCompanion.insert(
           id: householdId,
           defaultGuests: const Value(4),
           weekStartDay: const Value(1),
-          autoRegen: const Value(false),
           createdAt: now,
           updatedAt: now,
         ));
@@ -36,7 +35,6 @@ void main() {
     final h = await repo.get();
     expect(h.defaultGuests, 4);
     expect(h.weekStartDay, 1);
-    expect(h.autoRegen, false);
   });
 
   test('updates default guests, clamping the minimum to 1', () async {
@@ -47,12 +45,10 @@ void main() {
     expect((await repo.get()).defaultGuests, 1);
   });
 
-  test('updates week start and automatic regeneration', () async {
+  test('updates week start day', () async {
     await repo.setWeekStartDay(7);
-    await repo.setAutoRegen(true);
     final h = await repo.get();
     expect(h.weekStartDay, 7);
-    expect(h.autoRegen, true);
   });
 
   test('watch emits changes', () async {

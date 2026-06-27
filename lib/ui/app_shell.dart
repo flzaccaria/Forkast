@@ -17,7 +17,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
+  int _currentIndex = 2; // default landing: Piano
   bool _pairingHandled = false;
 
   static const _screens = [

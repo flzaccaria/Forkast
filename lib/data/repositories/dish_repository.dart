@@ -162,6 +162,7 @@ class DishRepository {
     List<String> tagIds = const [],
     String? difficulty,
     String? timeEstimate,
+    String? recipeUrl,
   }) async {
     final now = DateTime.now().toUtc();
     final dishId = _uuid.v4();
@@ -174,6 +175,7 @@ class DishRepository {
               name: name,
               difficulty: Value(difficulty),
               timeEstimate: Value(timeEstimate),
+              recipeUrl: Value(recipeUrl),
               nameModified: const Value(false),
               createdAt: now,
               updatedAt: now,
@@ -222,6 +224,7 @@ class DishRepository {
     List<String> tagIds = const [],
     Value<String?> difficulty = const Value.absent(),
     Value<String?> timeEstimate = const Value.absent(),
+    Value<String?> recipeUrl = const Value.absent(),
   }) async {
     final now = DateTime.now().toUtc();
     await _db.transaction(() async {
@@ -230,6 +233,7 @@ class DishRepository {
             name: Value(name),
             difficulty: difficulty,
             timeEstimate: timeEstimate,
+            recipeUrl: recipeUrl,
             updatedAt: Value(now),
           ));
       await (_db.delete(_db.dishIngredients)
