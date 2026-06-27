@@ -21,7 +21,7 @@ Future<void> _createSchema(AppDatabase db) async {
   Future<void> exec(String sql) => db.customStatement(sql);
   await exec('''CREATE TABLE household (
     id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-    week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT,
+    week_start_day INTEGER, seeded_at TEXT,
     created_at TEXT, updated_at TEXT)''');
   await exec('''CREATE TABLE membership (
     id TEXT PRIMARY KEY, household_id TEXT, device_id TEXT,
@@ -36,7 +36,7 @@ Future<void> _createSchema(AppDatabase db) async {
     created_at TEXT, updated_at TEXT)''');
   await exec('''CREATE TABLE dish (
     id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
-    difficulty TEXT, time_estimate TEXT,
+    difficulty TEXT, time_estimate TEXT, recipe_url TEXT,
     seed_key TEXT, name_modified INTEGER,
     created_at TEXT, updated_at TEXT)''');
   await exec('''CREATE TABLE dish_tag (
@@ -81,7 +81,7 @@ Future<void> _seedHousehold(AppDatabase db) async {
         id: _hh,
         defaultGuests: const Value(4),
         weekStartDay: const Value(1),
-        autoRegen: const Value(false),
+
         createdAt: now,
         updatedAt: now,
       ));

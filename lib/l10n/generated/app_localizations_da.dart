@@ -137,6 +137,9 @@ class AppLocalizationsDa extends AppLocalizations {
   String get dishEditorNameLabel => 'Navn på ret';
 
   @override
+  String get dishEditorRecipeUrl => 'Opskriftslink';
+
+  @override
   String get dishEditorNameRequired => 'Indtast retnavnet';
 
   @override
@@ -174,6 +177,16 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get dishEditorCreateIngredient => 'Opret ny ingrediens';
+
+  @override
+  String get dishEditorSimilarExisting => 'Lignende ingredienser findes';
+
+  @override
+  String get dishEditorSimilarExistingMessage =>
+      'Lignende ingredienser findes allerede i kataloget:';
+
+  @override
+  String get dishEditorCreateAnyway => 'Opret alligevel';
 
   @override
   String get dishEditorCatalogEmpty =>

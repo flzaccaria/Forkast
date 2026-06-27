@@ -22,7 +22,7 @@ void main() {
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
-      difficulty TEXT, time_estimate TEXT,
+      difficulty TEXT, time_estimate TEXT, recipe_url TEXT,
       seed_key TEXT, name_modified INTEGER DEFAULT 0,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_ingredient (
@@ -166,5 +166,24 @@ void main() {
     expect(await repo.getIngredients(id), isEmpty);
     expect(await db.select(db.dishTags).get(), isEmpty);
     expect(await db.select(db.planDayDishes).get(), isEmpty);
+  });
+
+  test('recipe_url is saved and retrieved', () async {
+    await seedIngredient('carne');
+    final id = await repo.create(
+      name: 'Pasta al forno',
+      ingredients: [DishIngredientDraft(ingredientId: 'carne', qtyBase4: 300)],
+      recipeUrl: 'https://example.com/pasta',
+    );
+    final dish = await repo.getDish(id);
+    expect(dish!.recipeUrl, 'https://example.com/pasta');
+
+    await repo.update(id,
+      name: 'Pasta al forno',
+      ingredients: [DishIngredientDraft(ingredientId: 'carne', qtyBase4: 300)],
+      recipeUrl: const Value(null),
+    );
+    final updated = await repo.getDish(id);
+    expect(updated!.recipeUrl, isNull);
   });
 }

@@ -21,7 +21,7 @@ Future<String> _insertHousehold(AppDatabase db, {DateTime? seededAt}) async {
         id: id,
         defaultGuests: const Value(4),
         weekStartDay: const Value(1),
-        autoRegen: const Value(false),
+
         seededAt: Value(seededAt),
         createdAt: now,
         updatedAt: now,
@@ -40,7 +40,6 @@ void main() {
         name TEXT,
         default_guests INTEGER,
         week_start_day INTEGER,
-        auto_regen INTEGER,
         seeded_at TEXT,
         created_at TEXT,
         updated_at TEXT

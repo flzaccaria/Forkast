@@ -19,7 +19,7 @@ void main() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     await exec('''CREATE TABLE household (
       id TEXT PRIMARY KEY, name TEXT, default_guests INTEGER,
-      week_start_day INTEGER, auto_regen INTEGER, seeded_at TEXT, created_at TEXT, updated_at TEXT)''');
+      week_start_day INTEGER, seeded_at TEXT, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE ingredient (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
       is_qb INTEGER, category TEXT, rounding_kind TEXT,
@@ -27,7 +27,7 @@ void main() {
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
-      difficulty TEXT, time_estimate TEXT,
+      difficulty TEXT, time_estimate TEXT, recipe_url TEXT,
       seed_key TEXT, name_modified INTEGER DEFAULT 0,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_ingredient (
@@ -64,7 +64,7 @@ void main() {
           id: householdId,
           defaultGuests: const Value(4),
           weekStartDay: const Value(1),
-          autoRegen: const Value(false),
+
           createdAt: now,
           updatedAt: now,
         ));

@@ -35,16 +35,6 @@ class $HouseholdsTable extends Households
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
-  static const VerificationMeta _autoRegenMeta =
-      const VerificationMeta('autoRegen');
-  @override
-  late final GeneratedColumn<bool> autoRegen = GeneratedColumn<bool>(
-      'auto_regen', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("auto_regen" IN (0, 1))'),
-      defaultValue: const Constant(false));
   static const VerificationMeta _seededAtMeta =
       const VerificationMeta('seededAt');
   @override
@@ -64,16 +54,8 @@ class $HouseholdsTable extends Households
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        name,
-        defaultGuests,
-        weekStartDay,
-        autoRegen,
-        seededAt,
-        createdAt,
-        updatedAt
-      ];
+  List<GeneratedColumn> get $columns =>
+      [id, name, defaultGuests, weekStartDay, seededAt, createdAt, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -104,10 +86,6 @@ class $HouseholdsTable extends Households
           _weekStartDayMeta,
           weekStartDay.isAcceptableOrUnknown(
               data['week_start_day']!, _weekStartDayMeta));
-    }
-    if (data.containsKey('auto_regen')) {
-      context.handle(_autoRegenMeta,
-          autoRegen.isAcceptableOrUnknown(data['auto_regen']!, _autoRegenMeta));
     }
     if (data.containsKey('seeded_at')) {
       context.handle(_seededAtMeta,
@@ -142,8 +120,6 @@ class $HouseholdsTable extends Households
           .read(DriftSqlType.int, data['${effectivePrefix}default_guests'])!,
       weekStartDay: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}week_start_day'])!,
-      autoRegen: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}auto_regen'])!,
       seededAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}seeded_at']),
       createdAt: attachedDatabase.typeMapping
@@ -164,7 +140,6 @@ class Household extends DataClass implements Insertable<Household> {
   final String? name;
   final int defaultGuests;
   final int weekStartDay;
-  final bool autoRegen;
   final DateTime? seededAt;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -173,7 +148,6 @@ class Household extends DataClass implements Insertable<Household> {
       this.name,
       required this.defaultGuests,
       required this.weekStartDay,
-      required this.autoRegen,
       this.seededAt,
       required this.createdAt,
       required this.updatedAt});
@@ -186,7 +160,6 @@ class Household extends DataClass implements Insertable<Household> {
     }
     map['default_guests'] = Variable<int>(defaultGuests);
     map['week_start_day'] = Variable<int>(weekStartDay);
-    map['auto_regen'] = Variable<bool>(autoRegen);
     if (!nullToAbsent || seededAt != null) {
       map['seeded_at'] = Variable<DateTime>(seededAt);
     }
@@ -201,7 +174,6 @@ class Household extends DataClass implements Insertable<Household> {
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
       defaultGuests: Value(defaultGuests),
       weekStartDay: Value(weekStartDay),
-      autoRegen: Value(autoRegen),
       seededAt: seededAt == null && nullToAbsent
           ? const Value.absent()
           : Value(seededAt),
@@ -218,7 +190,6 @@ class Household extends DataClass implements Insertable<Household> {
       name: serializer.fromJson<String?>(json['name']),
       defaultGuests: serializer.fromJson<int>(json['defaultGuests']),
       weekStartDay: serializer.fromJson<int>(json['weekStartDay']),
-      autoRegen: serializer.fromJson<bool>(json['autoRegen']),
       seededAt: serializer.fromJson<DateTime?>(json['seededAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -232,7 +203,6 @@ class Household extends DataClass implements Insertable<Household> {
       'name': serializer.toJson<String?>(name),
       'defaultGuests': serializer.toJson<int>(defaultGuests),
       'weekStartDay': serializer.toJson<int>(weekStartDay),
-      'autoRegen': serializer.toJson<bool>(autoRegen),
       'seededAt': serializer.toJson<DateTime?>(seededAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -244,7 +214,6 @@ class Household extends DataClass implements Insertable<Household> {
           Value<String?> name = const Value.absent(),
           int? defaultGuests,
           int? weekStartDay,
-          bool? autoRegen,
           Value<DateTime?> seededAt = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -253,7 +222,6 @@ class Household extends DataClass implements Insertable<Household> {
         name: name.present ? name.value : this.name,
         defaultGuests: defaultGuests ?? this.defaultGuests,
         weekStartDay: weekStartDay ?? this.weekStartDay,
-        autoRegen: autoRegen ?? this.autoRegen,
         seededAt: seededAt.present ? seededAt.value : this.seededAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -268,7 +236,6 @@ class Household extends DataClass implements Insertable<Household> {
       weekStartDay: data.weekStartDay.present
           ? data.weekStartDay.value
           : this.weekStartDay,
-      autoRegen: data.autoRegen.present ? data.autoRegen.value : this.autoRegen,
       seededAt: data.seededAt.present ? data.seededAt.value : this.seededAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -282,7 +249,6 @@ class Household extends DataClass implements Insertable<Household> {
           ..write('name: $name, ')
           ..write('defaultGuests: $defaultGuests, ')
           ..write('weekStartDay: $weekStartDay, ')
-          ..write('autoRegen: $autoRegen, ')
           ..write('seededAt: $seededAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -291,8 +257,8 @@ class Household extends DataClass implements Insertable<Household> {
   }
 
   @override
-  int get hashCode => Object.hash(id, name, defaultGuests, weekStartDay,
-      autoRegen, seededAt, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id, name, defaultGuests, weekStartDay, seededAt, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -301,7 +267,6 @@ class Household extends DataClass implements Insertable<Household> {
           other.name == this.name &&
           other.defaultGuests == this.defaultGuests &&
           other.weekStartDay == this.weekStartDay &&
-          other.autoRegen == this.autoRegen &&
           other.seededAt == this.seededAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -312,7 +277,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
   final Value<String?> name;
   final Value<int> defaultGuests;
   final Value<int> weekStartDay;
-  final Value<bool> autoRegen;
   final Value<DateTime?> seededAt;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -322,7 +286,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     this.name = const Value.absent(),
     this.defaultGuests = const Value.absent(),
     this.weekStartDay = const Value.absent(),
-    this.autoRegen = const Value.absent(),
     this.seededAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -333,7 +296,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     this.name = const Value.absent(),
     this.defaultGuests = const Value.absent(),
     this.weekStartDay = const Value.absent(),
-    this.autoRegen = const Value.absent(),
     this.seededAt = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -346,7 +308,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     Expression<String>? name,
     Expression<int>? defaultGuests,
     Expression<int>? weekStartDay,
-    Expression<bool>? autoRegen,
     Expression<DateTime>? seededAt,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -357,7 +318,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       if (name != null) 'name': name,
       if (defaultGuests != null) 'default_guests': defaultGuests,
       if (weekStartDay != null) 'week_start_day': weekStartDay,
-      if (autoRegen != null) 'auto_regen': autoRegen,
       if (seededAt != null) 'seeded_at': seededAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -370,7 +330,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       Value<String?>? name,
       Value<int>? defaultGuests,
       Value<int>? weekStartDay,
-      Value<bool>? autoRegen,
       Value<DateTime?>? seededAt,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
@@ -380,7 +339,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
       name: name ?? this.name,
       defaultGuests: defaultGuests ?? this.defaultGuests,
       weekStartDay: weekStartDay ?? this.weekStartDay,
-      autoRegen: autoRegen ?? this.autoRegen,
       seededAt: seededAt ?? this.seededAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -402,9 +360,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
     }
     if (weekStartDay.present) {
       map['week_start_day'] = Variable<int>(weekStartDay.value);
-    }
-    if (autoRegen.present) {
-      map['auto_regen'] = Variable<bool>(autoRegen.value);
     }
     if (seededAt.present) {
       map['seeded_at'] = Variable<DateTime>(seededAt.value);
@@ -428,7 +383,6 @@ class HouseholdsCompanion extends UpdateCompanion<Household> {
           ..write('name: $name, ')
           ..write('defaultGuests: $defaultGuests, ')
           ..write('weekStartDay: $weekStartDay, ')
-          ..write('autoRegen: $autoRegen, ')
           ..write('seededAt: $seededAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1808,6 +1762,12 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
   late final GeneratedColumn<String> timeEstimate = GeneratedColumn<String>(
       'time_estimate', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recipeUrlMeta =
+      const VerificationMeta('recipeUrl');
+  @override
+  late final GeneratedColumn<String> recipeUrl = GeneratedColumn<String>(
+      'recipe_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _seedKeyMeta =
       const VerificationMeta('seedKey');
   @override
@@ -1842,6 +1802,7 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
         name,
         difficulty,
         timeEstimate,
+        recipeUrl,
         seedKey,
         nameModified,
         createdAt,
@@ -1888,6 +1849,10 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
           timeEstimate.isAcceptableOrUnknown(
               data['time_estimate']!, _timeEstimateMeta));
     }
+    if (data.containsKey('recipe_url')) {
+      context.handle(_recipeUrlMeta,
+          recipeUrl.isAcceptableOrUnknown(data['recipe_url']!, _recipeUrlMeta));
+    }
     if (data.containsKey('seed_key')) {
       context.handle(_seedKeyMeta,
           seedKey.isAcceptableOrUnknown(data['seed_key']!, _seedKeyMeta));
@@ -1929,6 +1894,8 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, Dish> {
           .read(DriftSqlType.string, data['${effectivePrefix}difficulty']),
       timeEstimate: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}time_estimate']),
+      recipeUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}recipe_url']),
       seedKey: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
       nameModified: attachedDatabase.typeMapping
@@ -1952,6 +1919,7 @@ class Dish extends DataClass implements Insertable<Dish> {
   final String name;
   final String? difficulty;
   final String? timeEstimate;
+  final String? recipeUrl;
   final String? seedKey;
   final bool? nameModified;
   final DateTime createdAt;
@@ -1962,6 +1930,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       required this.name,
       this.difficulty,
       this.timeEstimate,
+      this.recipeUrl,
       this.seedKey,
       this.nameModified,
       required this.createdAt,
@@ -1977,6 +1946,9 @@ class Dish extends DataClass implements Insertable<Dish> {
     }
     if (!nullToAbsent || timeEstimate != null) {
       map['time_estimate'] = Variable<String>(timeEstimate);
+    }
+    if (!nullToAbsent || recipeUrl != null) {
+      map['recipe_url'] = Variable<String>(recipeUrl);
     }
     if (!nullToAbsent || seedKey != null) {
       map['seed_key'] = Variable<String>(seedKey);
@@ -2000,6 +1972,9 @@ class Dish extends DataClass implements Insertable<Dish> {
       timeEstimate: timeEstimate == null && nullToAbsent
           ? const Value.absent()
           : Value(timeEstimate),
+      recipeUrl: recipeUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recipeUrl),
       seedKey: seedKey == null && nullToAbsent
           ? const Value.absent()
           : Value(seedKey),
@@ -2020,6 +1995,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       name: serializer.fromJson<String>(json['name']),
       difficulty: serializer.fromJson<String?>(json['difficulty']),
       timeEstimate: serializer.fromJson<String?>(json['timeEstimate']),
+      recipeUrl: serializer.fromJson<String?>(json['recipeUrl']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
       nameModified: serializer.fromJson<bool?>(json['nameModified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -2035,6 +2011,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       'name': serializer.toJson<String>(name),
       'difficulty': serializer.toJson<String?>(difficulty),
       'timeEstimate': serializer.toJson<String?>(timeEstimate),
+      'recipeUrl': serializer.toJson<String?>(recipeUrl),
       'seedKey': serializer.toJson<String?>(seedKey),
       'nameModified': serializer.toJson<bool?>(nameModified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -2048,6 +2025,7 @@ class Dish extends DataClass implements Insertable<Dish> {
           String? name,
           Value<String?> difficulty = const Value.absent(),
           Value<String?> timeEstimate = const Value.absent(),
+          Value<String?> recipeUrl = const Value.absent(),
           Value<String?> seedKey = const Value.absent(),
           Value<bool?> nameModified = const Value.absent(),
           DateTime? createdAt,
@@ -2059,6 +2037,7 @@ class Dish extends DataClass implements Insertable<Dish> {
         difficulty: difficulty.present ? difficulty.value : this.difficulty,
         timeEstimate:
             timeEstimate.present ? timeEstimate.value : this.timeEstimate,
+        recipeUrl: recipeUrl.present ? recipeUrl.value : this.recipeUrl,
         seedKey: seedKey.present ? seedKey.value : this.seedKey,
         nameModified:
             nameModified.present ? nameModified.value : this.nameModified,
@@ -2076,6 +2055,7 @@ class Dish extends DataClass implements Insertable<Dish> {
       timeEstimate: data.timeEstimate.present
           ? data.timeEstimate.value
           : this.timeEstimate,
+      recipeUrl: data.recipeUrl.present ? data.recipeUrl.value : this.recipeUrl,
       seedKey: data.seedKey.present ? data.seedKey.value : this.seedKey,
       nameModified: data.nameModified.present
           ? data.nameModified.value
@@ -2093,6 +2073,7 @@ class Dish extends DataClass implements Insertable<Dish> {
           ..write('name: $name, ')
           ..write('difficulty: $difficulty, ')
           ..write('timeEstimate: $timeEstimate, ')
+          ..write('recipeUrl: $recipeUrl, ')
           ..write('seedKey: $seedKey, ')
           ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
@@ -2103,7 +2084,7 @@ class Dish extends DataClass implements Insertable<Dish> {
 
   @override
   int get hashCode => Object.hash(id, householdId, name, difficulty,
-      timeEstimate, seedKey, nameModified, createdAt, updatedAt);
+      timeEstimate, recipeUrl, seedKey, nameModified, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2113,6 +2094,7 @@ class Dish extends DataClass implements Insertable<Dish> {
           other.name == this.name &&
           other.difficulty == this.difficulty &&
           other.timeEstimate == this.timeEstimate &&
+          other.recipeUrl == this.recipeUrl &&
           other.seedKey == this.seedKey &&
           other.nameModified == this.nameModified &&
           other.createdAt == this.createdAt &&
@@ -2125,6 +2107,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
   final Value<String> name;
   final Value<String?> difficulty;
   final Value<String?> timeEstimate;
+  final Value<String?> recipeUrl;
   final Value<String?> seedKey;
   final Value<bool?> nameModified;
   final Value<DateTime> createdAt;
@@ -2136,6 +2119,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     this.name = const Value.absent(),
     this.difficulty = const Value.absent(),
     this.timeEstimate = const Value.absent(),
+    this.recipeUrl = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.nameModified = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -2148,6 +2132,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     required String name,
     this.difficulty = const Value.absent(),
     this.timeEstimate = const Value.absent(),
+    this.recipeUrl = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.nameModified = const Value.absent(),
     required DateTime createdAt,
@@ -2164,6 +2149,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     Expression<String>? name,
     Expression<String>? difficulty,
     Expression<String>? timeEstimate,
+    Expression<String>? recipeUrl,
     Expression<String>? seedKey,
     Expression<bool>? nameModified,
     Expression<DateTime>? createdAt,
@@ -2176,6 +2162,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       if (name != null) 'name': name,
       if (difficulty != null) 'difficulty': difficulty,
       if (timeEstimate != null) 'time_estimate': timeEstimate,
+      if (recipeUrl != null) 'recipe_url': recipeUrl,
       if (seedKey != null) 'seed_key': seedKey,
       if (nameModified != null) 'name_modified': nameModified,
       if (createdAt != null) 'created_at': createdAt,
@@ -2190,6 +2177,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       Value<String>? name,
       Value<String?>? difficulty,
       Value<String?>? timeEstimate,
+      Value<String?>? recipeUrl,
       Value<String?>? seedKey,
       Value<bool?>? nameModified,
       Value<DateTime>? createdAt,
@@ -2201,6 +2189,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
       name: name ?? this.name,
       difficulty: difficulty ?? this.difficulty,
       timeEstimate: timeEstimate ?? this.timeEstimate,
+      recipeUrl: recipeUrl ?? this.recipeUrl,
       seedKey: seedKey ?? this.seedKey,
       nameModified: nameModified ?? this.nameModified,
       createdAt: createdAt ?? this.createdAt,
@@ -2226,6 +2215,9 @@ class DishesCompanion extends UpdateCompanion<Dish> {
     }
     if (timeEstimate.present) {
       map['time_estimate'] = Variable<String>(timeEstimate.value);
+    }
+    if (recipeUrl.present) {
+      map['recipe_url'] = Variable<String>(recipeUrl.value);
     }
     if (seedKey.present) {
       map['seed_key'] = Variable<String>(seedKey.value);
@@ -2253,6 +2245,7 @@ class DishesCompanion extends UpdateCompanion<Dish> {
           ..write('name: $name, ')
           ..write('difficulty: $difficulty, ')
           ..write('timeEstimate: $timeEstimate, ')
+          ..write('recipeUrl: $recipeUrl, ')
           ..write('seedKey: $seedKey, ')
           ..write('nameModified: $nameModified, ')
           ..write('createdAt: $createdAt, ')
@@ -6240,7 +6233,6 @@ typedef $$HouseholdsTableCreateCompanionBuilder = HouseholdsCompanion Function({
   Value<String?> name,
   Value<int> defaultGuests,
   Value<int> weekStartDay,
-  Value<bool> autoRegen,
   Value<DateTime?> seededAt,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -6251,7 +6243,6 @@ typedef $$HouseholdsTableUpdateCompanionBuilder = HouseholdsCompanion Function({
   Value<String?> name,
   Value<int> defaultGuests,
   Value<int> weekStartDay,
-  Value<bool> autoRegen,
   Value<DateTime?> seededAt,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -6278,9 +6269,6 @@ class $$HouseholdsTableFilterComposer
 
   ColumnFilters<int> get weekStartDay => $composableBuilder(
       column: $table.weekStartDay, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get autoRegen => $composableBuilder(
-      column: $table.autoRegen, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get seededAt => $composableBuilder(
       column: $table.seededAt, builder: (column) => ColumnFilters(column));
@@ -6315,9 +6303,6 @@ class $$HouseholdsTableOrderingComposer
       column: $table.weekStartDay,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get autoRegen => $composableBuilder(
-      column: $table.autoRegen, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get seededAt => $composableBuilder(
       column: $table.seededAt, builder: (column) => ColumnOrderings(column));
 
@@ -6348,9 +6333,6 @@ class $$HouseholdsTableAnnotationComposer
 
   GeneratedColumn<int> get weekStartDay => $composableBuilder(
       column: $table.weekStartDay, builder: (column) => column);
-
-  GeneratedColumn<bool> get autoRegen =>
-      $composableBuilder(column: $table.autoRegen, builder: (column) => column);
 
   GeneratedColumn<DateTime> get seededAt =>
       $composableBuilder(column: $table.seededAt, builder: (column) => column);
@@ -6389,7 +6371,6 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             Value<String?> name = const Value.absent(),
             Value<int> defaultGuests = const Value.absent(),
             Value<int> weekStartDay = const Value.absent(),
-            Value<bool> autoRegen = const Value.absent(),
             Value<DateTime?> seededAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -6400,7 +6381,6 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             name: name,
             defaultGuests: defaultGuests,
             weekStartDay: weekStartDay,
-            autoRegen: autoRegen,
             seededAt: seededAt,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -6411,7 +6391,6 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             Value<String?> name = const Value.absent(),
             Value<int> defaultGuests = const Value.absent(),
             Value<int> weekStartDay = const Value.absent(),
-            Value<bool> autoRegen = const Value.absent(),
             Value<DateTime?> seededAt = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
@@ -6422,7 +6401,6 @@ class $$HouseholdsTableTableManager extends RootTableManager<
             name: name,
             defaultGuests: defaultGuests,
             weekStartDay: weekStartDay,
-            autoRegen: autoRegen,
             seededAt: seededAt,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -7102,6 +7080,7 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String name,
   Value<String?> difficulty,
   Value<String?> timeEstimate,
+  Value<String?> recipeUrl,
   Value<String?> seedKey,
   Value<bool?> nameModified,
   required DateTime createdAt,
@@ -7114,6 +7093,7 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> name,
   Value<String?> difficulty,
   Value<String?> timeEstimate,
+  Value<String?> recipeUrl,
   Value<String?> seedKey,
   Value<bool?> nameModified,
   Value<DateTime> createdAt,
@@ -7144,6 +7124,9 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<String> get timeEstimate => $composableBuilder(
       column: $table.timeEstimate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recipeUrl => $composableBuilder(
+      column: $table.recipeUrl, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get seedKey => $composableBuilder(
       column: $table.seedKey, builder: (column) => ColumnFilters(column));
@@ -7183,6 +7166,9 @@ class $$DishesTableOrderingComposer
       column: $table.timeEstimate,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get recipeUrl => $composableBuilder(
+      column: $table.recipeUrl, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get seedKey => $composableBuilder(
       column: $table.seedKey, builder: (column) => ColumnOrderings(column));
 
@@ -7220,6 +7206,9 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<String> get timeEstimate => $composableBuilder(
       column: $table.timeEstimate, builder: (column) => column);
+
+  GeneratedColumn<String> get recipeUrl =>
+      $composableBuilder(column: $table.recipeUrl, builder: (column) => column);
 
   GeneratedColumn<String> get seedKey =>
       $composableBuilder(column: $table.seedKey, builder: (column) => column);
@@ -7262,6 +7251,7 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
+            Value<String?> recipeUrl = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -7274,6 +7264,7 @@ class $$DishesTableTableManager extends RootTableManager<
             name: name,
             difficulty: difficulty,
             timeEstimate: timeEstimate,
+            recipeUrl: recipeUrl,
             seedKey: seedKey,
             nameModified: nameModified,
             createdAt: createdAt,
@@ -7286,6 +7277,7 @@ class $$DishesTableTableManager extends RootTableManager<
             required String name,
             Value<String?> difficulty = const Value.absent(),
             Value<String?> timeEstimate = const Value.absent(),
+            Value<String?> recipeUrl = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
             required DateTime createdAt,
@@ -7298,6 +7290,7 @@ class $$DishesTableTableManager extends RootTableManager<
             name: name,
             difficulty: difficulty,
             timeEstimate: timeEstimate,
+            recipeUrl: recipeUrl,
             seedKey: seedKey,
             nameModified: nameModified,
             createdAt: createdAt,

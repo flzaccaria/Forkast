@@ -45,6 +45,7 @@ Prima di dare colpa al codice, conferma che il browser serve la build nuova:
 | **SM-9** | Ingrediente usato in un piatto → apri modifica | Dropdown unità disabilitato | FR-16 unità bloccata |
 | **SM-10** | Copia settimana precedente su vuota → Lista | Piatti copiati + Lista si rigenera | FR-19 copia settimana |
 | **SM-11** | Cambia ospiti 4→6 → Lista | Quantità riscalate senza refresh | ospiti → riscalo reattivo |
+| **SM-12** | Apri l'app → tab attivo | Il tab attivo è **Piano** (non Ingredienti) | default landing tab (v0.7) |
 
 Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima di testare le feature.
 
@@ -157,7 +158,30 @@ Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima 
 | BT-104 | 🔴 | Apri un giorno del piano → cambia ospiti da 4 a 6 → vai su Lista | Le quantità si riscalano (es. 600 g → 900 g per 6 ospiti) **senza refresh** | UI ospiti → riscalo reattivo |
 | BT-105 | 🟡 | Stesso di BT-104, poi rimetti ospiti a 4 | Le quantità tornano ai valori base | riscalo bidirezionale |
 
-## 12. Reparti e raggruppamento (FR-23)
+## 12. Navigazione e atterraggio (FR-23 v0.7)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-120 | 🔴 | Apri l'app in incognito (primo avvio) | Il tab attivo è **Piano**, non Ingredienti | A: default landing su tab sbagliato |
+| BT-121 | 🟡 | Osserva l'ordine dei tab nella barra di navigazione | Ingredienti · Piatti · Piano · Lista (da sinistra) | A: ordine tab invertito |
+
+## 13. Link ricetta sul piatto (FR-14/P9)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-130 | 🟡 | Crea un piatto con un URL ricetta (es. `https://example.com/ricetta`) → salva → riaprilo | Il campo "Link alla ricetta" mostra l'URL salvato | C: recipe_url non persistito |
+| BT-131 | 🟡 | Piatto con URL → tap sull'icona di apertura | Si apre il browser esterno con l'URL | C: url_launcher non funziona |
+| BT-132 | 🟡 | Crea un piatto **senza** URL ricetta | Il campo resta vuoto, nessuna icona di apertura | C: campo obbligatorio per errore |
+
+## 14. Autocomplete ingredienti nell'editor piatto (D3)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-140 | 🟡 | Nell'editor piatto, tap "Aggiungi" ingrediente → digita "pomo" | La lista filtra mostrando solo ingredienti con "pomo" nel nome | D3: filtro non attivo |
+| BT-141 | 🟡 | Digita "pomodroi" (typo) → tap "Crea nuovo ingrediente" | Dialog avviso "Ingredienti simili: Pomodori" → l'utente può annullare o creare comunque | D3: anti-doppioni assente |
+| BT-142 | 🟡 | Seleziona un ingrediente esistente dal catalogo | La riga eredita unità/q.b. dal catalogo; non viene creata una nuova voce | D3: selezione crea duplicato |
+
+## 15. Reparti e raggruppamento (FR-22/23)
 
 | ID | Pri | Passi | Atteso | Previene |
 | --- | --- | --- | --- | --- |

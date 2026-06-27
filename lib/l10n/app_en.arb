@@ -48,6 +48,7 @@
   "dishEditorNewTitle": "New dish",
   "dishEditorEditTitle": "Edit dish",
   "dishEditorNameLabel": "Dish name",
+  "dishEditorRecipeUrl": "Recipe link",
   "dishEditorNameRequired": "Enter the dish name",
   "dishEditorInvalidQty": "Invalid quantity for {name}",
   "dishEditorSaveError": "Error saving dish",
@@ -60,6 +61,9 @@
   "dishEditorCourse": "Course",
   "dishEditorNoCoursesDefined": "No courses defined. Add them in Settings → Course vocabulary.",
   "dishEditorCreateIngredient": "Create new ingredient",
+  "dishEditorSimilarExisting": "Similar ingredients exist",
+  "dishEditorSimilarExistingMessage": "Similar ingredients already exist in the catalog:",
+  "dishEditorCreateAnyway": "Create anyway",
   "dishEditorCatalogEmpty": "Catalog is empty. Create the first ingredient.",
 
   "planPrevWeekEmpty": "The previous week is empty.",
