@@ -287,6 +287,89 @@ void main() {
       await sub.cancel();
     });
 
+    // Regression: list screen stayed empty because watchList stream was
+    // recreated on every build, losing the emission from generate.
+    test('watchList emits non-null after generate on empty plan', () async {
+      final now = DateTime.now().toUtc();
+      await db.into(db.ingredients).insert(IngredientsCompanion.insert(
+            id: 'i1', householdId: _hh, name: 'Carne', unit: 'g',
+            isQb: const Value(false), roundingKind: const Value('weight'),
+            createdAt: now, updatedAt: now));
+      await db.into(db.dishes).insert(DishesCompanion.insert(
+            id: 'd1', householdId: _hh, name: 'Bistecca',
+            createdAt: now, updatedAt: now));
+      await db.into(db.dishIngredients).insert(DishIngredientsCompanion.insert(
+            id: 'di1', dishId: 'd1', ingredientId: 'i1', householdId: _hh,
+            qtyBase4: const Value(600), createdAt: now, updatedAt: now));
+      await db.into(db.planDays).insert(PlanDaysCompanion.insert(
+            id: 'pd1', weekPlanId: _wp, householdId: _hh,
+            dayOfWeek: 1, guests: 4, createdAt: now, updatedAt: now));
+      await db.into(db.planDayDishes).insert(PlanDayDishesCompanion.insert(
+            id: 'pdd1', planDayId: 'pd1', dishId: 'd1', householdId: _hh,
+            sortOrder: const Value(0), createdAt: now));
+
+      final emissions = <ShoppingList?>[];
+      final sub = listRepo.watchList(_wp).listen(emissions.add);
+      await pumpEventQueue();
+
+      expect(emissions, hasLength(1));
+      expect(emissions.last, isNull, reason: 'no list yet');
+
+      await listRepo.generate(_wp);
+      await pumpEventQueue();
+
+      expect(emissions, hasLength(2),
+          reason: 'watchList must re-emit after generate creates the list');
+      expect(emissions.last, isNotNull);
+      expect(emissions.last!.planHash, isNotEmpty);
+
+      await sub.cancel();
+    });
+
+    // Regression: adding a dish after initial generation must produce new
+    // generated items upon regeneration (the exact user-reported scenario).
+    test('regeneration after adding a dish populates the list', () async {
+      final now = DateTime.now().toUtc();
+      await db.into(db.planDays).insert(PlanDaysCompanion.insert(
+            id: 'pd1', weekPlanId: _wp, householdId: _hh,
+            dayOfWeek: 1, guests: 4, createdAt: now, updatedAt: now));
+
+      // Generate on an empty plan — no dishes yet.
+      final listId = await listRepo.generate(_wp);
+      final emptyItems = await listRepo.watchGeneratedItems(listId).first;
+      expect(emptyItems, isEmpty, reason: 'no dishes → no items');
+      final emptyHash =
+          (await listRepo.watchList(_wp).first)!.planHash;
+
+      // Now add a dish with an ingredient.
+      await db.into(db.ingredients).insert(IngredientsCompanion.insert(
+            id: 'i1', householdId: _hh, name: 'Pomodoro', unit: 'g',
+            isQb: const Value(false), roundingKind: const Value('weight'),
+            createdAt: now, updatedAt: now));
+      await db.into(db.dishes).insert(DishesCompanion.insert(
+            id: 'd1', householdId: _hh, name: 'Pasta al pomodoro',
+            createdAt: now, updatedAt: now));
+      await db.into(db.dishIngredients).insert(DishIngredientsCompanion.insert(
+            id: 'di1', dishId: 'd1', ingredientId: 'i1', householdId: _hh,
+            qtyBase4: const Value(400), createdAt: now, updatedAt: now));
+      await db.into(db.planDayDishes).insert(PlanDayDishesCompanion.insert(
+            id: 'pdd1', planDayId: 'pd1', dishId: 'd1', householdId: _hh,
+            sortOrder: const Value(0), createdAt: now));
+
+      // Hash must have diverged.
+      final newHash = await listRepo.currentPlanHash(_wp);
+      expect(newHash, isNot(emptyHash),
+          reason: 'plan hash must change after adding a dish');
+
+      // Regenerate.
+      await listRepo.generate(_wp);
+
+      final items = await listRepo.watchGeneratedItems(listId).first;
+      expect(items, hasLength(1));
+      expect(items.single.ingredientId, 'i1');
+      expect(items.single.displayQty, 400);
+    });
+
     // Regression: PowerSync bridge filtered by known table names; if the set
     // was incomplete, sync-down writes would silently not refresh drift
     // streams.

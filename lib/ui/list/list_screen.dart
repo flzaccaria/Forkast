@@ -36,6 +36,9 @@ class _ListScreenState extends State<ListScreen> {
   late PlanRepository _planRepo;
   late Stream<WeekPlan?> _weekPlanStream;
 
+  Stream<ShoppingList?>? _listStream;
+  String? _listStreamWeekPlanId;
+
   final _now = DateTime.now();
   int get _year => isoWeekYear(_now);
   int get _week => isoWeekNumber(_now);
@@ -49,6 +52,16 @@ class _ListScreenState extends State<ListScreen> {
     _repo = ListRepository(scope.database, scope.householdId);
     _planRepo = PlanRepository(scope.database, scope.householdId);
     _weekPlanStream = _planRepo.watchWeekPlan(_year, _week);
+    _listStream = null;
+    _listStreamWeekPlanId = null;
+  }
+
+  Stream<ShoppingList?> _ensureListStream(String weekPlanId) {
+    if (_listStreamWeekPlanId != weekPlanId) {
+      _listStreamWeekPlanId = weekPlanId;
+      _listStream = _repo.watchList(weekPlanId);
+    }
+    return _listStream!;
   }
 
   Future<void> _generate(String weekPlanId) async {
@@ -59,6 +72,13 @@ class _ListScreenState extends State<ListScreen> {
     } finally {
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  void _scheduleGenerate(String weekPlanId) {
+    if (_generating) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_generating) _generate(weekPlanId);
+    });
   }
 
   @override
@@ -92,11 +112,11 @@ class _ListScreenState extends State<ListScreen> {
             );
           }
           return StreamBuilder<ShoppingList?>(
-            stream: _repo.watchList(weekPlan.id),
+            stream: _ensureListStream(weekPlan.id),
             builder: (context, listSnap) {
               final list = listSnap.data;
               if (list == null) {
-                _generate(weekPlan.id);
+                _scheduleGenerate(weekPlan.id);
                 return const Center(child: CircularProgressIndicator());
               }
               return _ListContent(
