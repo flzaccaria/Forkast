@@ -2,9 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../core/l10n_enums.dart';
+import '../../core/diacritics.dart';
 import '../../core/qty_format.dart';
-import '../../core/reparto.dart';
 import '../../core/seed_name_resolver.dart';
 import '../../core/week.dart';
 import '../../data/database.dart';
@@ -14,6 +13,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
+import '../widgets/reparto_header.dart';
 
 String _resolvedName(GeneratedItemView item, String locale) {
   return SeedNameResolver.instance.resolve(
@@ -300,15 +300,19 @@ class _GeneratedSection extends StatelessWidget {
           );
         }
         final locale = Localizations.localeOf(context).toString();
-        final entries = _groupByReparto(items, locale);
+        final entries = groupByReparto<GeneratedItemView>(
+          items: items,
+          categoryOf: (x) => x.category,
+          nameOf: (x) => normalizeForSearch(_resolvedName(x, locale)),
+        );
         return SliverList.builder(
           itemCount: entries.length,
           itemBuilder: (context, i) {
             final entry = entries[i];
-            if (entry is _RepartoHeader) {
-              return _StickyDepartmentHeader(label: entry.label, dbKey: entry.dbKey);
+            if (entry is RepartoHeaderEntry<GeneratedItemView>) {
+              return RepartoDepartmentHeader(dbKey: entry.dbKey);
             }
-            final item = (entry as _RepartoItem).item;
+            final item = (entry as RepartoItemEntry<GeneratedItemView>).item;
             return _GeneratedRow(
               item: item,
               onCheck: (v) => repo.setIngredientChecked(
@@ -318,55 +322,6 @@ class _GeneratedSection extends StatelessWidget {
           },
         );
       },
-    );
-  }
-
-  List<_RepartoEntry> _groupByReparto(List<GeneratedItemView> items, String locale) {
-    final sorted = [...items]..sort((a, b) {
-        final byReparto = repartoSortIndex(a.category)
-            .compareTo(repartoSortIndex(b.category));
-        return byReparto != 0
-            ? byReparto
-            : _resolvedName(a, locale).compareTo(_resolvedName(b, locale));
-      });
-    final entries = <_RepartoEntry>[];
-    String? currentLabel;
-    for (final item in sorted) {
-      final label = item.category ?? repartoNonAssegnato;
-      if (label != currentLabel) {
-        entries.add(_RepartoHeader(label, item.category));
-        currentLabel = label;
-      }
-      entries.add(_RepartoItem(item));
-    }
-    return entries;
-  }
-}
-
-class _StickyDepartmentHeader extends StatelessWidget {
-  const _StickyDepartmentHeader({required this.label, this.dbKey});
-
-  final String label;
-  final String? dbKey;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final tokens = Theme.of(context).extension<ForkastTokens>()!;
-    final primary = Theme.of(context).colorScheme.primary;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
-      color: tokens.surfacePage,
-      child: Text(
-        localizedReparto(dbKey, l).toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.8,
-          color: primary,
-        ),
-      ),
     );
   }
 }
@@ -477,21 +432,6 @@ class _QtyLabel extends StatelessWidget {
       ),
     );
   }
-}
-
-sealed class _RepartoEntry {
-  const _RepartoEntry();
-}
-
-class _RepartoHeader extends _RepartoEntry {
-  const _RepartoHeader(this.label, this.dbKey);
-  final String label;
-  final String? dbKey;
-}
-
-class _RepartoItem extends _RepartoEntry {
-  const _RepartoItem(this.item);
-  final GeneratedItemView item;
 }
 
 class _ManualSection extends StatelessWidget {

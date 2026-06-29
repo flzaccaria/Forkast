@@ -11,6 +11,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
+import '../widgets/reparto_header.dart';
 import 'ingredient_form.dart';
 
 // ---------------------------------------------------------------------------
@@ -90,47 +91,28 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     List<IngredientWithUsage> all,
     String locale,
   ) {
-    var result = all;
+    final normalizedQuery =
+        _query.isNotEmpty ? normalizeForSearch(_query) : null;
 
-    // Search: accent/case-insensitive substring on the localized display name.
-    if (_query.isNotEmpty) {
-      final normalizedQuery = removeDiacritics(_query).toLowerCase();
-      result = result.where((item) {
-        final displayName = ingredientDisplayName(item.ingredient, locale);
-        final normalized = removeDiacritics(displayName).toLowerCase();
-        return normalized.contains(normalizedQuery);
-      }).toList();
-    }
-
-    // Filter: department
-    if (_filterDepartments.isNotEmpty) {
-      result = result
-          .where((item) => _filterDepartments.contains(item.ingredient.category))
-          .toList();
-    }
-
-    // Filter: unit
-    if (_filterUnit != null) {
-      result = result
-          .where((item) => item.ingredient.unit == _filterUnit!.dbValue)
-          .toList();
-    }
-
-    // Filter: q.b.
-    if (_qbFilter == _QbFilter.qbOnly) {
-      result = result.where((item) => item.ingredient.isQb).toList();
-    } else if (_qbFilter == _QbFilter.qtyOnly) {
-      result = result.where((item) => !item.ingredient.isQb).toList();
-    }
-
-    // Filter: usage
-    if (_usageFilter == _UsageFilter.used) {
-      result = result.where((item) => item.usageCount > 0).toList();
-    } else if (_usageFilter == _UsageFilter.unused) {
-      result = result.where((item) => item.usageCount == 0).toList();
-    }
-
-    return result;
+    return all.where((item) {
+      if (normalizedQuery != null) {
+        final name = normalizeForSearch(ingredientDisplayName(item.ingredient, locale));
+        if (!name.contains(normalizedQuery)) return false;
+      }
+      if (_filterDepartments.isNotEmpty &&
+          !_filterDepartments.contains(item.ingredient.category)) {
+        return false;
+      }
+      if (_filterUnit != null &&
+          item.ingredient.unit != _filterUnit!.dbValue) {
+        return false;
+      }
+      if (_qbFilter == _QbFilter.qbOnly && !item.ingredient.isQb) return false;
+      if (_qbFilter == _QbFilter.qtyOnly && item.ingredient.isQb) return false;
+      if (_usageFilter == _UsageFilter.used && item.usageCount == 0) return false;
+      if (_usageFilter == _UsageFilter.unused && item.usageCount > 0) return false;
+      return true;
+    }).toList();
   }
 
   List<IngredientWithUsage> _applySort(
@@ -139,29 +121,21 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   ) {
     final sorted = [...items];
     final dir = _sortAsc ? 1 : -1;
+    String sortKey(IngredientWithUsage x) =>
+        normalizeForSearch(ingredientDisplayName(x.ingredient, locale));
     switch (_sortField) {
       case _SortField.name:
-        sorted.sort((a, b) {
-          final na = removeDiacritics(ingredientDisplayName(a.ingredient, locale)).toLowerCase();
-          final nb = removeDiacritics(ingredientDisplayName(b.ingredient, locale)).toLowerCase();
-          return na.compareTo(nb) * dir;
-        });
+        sorted.sort((a, b) => sortKey(a).compareTo(sortKey(b)) * dir);
       case _SortField.department:
         sorted.sort((a, b) {
           final cmp = repartoSortIndex(a.ingredient.category)
               .compareTo(repartoSortIndex(b.ingredient.category));
-          if (cmp != 0) return cmp * dir;
-          final na = removeDiacritics(ingredientDisplayName(a.ingredient, locale)).toLowerCase();
-          final nb = removeDiacritics(ingredientDisplayName(b.ingredient, locale)).toLowerCase();
-          return na.compareTo(nb);
+          return cmp != 0 ? cmp * dir : sortKey(a).compareTo(sortKey(b));
         });
       case _SortField.usage:
         sorted.sort((a, b) {
           final cmp = a.usageCount.compareTo(b.usageCount);
-          if (cmp != 0) return cmp * dir;
-          final na = removeDiacritics(ingredientDisplayName(a.ingredient, locale)).toLowerCase();
-          final nb = removeDiacritics(ingredientDisplayName(b.ingredient, locale)).toLowerCase();
-          return na.compareTo(nb);
+          return cmp != 0 ? cmp * dir : sortKey(a).compareTo(sortKey(b));
         });
     }
     return sorted;
@@ -170,32 +144,6 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   // ---------------------------------------------------------------------------
   // Grouping (reparto)
   // ---------------------------------------------------------------------------
-
-  List<_RepartoEntry> _groupByReparto(
-    List<IngredientWithUsage> items,
-    String locale,
-  ) {
-    // Within each group, sort by name (locale-aware, accent-stripped).
-    final sorted = [...items]..sort((a, b) {
-        final byReparto = repartoSortIndex(a.ingredient.category)
-            .compareTo(repartoSortIndex(b.ingredient.category));
-        if (byReparto != 0) return byReparto;
-        final na = removeDiacritics(ingredientDisplayName(a.ingredient, locale)).toLowerCase();
-        final nb = removeDiacritics(ingredientDisplayName(b.ingredient, locale)).toLowerCase();
-        return na.compareTo(nb);
-      });
-    final entries = <_RepartoEntry>[];
-    String? currentLabel;
-    for (final item in sorted) {
-      final label = item.ingredient.category ?? repartoNonAssegnato;
-      if (label != currentLabel) {
-        entries.add(_RepartoHeader(label, item.ingredient.category));
-        currentLabel = label;
-      }
-      entries.add(_RepartoItem(item));
-    }
-    return entries;
-  }
 
   // ---------------------------------------------------------------------------
   // Actions
@@ -473,17 +421,20 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     AppLocalizations l,
     ForkastTokens tokens,
   ) {
-    final entries = _groupByReparto(items, locale);
+    final entries = groupByReparto<IngredientWithUsage>(
+      items: items,
+      categoryOf: (x) => x.ingredient.category,
+      nameOf: (x) => normalizeForSearch(ingredientDisplayName(x.ingredient, locale)),
+    );
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 80),
       itemCount: entries.length,
       itemBuilder: (context, i) {
         final entry = entries[i];
-        if (entry is _RepartoHeader) {
-          return _StickyDepartmentHeader(
-              label: entry.label, dbKey: entry.dbKey);
+        if (entry is RepartoHeaderEntry<IngredientWithUsage>) {
+          return RepartoDepartmentHeader(dbKey: entry.dbKey);
         }
-        final item = (entry as _RepartoItem).item;
+        final item = (entry as RepartoItemEntry<IngredientWithUsage>).item;
         return _IngredientTile(
           item: item,
           locale: locale,
@@ -812,57 +763,6 @@ class _FilterSheetState extends State<_FilterSheet> {
       ),
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// Reparto header
-// ---------------------------------------------------------------------------
-
-class _StickyDepartmentHeader extends StatelessWidget {
-  const _StickyDepartmentHeader({required this.label, this.dbKey});
-
-  final String label;
-  final String? dbKey;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final primary = Theme.of(context).colorScheme.primary;
-    final surfacePage = Theme.of(context).extension<ForkastTokens>()!.surfacePage;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
-      color: surfacePage,
-      child: Text(
-        localizedReparto(dbKey, l).toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.8,
-          color: primary,
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Reparto grouping entries
-// ---------------------------------------------------------------------------
-
-sealed class _RepartoEntry {
-  const _RepartoEntry();
-}
-
-class _RepartoHeader extends _RepartoEntry {
-  const _RepartoHeader(this.label, this.dbKey);
-  final String label;
-  final String? dbKey;
-}
-
-class _RepartoItem extends _RepartoEntry {
-  const _RepartoItem(this.item);
-  final IngredientWithUsage item;
 }
 
 // ---------------------------------------------------------------------------

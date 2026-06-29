@@ -495,22 +495,18 @@ class _IngredientPickerState extends State<_IngredientPicker> {
 
   List<Ingredient> _filtered(String locale) {
     if (_query.isEmpty) return widget.ingredients;
-    final normalizedQuery = removeDiacritics(_query).toLowerCase();
+    final normalizedQuery = normalizeForSearch(_query);
     return widget.ingredients.where((ing) {
-      final name = removeDiacritics(
-        ingredientDisplayName(ing, locale),
-      ).toLowerCase();
+      final name = normalizeForSearch(ingredientDisplayName(ing, locale));
       return name.contains(normalizedQuery);
     }).toList();
   }
 
   List<Ingredient> _findSimilar(String query, String locale) {
     if (query.length < 2) return const [];
-    final normalizedQuery = removeDiacritics(query).toLowerCase();
+    final normalizedQuery = normalizeForSearch(query);
     return widget.ingredients.where((ing) {
-      final name = removeDiacritics(
-        ingredientDisplayName(ing, locale),
-      ).toLowerCase();
+      final name = normalizeForSearch(ingredientDisplayName(ing, locale));
       if (name.contains(normalizedQuery) ||
           normalizedQuery.contains(name)) {
         return true;

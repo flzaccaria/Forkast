@@ -173,31 +173,32 @@ class IngredientRepository {
     final all = await (_db.select(_db.ingredients)
           ..where((i) => i.householdId.equals(_householdId)))
         .get();
+    final now = DateTime.now().toUtc();
+    final updates = <(String id, Unit mapped)>[];
     for (final ing in all) {
       if (ing.isQb) continue;
       final canonical = Unit.tryParse(ing.unit);
-      if (canonical != null) continue; // already canonical
+      if (canonical != null) continue;
       final mapped = Unit.tryParseLoose(ing.unit);
       if (mapped != null) {
-        await (_db.update(_db.ingredients)
-              ..where((i) => i.id.equals(ing.id)))
-            .write(IngredientsCompanion(
-          unit: Value(mapped.dbValue),
-          roundingKind: Value(mapped.roundingKind),
-          updatedAt: Value(DateTime.now().toUtc()),
-        ));
+        updates.add((ing.id, mapped));
       } else {
         debugPrint('migrateUnitsToEnum: unrecognized unit "${ing.unit}" '
             'on ingredient "${ing.name}" (${ing.id}) — mapping to "pz"');
-        await (_db.update(_db.ingredients)
-              ..where((i) => i.id.equals(ing.id)))
-            .write(IngredientsCompanion(
-          unit: Value(Unit.pezzo.dbValue),
-          roundingKind: Value(Unit.pezzo.roundingKind),
-          updatedAt: Value(DateTime.now().toUtc()),
-        ));
+        updates.add((ing.id, Unit.pezzo));
       }
     }
+    if (updates.isEmpty) return;
+    await _db.transaction(() async {
+      for (final (id, mapped) in updates) {
+        await (_db.update(_db.ingredients)..where((i) => i.id.equals(id)))
+            .write(IngredientsCompanion(
+          unit: Value(mapped.dbValue),
+          roundingKind: Value(mapped.roundingKind),
+          updatedAt: Value(now),
+        ));
+      }
+    });
   }
 
   /// Merges the duplicate `sourceId` into `targetId` (FR-18). Allowed only
