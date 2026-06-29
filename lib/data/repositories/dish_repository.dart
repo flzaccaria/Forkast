@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/week.dart';
 import '../database.dart';
 
 /// A dish with its resolved tags, for display in the catalog list.
@@ -11,6 +12,19 @@ class DishWithTags {
 
   final Dish dish;
   final List<Tag> tags;
+}
+
+/// A dish with tags and the date it was last planned (FR-24).
+class DishWithLastPlanned {
+  DishWithLastPlanned({
+    required this.dish,
+    required this.tags,
+    this.lastPlannedDate,
+  });
+
+  final Dish dish;
+  final List<Tag> tags;
+  final DateTime? lastPlannedDate;
 }
 
 /// An ingredient row while editing a dish.
@@ -131,6 +145,96 @@ class DishRepository {
       },
     );
 
+    return controller.stream;
+  }
+
+  /// Last-planned date for each dish (FR-24). Returns a map of dishId to
+  /// the Monday of the most recent past ISO week where the dish appears.
+  /// Dishes never planned (or only in the future) are absent from the map.
+  Stream<Map<String, DateTime>> watchLastPlannedMap() {
+    final now = DateTime.now();
+    final cy = isoWeekYear(now);
+    final cw = isoWeekNumber(now);
+    return _db.customSelect(
+      'SELECT pdd.dish_id AS dish_id, '
+      'MAX(wp.year * 100 + wp.week) AS last_yw '
+      'FROM plan_day_dish pdd '
+      'JOIN plan_day pd ON pd.id = pdd.plan_day_id '
+      'JOIN week_plan wp ON wp.id = pd.week_plan_id '
+      'WHERE wp.household_id = ? '
+      'AND (wp.year < ? OR (wp.year = ? AND wp.week <= ?)) '
+      'GROUP BY pdd.dish_id',
+      variables: [
+        Variable.withString(_householdId),
+        Variable.withInt(cy),
+        Variable.withInt(cy),
+        Variable.withInt(cw),
+      ],
+      readsFrom: {_db.planDayDishes, _db.planDays, _db.weekPlans},
+    ).watch().map((rows) {
+      final map = <String, DateTime>{};
+      for (final r in rows) {
+        final dishId = r.read<String>('dish_id');
+        final yw = r.read<int>('last_yw');
+        final year = yw ~/ 100;
+        final week = yw % 100;
+        map[dishId] = dateOfIsoWeek(year, week, DateTime.monday);
+      }
+      return map;
+    });
+  }
+
+  /// Dishes with tags and last-planned date. Combines three streams.
+  Stream<List<DishWithLastPlanned>> watchAllWithTagsAndLastPlanned({
+    String query = '',
+    String? tagId,
+    String? difficulty,
+    String? timeEstimate,
+  }) {
+    final dishTagStream = watchAllWithTags(
+      query: query,
+      tagId: tagId,
+      difficulty: difficulty,
+      timeEstimate: timeEstimate,
+    );
+    final lastPlannedStream = watchLastPlannedMap();
+
+    List<DishWithTags>? lastDishes;
+    Map<String, DateTime>? lastMap;
+    StreamSubscription<List<DishWithTags>>? dishSub;
+    StreamSubscription<Map<String, DateTime>>? mapSub;
+    late StreamController<List<DishWithLastPlanned>> controller;
+
+    List<DishWithLastPlanned> combine() => lastDishes!
+        .map((dt) => DishWithLastPlanned(
+              dish: dt.dish,
+              tags: dt.tags,
+              lastPlannedDate: lastMap![dt.dish.id],
+            ))
+        .toList();
+
+    controller = StreamController<List<DishWithLastPlanned>>(
+      onListen: () {
+        dishSub = dishTagStream.listen(
+          (dishes) {
+            lastDishes = dishes;
+            if (lastMap != null) controller.add(combine());
+          },
+          onError: controller.addError,
+        );
+        mapSub = lastPlannedStream.listen(
+          (map) {
+            lastMap = map;
+            if (lastDishes != null) controller.add(combine());
+          },
+          onError: controller.addError,
+        );
+      },
+      onCancel: () {
+        dishSub?.cancel();
+        mapSub?.cancel();
+      },
+    );
     return controller.stream;
   }
 

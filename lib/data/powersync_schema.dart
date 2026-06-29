@@ -32,6 +32,8 @@ const forkastSchema = Schema([
     Column.text('rounding_kind'),
     Column.text('seed_key'),
     Column.integer('name_modified'),
+    Column.integer('always_in_list'),
+    Column.real('default_qty'),
     Column.text('created_at'),
     Column.text('updated_at'),
   ], indexes: [
@@ -103,6 +105,7 @@ const forkastSchema = Schema([
     Column.text('dish_id'),
     Column.text('household_id'),
     Column.integer('sort_order'),
+    Column.integer('auto_assigned'),
     Column.text('created_at'),
   ], indexes: [
     Index('plan_day_dish_plan_day', [IndexedColumn('plan_day_id')]),
@@ -159,5 +162,14 @@ const forkastSchema = Schema([
     Column.text('updated_at'),
   ], indexes: [
     Index('list_check_list', [IndexedColumn('shopping_list_id')]),
+  ]),
+  Table('list_recurring_exclusion', [
+    Column.text('shopping_list_id'),
+    Column.text('ingredient_id'),
+    Column.text('household_id'),
+    Column.text('created_at'),
+  ], indexes: [
+    Index('list_recurring_exclusion_list',
+        [IndexedColumn('shopping_list_id')]),
   ]),
 ]);

@@ -665,4 +665,103 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ingredientAlwaysInList => 'Sempre in lista';
+
+  @override
+  String get ingredientAlwaysInListSubtitle =>
+      'Aggiunto automaticamente alla lista della spesa';
+
+  @override
+  String get ingredientDefaultQty => 'Quantità predefinita';
+
+  @override
+  String get ingredientsFilterRecurring => 'Ricorrenti';
+
+  @override
+  String get ingredientsFilterRecurringOnly => 'Solo ricorrenti';
+
+  @override
+  String get ingredientsFilterNonRecurring => 'Non ricorrenti';
+
+  @override
+  String get listResetChecks => 'Azzera spunte';
+
+  @override
+  String get listResetConfirm =>
+      'Vuoi cancellare tutti i segni di spunta? Piano, righe, override e voci manuali restano invariati.';
+
+  @override
+  String get listResetDone => 'Spunte azzerate.';
+
+  @override
+  String get listExcludeThisWeek => 'Escludi questa settimana';
+
+  @override
+  String get listIncludeAgain => 'Includi di nuovo';
+
+  @override
+  String get listRecurringLabel => 'ricorrente';
+
+  @override
+  String get historyTitle => 'Settimane passate';
+
+  @override
+  String get historyEmpty => 'Nessuna settimana passata.';
+
+  @override
+  String get dishNeverPlanned => 'mai';
+
+  @override
+  String get dishThisWeek => 'questa settimana';
+
+  @override
+  String get dishOneWeekAgo => '1 settimana fa';
+
+  @override
+  String dishWeeksAgo(int count) {
+    return '$count settimane fa';
+  }
+
+  @override
+  String get dishSortLeastRecent => 'Meno recenti';
+
+  @override
+  String get dishFilterNotMadeSince => 'Non fatto da oltre';
+
+  @override
+  String dishFilterWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count settimane',
+      one: '1 settimana',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dishLastPlannedLabel => 'Da quanto';
+
+  @override
+  String get surpriseMe => 'Sorprendimi';
+
+  @override
+  String surpriseMePartial(int filled, int total) {
+    return 'Riempiti $filled su $total giorni. Non ci sono abbastanza piatti disponibili.';
+  }
+
+  @override
+  String get surpriseMeRegenerate => 'Rigenera';
+
+  @override
+  String get surpriseMeUndo => 'Annulla';
+
+  @override
+  String get surpriseMeNoDishes =>
+      'Nessun piatto disponibile per i giorni vuoti.';
+
+  @override
+  String get surpriseMeSuccess => 'Piano completato!';
 }

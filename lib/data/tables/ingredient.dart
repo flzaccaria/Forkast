@@ -10,6 +10,8 @@ class Ingredients extends Table {
   TextColumn get roundingKind => text().nullable()();
   TextColumn get seedKey => text().nullable()();
   BoolColumn get nameModified => boolean().nullable()();
+  BoolColumn get alwaysInList => boolean().withDefault(const Constant(false))();
+  RealColumn get defaultQty => real().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

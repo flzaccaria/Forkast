@@ -213,5 +213,41 @@
   "ingredientsSortDesc": "Z → A",
   "ingredientsViewGrouped": "Efter afdeling",
   "ingredientsViewFlat": "Flad liste",
-  "ingredientsUsageCountLabel": "{count, plural, =0{ikke brugt} =1{1 ret} other{{count} retter}}"
+  "ingredientsUsageCountLabel": "{count, plural, =0{ikke brugt} =1{1 ret} other{{count} retter}}",
+
+  "ingredientAlwaysInList": "Altid på listen",
+  "ingredientAlwaysInListSubtitle": "Tilføjes automatisk til indkøbslisten",
+  "ingredientDefaultQty": "Standardmængde",
+  "ingredientsFilterRecurring": "Tilbagevendende",
+  "ingredientsFilterRecurringOnly": "Kun tilbagevendende",
+  "ingredientsFilterNonRecurring": "Ikke tilbagevendende",
+
+  "listResetChecks": "Nulstil flueben",
+  "listResetConfirm": "Fjern alle flueben? Plan, rækker, tilpasninger og manuelle poster forbliver uændrede.",
+  "listResetDone": "Flueben nulstillet.",
+  "listExcludeThisWeek": "Ekskluder denne uge",
+  "listIncludeAgain": "Inkluder igen",
+  "listRecurringLabel": "tilbagevendende",
+
+  "historyTitle": "Tidligere uger",
+  "historyEmpty": "Ingen tidligere uger.",
+
+  "dishNeverPlanned": "aldrig",
+  "dishThisWeek": "denne uge",
+  "dishOneWeekAgo": "1 uge siden",
+  "dishWeeksAgo": "{count} uger siden",
+  "@dishWeeksAgo": { "placeholders": { "count": { "type": "int" } } },
+  "dishSortLeastRecent": "Mindst nylige",
+  "dishFilterNotMadeSince": "Ikke lavet i over",
+  "dishFilterWeeks": "{count, plural, =1{1 uge} other{{count} uger}}",
+  "@dishFilterWeeks": { "placeholders": { "count": { "type": "int" } } },
+  "dishLastPlannedLabel": "Sidst lavet",
+
+  "surpriseMe": "Overrask mig",
+  "surpriseMePartial": "Fyldt {filled} af {total} dage. Ikke nok retter tilgængelige.",
+  "@surpriseMePartial": { "placeholders": { "filled": { "type": "int" }, "total": { "type": "int" } } },
+  "surpriseMeRegenerate": "Regenerer",
+  "surpriseMeUndo": "Fortryd",
+  "surpriseMeNoDishes": "Ingen retter tilgængelige til de tomme dage.",
+  "surpriseMeSuccess": "Plan fuldført!"
 }

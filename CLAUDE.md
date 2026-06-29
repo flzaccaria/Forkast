@@ -51,16 +51,17 @@ Every table carries a `household_id`. Every insert uses a **client-generated UUI
 
 - `household` — container for all data. Owns settings: `default_guests` (FR-8, default 4), `week_start_day` (FR-20, `DateTime.weekday` convention, 0 = unset → falls back to Monday), `seeded_at` (guard against re-seeding). `auto_regen` removed in v0.7 (migration `00013`): regeneration is always automatic and invisible (FR-21 v0.6).
 - `membership` — links a device (tomorrow a user) to a household. Basis for pairing.
-- `ingredient` — shared catalog. Owns `unit` (from closed enum, FR-5) and the `is_qb` flag ("to taste").
+- `ingredient` — shared catalog. Owns `unit` (from closed enum, FR-5), `is_qb` flag ("to taste"), `always_in_list` (FR-28, recurring), `default_qty` (optional default quantity for recurring).
 - `tag` — `portata` (course, single) group, with color and order. Old `attributo` tags archived in DB (v0.6).
 - `dish` + `dish_tag` — reusable dish; one course. Has optional `difficulty`, `time_estimate`, and `recipe_url` (TEXT nullable, FR-14/P9, migration `00013`) fields.
 - `dish_ingredient` — ingredient row of the dish, `qty_base4` (ignored for `is_qb`).
-- `week_plan` → `plan_day` (with the evening's `guests`) → `plan_day_dish`.
+- `week_plan` → `plan_day` (with the evening's `guests`) → `plan_day_dish` (with `auto_assigned` flag, FR-26).
 - `shopping_list` — snapshot context: week, `generated_at`, **fingerprint/hash of the source plan**.
 - `list_generated_row` — derived snapshot row (ingredient, rescaled qty, unit).
 - `list_override` — reversible modification of a generated row, tied to the `ingredient_id`.
 - `list_manual_item` — manually added item (own ID), additive and persistent.
 - `list_check` — idempotent check for (list, ingredient); persists across regenerations.
+- `list_recurring_exclusion` — per-week suppression of a recurring ingredient (FR-29). Tied to `(shopping_list_id, ingredient_id)`. Does not carry over to the next week.
 
 ---
 
@@ -224,6 +225,52 @@ Stored as nullable TEXT columns `difficulty` and `time_estimate` on `dish` (Supa
 
 ---
 
+## Plan history & shopping reset (FR-30/31, v0.7)
+
+Week plans persist indefinitely (keyed by `(householdId, year, week)`). No cleanup logic.
+
+- **History view**: `lib/ui/plan/history_screen.dart` — scrollable list of past weeks (reverse-chronological). Each row shows week label + date range; tap expands to show day-by-day dishes + guests (read-only). Reuses `PlanRepository.watchWeekOverview()`. Accessed via history icon in plan screen's week header.
+- **`PlanRepository.watchPastWeekPlans()`**: stream of `WeekPlan` rows where `(year, week) < current`, ordered descending.
+- **Shopping reset** (FR-31): `ListRepository.resetChecks(listId)` deletes all `list_check` rows for the list. Preserves generated rows, overrides, and manual items. UI: overflow menu in list screen.
+
+---
+
+## "Da quanto non lo facciamo" (FR-24/25, v0.7)
+
+Per-dish "last planned" date, derived at query time (not denormalized). Rationale: the data already exists in `plan_day_dish → plan_day → week_plan`; denormalization would require sync-aware maintenance.
+
+- **`DishRepository.watchLastPlannedMap()`**: custom SQL `MAX(wp.year * 100 + wp.week)` grouped by `dish_id`, filtered to past/current weeks. Returns `Map<String, DateTime>`.
+- **`DishRepository.watchAllWithTagsAndLastPlanned()`**: three-way combineLatest (dishes + tags + last-planned map). Returns `List<DishWithLastPlanned>`.
+- **Core logic**: `lib/core/last_planned.dart` — `formatLastPlanned(DateTime?, AppLocalizations)` → locale-aware relative time ("3 settimane fa", "mai"). `weeksAgo(DateTime?)` → int for filtering.
+- **UI**: dish catalog (`lib/ui/dishes/dishes_screen.dart`) shows "da quanto" subtitle per dish row. Filter bar: "Meno recenti" sort (ascending by `lastPlannedDate`, null first) + "Non fatto da oltre N settimane" filter (predefined: 2, 4, 8 weeks).
+
+---
+
+## "Sorprendimi" (FR-26/27, v0.7)
+
+Fills empty dinner days of the current week with one dish each.
+
+- **Pure logic**: `lib/core/surprise_me.dart` — `selectSurpriseDishes()` takes empty days, already-assigned dish IDs, candidate dishes with last-planned dates, optional weekday difficulty/time filters. Algorithm: for each empty day, filter by day-type constraints → remove used → sort by `lastPlannedDate` ascending (null first) → pick top. Returns `SurpriseMeResult` with assignment map and partial-fill flag.
+- **`plan_day_dish.auto_assigned`** (BOOLEAN DEFAULT false, migration `00014`): tracks auto-inserted dishes. Survives app restart and sync.
+- **`PlanRepository.surpriseMe(year, week)`**: gathers empty days, fetches candidates with last-planned dates, calls `selectSurpriseDishes()`, inserts via `addDishes(autoAssigned: true)`.
+- **`PlanRepository.undoSurpriseMe(year, week)`**: deletes `plan_day_dish` rows where `auto_assigned = true` within the week.
+- **`PlanRepository.watchHasAutoAssigned(year, week)`**: stream for showing/hiding the undo button.
+- **UI**: plan screen (`lib/ui/plan/plan_screen.dart`) — "Sorprendimi" button (wand icon) + "Annulla" (undo, shown when auto-assigned dishes exist). Snackbar for partial fill warning.
+
+---
+
+## Recurring / "Sempre in lista" (FR-28/29, v0.7)
+
+Ingredients marked `always_in_list` appear in every shopping list regardless of the menu.
+
+- **Schema** (migration `00014`): `ingredient.always_in_list` (BOOLEAN DEFAULT false), `ingredient.default_qty` (REAL nullable). New table `list_recurring_exclusion` (id, shopping_list_id, ingredient_id, household_id, created_at) for per-week suppression.
+- **Aggregation**: recurring ingredients are fed as synthetic `ListLineInput` with `guests: 4` (identity scaling: `scaleQty(qtyBase4: x, guests: 4) = x`). They pass through `aggregateList()` unchanged — if the same ingredient also comes from the plan, quantities sum naturally (FR-12). The pure `list_generation.dart` module is NOT modified.
+- **Plan hash**: combined hash of plan-derived lines + recurring lines. `watchPlanHash()` reacts to both plan table changes and `ingredient.always_in_list` / `default_qty` changes.
+- **Per-week exclusion** (FR-29): `ListRepository.excludeRecurring(listId, ingredientId)` inserts into `list_recurring_exclusion`. Scoped by `shoppingListId` — new week = new list = exclusion doesn't carry over. `includeRecurring()` deletes the exclusion row.
+- **UI**: ingredient form (`lib/ui/settings/ingredient_form.dart`) — "Sempre in lista" toggle + conditional default qty field. Ingredient catalog — "Ricorrenti" filter. List screen — "ricorrente" label on recurring items; "Escludi questa settimana" action in row bottom sheet.
+
+---
+
 ## Autocomplete in dish editor (D3, v0.7)
 
 The ingredient picker in `DishEditorScreen` (`_IngredientPicker`) provides:
@@ -278,7 +325,7 @@ The ingredient picker in `DishEditorScreen` (`_IngredientPicker`) provides:
 
 - **Unit tests** in `test/`: organized by layer (`test/core/`, `test/data/`, root-level).
 - **`AppDatabase.forTesting(connection)`**: constructor that takes any drift `QueryExecutor` (typically in-memory SQLite). No PowerSync, no sync bridge. Allows testing repository logic with a real schema minus PowerSync's table management.
-- **Key test suites**: `scaling_test` (rounding/rescaling), `list_generation_test` (aggregation), `ingredient_rules_test` (FR-16/17/18), `plan_repository_test` (copy week), `tag_repository_test` (protected deletion), `powersync_connector_test` (fatal error classification), `seed_catalog_test`, `seed_name_resolver_test`, `display_name_test`, `qty_format_test`, `dish_repository_test` (CRUD + recipe_url), `household_repository_test` (settings), `ingredient_filter_test` (combined filters).
+- **Key test suites**: `scaling_test` (rounding/rescaling), `list_generation_test` (aggregation), `ingredient_rules_test` (FR-16/17/18), `plan_repository_test` (copy week), `tag_repository_test` (protected deletion), `powersync_connector_test` (fatal error classification), `seed_catalog_test`, `seed_name_resolver_test`, `display_name_test`, `qty_format_test`, `dish_repository_test` (CRUD + recipe_url), `household_repository_test` (settings), `ingredient_filter_test` (combined filters), `surprise_me_test` (P14 selection logic), `last_planned_test` (P13 weeksAgo).
 - **Browser test suite** (manual): `docs/Forkast_Browser_Test_Suite.md` — E2E checklist for the deployed web app. Covers infra, sync, reactivity, calculation, two-layer list, localization, pairing, deletion, ingredient constraints, dish filters, plan navigation/copy/guests, reparti. See Manutenzione section below.
 
 ---

@@ -183,13 +183,14 @@ class _ListContentState extends State<_ListContent> {
 
   void _subscribePlanHash() {
     _planHashSub = widget.repo
-        .watchPlanHash(widget.weekPlanId)
+        .watchPlanHash(widget.weekPlanId, listId: widget.list.id)
         .listen((_) => _autoRegenIfNeeded());
   }
 
   Future<void> _autoRegenIfNeeded() async {
     if (widget.generating) return;
-    final current = await widget.repo.currentPlanHash(widget.weekPlanId);
+    final current = await widget.repo
+        .currentPlanHash(widget.weekPlanId, listId: widget.list.id);
     if (!mounted) return;
     if (current != widget.list.planHash) {
       widget.onRegenerate();
@@ -229,8 +230,45 @@ class _ListContentState extends State<_ListContent> {
             widget.repo.removeGeneratedRow(widget.list.id, item.ingredientId),
         onRestore: () => widget.repo
             .restoreGeneratedRow(widget.list.id, item.ingredientId),
+        onExcludeRecurring: item.isRecurring
+            ? () async {
+                await widget.repo
+                    .excludeRecurring(widget.list.id, item.ingredientId);
+                widget.onRegenerate();
+              }
+            : null,
+        onIncludeRecurring: null,
       ),
     );
+  }
+
+  Future<void> _resetChecks() async {
+    final l = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.listResetChecks),
+        content: Text(l.listResetConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l.confirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await widget.repo.resetChecks(widget.list.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l.listResetDone)),
+        );
+      }
+    }
   }
 
   @override
@@ -239,6 +277,26 @@ class _ListContentState extends State<_ListContent> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
+          SliverToBoxAdapter(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (v) {
+                    if (v == 'reset') _resetChecks();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'reset',
+                      child: Text(l.listResetChecks),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           _GeneratedSection(
             stream: _generatedStream,
             listId: widget.list.id,
@@ -373,6 +431,10 @@ class _GeneratedRow extends StatelessWidget {
                       decoration: nameDecoration,
                     ),
                   ),
+                  if (item.isRecurring && !removed && !item.hasOverride)
+                    Text(l.listRecurringLabel,
+                        style: TextStyle(
+                            fontSize: 12, color: tokens.inkMuted)),
                   if (item.hasOverride && !removed)
                     Text(l.listModified,
                         style: TextStyle(
@@ -577,12 +639,16 @@ class _GeneratedRowActions extends StatelessWidget {
     required this.onEditQty,
     required this.onRemove,
     required this.onRestore,
+    this.onExcludeRecurring,
+    this.onIncludeRecurring,
   });
 
   final GeneratedItemView item;
   final ValueChanged<double> onEditQty;
   final VoidCallback onRemove;
   final VoidCallback onRestore;
+  final VoidCallback? onExcludeRecurring;
+  final VoidCallback? onIncludeRecurring;
 
   Future<void> _editQty(BuildContext context) async {
     final l = AppLocalizations.of(context);
@@ -650,6 +716,24 @@ class _GeneratedRowActions extends StatelessWidget {
               title: Text(l.listRestoreCalculated),
               onTap: () {
                 onRestore();
+                Navigator.of(context).pop();
+              },
+            ),
+          if (onExcludeRecurring != null)
+            ListTile(
+              leading: const Icon(Icons.block_outlined),
+              title: Text(l.listExcludeThisWeek),
+              onTap: () {
+                onExcludeRecurring!();
+                Navigator.of(context).pop();
+              },
+            ),
+          if (onIncludeRecurring != null)
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: Text(l.listIncludeAgain),
+              onTap: () {
+                onIncludeRecurring!();
                 Navigator.of(context).pop();
               },
             ),

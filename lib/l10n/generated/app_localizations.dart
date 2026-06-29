@@ -1257,6 +1257,174 @@ abstract class AppLocalizations {
   /// In it, this message translates to:
   /// **'{count, plural, =0{non usato} =1{1 piatto} other{{count} piatti}}'**
   String ingredientsUsageCountLabel(int count);
+
+  /// No description provided for @ingredientAlwaysInList.
+  ///
+  /// In it, this message translates to:
+  /// **'Sempre in lista'**
+  String get ingredientAlwaysInList;
+
+  /// No description provided for @ingredientAlwaysInListSubtitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Aggiunto automaticamente alla lista della spesa'**
+  String get ingredientAlwaysInListSubtitle;
+
+  /// No description provided for @ingredientDefaultQty.
+  ///
+  /// In it, this message translates to:
+  /// **'Quantità predefinita'**
+  String get ingredientDefaultQty;
+
+  /// No description provided for @ingredientsFilterRecurring.
+  ///
+  /// In it, this message translates to:
+  /// **'Ricorrenti'**
+  String get ingredientsFilterRecurring;
+
+  /// No description provided for @ingredientsFilterRecurringOnly.
+  ///
+  /// In it, this message translates to:
+  /// **'Solo ricorrenti'**
+  String get ingredientsFilterRecurringOnly;
+
+  /// No description provided for @ingredientsFilterNonRecurring.
+  ///
+  /// In it, this message translates to:
+  /// **'Non ricorrenti'**
+  String get ingredientsFilterNonRecurring;
+
+  /// No description provided for @listResetChecks.
+  ///
+  /// In it, this message translates to:
+  /// **'Azzera spunte'**
+  String get listResetChecks;
+
+  /// No description provided for @listResetConfirm.
+  ///
+  /// In it, this message translates to:
+  /// **'Vuoi cancellare tutti i segni di spunta? Piano, righe, override e voci manuali restano invariati.'**
+  String get listResetConfirm;
+
+  /// No description provided for @listResetDone.
+  ///
+  /// In it, this message translates to:
+  /// **'Spunte azzerate.'**
+  String get listResetDone;
+
+  /// No description provided for @listExcludeThisWeek.
+  ///
+  /// In it, this message translates to:
+  /// **'Escludi questa settimana'**
+  String get listExcludeThisWeek;
+
+  /// No description provided for @listIncludeAgain.
+  ///
+  /// In it, this message translates to:
+  /// **'Includi di nuovo'**
+  String get listIncludeAgain;
+
+  /// No description provided for @listRecurringLabel.
+  ///
+  /// In it, this message translates to:
+  /// **'ricorrente'**
+  String get listRecurringLabel;
+
+  /// No description provided for @historyTitle.
+  ///
+  /// In it, this message translates to:
+  /// **'Settimane passate'**
+  String get historyTitle;
+
+  /// No description provided for @historyEmpty.
+  ///
+  /// In it, this message translates to:
+  /// **'Nessuna settimana passata.'**
+  String get historyEmpty;
+
+  /// No description provided for @dishNeverPlanned.
+  ///
+  /// In it, this message translates to:
+  /// **'mai'**
+  String get dishNeverPlanned;
+
+  /// No description provided for @dishThisWeek.
+  ///
+  /// In it, this message translates to:
+  /// **'questa settimana'**
+  String get dishThisWeek;
+
+  /// No description provided for @dishOneWeekAgo.
+  ///
+  /// In it, this message translates to:
+  /// **'1 settimana fa'**
+  String get dishOneWeekAgo;
+
+  /// No description provided for @dishWeeksAgo.
+  ///
+  /// In it, this message translates to:
+  /// **'{count} settimane fa'**
+  String dishWeeksAgo(int count);
+
+  /// No description provided for @dishSortLeastRecent.
+  ///
+  /// In it, this message translates to:
+  /// **'Meno recenti'**
+  String get dishSortLeastRecent;
+
+  /// No description provided for @dishFilterNotMadeSince.
+  ///
+  /// In it, this message translates to:
+  /// **'Non fatto da oltre'**
+  String get dishFilterNotMadeSince;
+
+  /// No description provided for @dishFilterWeeks.
+  ///
+  /// In it, this message translates to:
+  /// **'{count, plural, =1{1 settimana} other{{count} settimane}}'**
+  String dishFilterWeeks(int count);
+
+  /// No description provided for @dishLastPlannedLabel.
+  ///
+  /// In it, this message translates to:
+  /// **'Da quanto'**
+  String get dishLastPlannedLabel;
+
+  /// No description provided for @surpriseMe.
+  ///
+  /// In it, this message translates to:
+  /// **'Sorprendimi'**
+  String get surpriseMe;
+
+  /// No description provided for @surpriseMePartial.
+  ///
+  /// In it, this message translates to:
+  /// **'Riempiti {filled} su {total} giorni. Non ci sono abbastanza piatti disponibili.'**
+  String surpriseMePartial(int filled, int total);
+
+  /// No description provided for @surpriseMeRegenerate.
+  ///
+  /// In it, this message translates to:
+  /// **'Rigenera'**
+  String get surpriseMeRegenerate;
+
+  /// No description provided for @surpriseMeUndo.
+  ///
+  /// In it, this message translates to:
+  /// **'Annulla'**
+  String get surpriseMeUndo;
+
+  /// No description provided for @surpriseMeNoDishes.
+  ///
+  /// In it, this message translates to:
+  /// **'Nessun piatto disponibile per i giorni vuoti.'**
+  String get surpriseMeNoDishes;
+
+  /// No description provided for @surpriseMeSuccess.
+  ///
+  /// In it, this message translates to:
+  /// **'Piano completato!'**
+  String get surpriseMeSuccess;
 }
 
 class _AppLocalizationsDelegate
