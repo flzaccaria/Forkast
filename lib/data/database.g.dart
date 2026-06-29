@@ -807,12 +807,11 @@ class $IngredientsTable extends Ingredients
       const VerificationMeta('alwaysInList');
   @override
   late final GeneratedColumn<bool> alwaysInList = GeneratedColumn<bool>(
-      'always_in_list', aliasedName, false,
+      'always_in_list', aliasedName, true,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("always_in_list" IN (0, 1))'),
-      defaultValue: const Constant(false));
+          'CHECK ("always_in_list" IN (0, 1))'));
   static const VerificationMeta _defaultQtyMeta =
       const VerificationMeta('defaultQty');
   @override
@@ -962,7 +961,7 @@ class $IngredientsTable extends Ingredients
       nameModified: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}name_modified']),
       alwaysInList: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}always_in_list'])!,
+          .read(DriftSqlType.bool, data['${effectivePrefix}always_in_list']),
       defaultQty: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}default_qty']),
       createdAt: attachedDatabase.typeMapping
@@ -988,7 +987,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String? roundingKind;
   final String? seedKey;
   final bool? nameModified;
-  final bool alwaysInList;
+  final bool? alwaysInList;
   final double? defaultQty;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -1002,7 +1001,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       this.roundingKind,
       this.seedKey,
       this.nameModified,
-      required this.alwaysInList,
+      this.alwaysInList,
       this.defaultQty,
       required this.createdAt,
       required this.updatedAt});
@@ -1026,7 +1025,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     if (!nullToAbsent || nameModified != null) {
       map['name_modified'] = Variable<bool>(nameModified);
     }
-    map['always_in_list'] = Variable<bool>(alwaysInList);
+    if (!nullToAbsent || alwaysInList != null) {
+      map['always_in_list'] = Variable<bool>(alwaysInList);
+    }
     if (!nullToAbsent || defaultQty != null) {
       map['default_qty'] = Variable<double>(defaultQty);
     }
@@ -1054,7 +1055,9 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       nameModified: nameModified == null && nullToAbsent
           ? const Value.absent()
           : Value(nameModified),
-      alwaysInList: Value(alwaysInList),
+      alwaysInList: alwaysInList == null && nullToAbsent
+          ? const Value.absent()
+          : Value(alwaysInList),
       defaultQty: defaultQty == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultQty),
@@ -1076,7 +1079,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       roundingKind: serializer.fromJson<String?>(json['roundingKind']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
       nameModified: serializer.fromJson<bool?>(json['nameModified']),
-      alwaysInList: serializer.fromJson<bool>(json['alwaysInList']),
+      alwaysInList: serializer.fromJson<bool?>(json['alwaysInList']),
       defaultQty: serializer.fromJson<double?>(json['defaultQty']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -1095,7 +1098,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'roundingKind': serializer.toJson<String?>(roundingKind),
       'seedKey': serializer.toJson<String?>(seedKey),
       'nameModified': serializer.toJson<bool?>(nameModified),
-      'alwaysInList': serializer.toJson<bool>(alwaysInList),
+      'alwaysInList': serializer.toJson<bool?>(alwaysInList),
       'defaultQty': serializer.toJson<double?>(defaultQty),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -1112,7 +1115,7 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           Value<String?> roundingKind = const Value.absent(),
           Value<String?> seedKey = const Value.absent(),
           Value<bool?> nameModified = const Value.absent(),
-          bool? alwaysInList,
+          Value<bool?> alwaysInList = const Value.absent(),
           Value<double?> defaultQty = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -1128,7 +1131,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         seedKey: seedKey.present ? seedKey.value : this.seedKey,
         nameModified:
             nameModified.present ? nameModified.value : this.nameModified,
-        alwaysInList: alwaysInList ?? this.alwaysInList,
+        alwaysInList:
+            alwaysInList.present ? alwaysInList.value : this.alwaysInList,
         defaultQty: defaultQty.present ? defaultQty.value : this.defaultQty,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -1223,7 +1227,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String?> roundingKind;
   final Value<String?> seedKey;
   final Value<bool?> nameModified;
-  final Value<bool> alwaysInList;
+  final Value<bool?> alwaysInList;
   final Value<double?> defaultQty;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1309,7 +1313,7 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<String?>? roundingKind,
       Value<String?>? seedKey,
       Value<bool?>? nameModified,
-      Value<bool>? alwaysInList,
+      Value<bool?>? alwaysInList,
       Value<double?>? defaultQty,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
@@ -7089,7 +7093,7 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   Value<String?> roundingKind,
   Value<String?> seedKey,
   Value<bool?> nameModified,
-  Value<bool> alwaysInList,
+  Value<bool?> alwaysInList,
   Value<double?> defaultQty,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -7106,7 +7110,7 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<String?> roundingKind,
   Value<String?> seedKey,
   Value<bool?> nameModified,
-  Value<bool> alwaysInList,
+  Value<bool?> alwaysInList,
   Value<double?> defaultQty,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -7295,7 +7299,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
-            Value<bool> alwaysInList = const Value.absent(),
+            Value<bool?> alwaysInList = const Value.absent(),
             Value<double?> defaultQty = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -7327,7 +7331,7 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
-            Value<bool> alwaysInList = const Value.absent(),
+            Value<bool?> alwaysInList = const Value.absent(),
             Value<double?> defaultQty = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
