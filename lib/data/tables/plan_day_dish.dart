@@ -7,6 +7,7 @@ class PlanDayDishes extends Table {
   TextColumn get dishId => text()();
   TextColumn get householdId => text()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get autoAssigned => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

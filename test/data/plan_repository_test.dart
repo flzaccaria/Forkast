@@ -36,7 +36,7 @@ void main() {
     await db.customStatement('''
       CREATE TABLE plan_day_dish (
         id TEXT PRIMARY KEY, plan_day_id TEXT, dish_id TEXT, household_id TEXT,
-        sort_order INTEGER, created_at TEXT)''');
+        sort_order INTEGER, auto_assigned INTEGER DEFAULT 0, created_at TEXT)''');
 
     // A household with default guests 4.
     final now = DateTime.now().toUtc();

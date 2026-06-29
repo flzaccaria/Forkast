@@ -28,6 +28,8 @@ Ingredient _ing({
       roundingKind: isQb ? null : 'weight',
       seedKey: null,
       nameModified: false,
+      alwaysInList: false,
+      defaultQty: null,
       createdAt: DateTime(2024),
       updatedAt: DateTime(2024),
     );

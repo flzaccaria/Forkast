@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,6 +21,7 @@ class GeneratedItemView {
     required this.checked,
     this.seedKey,
     this.nameModified = false,
+    this.isRecurring = false,
   });
 
   final String ingredientId;
@@ -33,6 +36,7 @@ class GeneratedItemView {
   final bool checked;
   final String? seedKey;
   final bool nameModified;
+  final bool isRecurring;
 
   /// Displayed quantity: the override takes precedence over the generated value.
   double? get displayQty => hasOverride ? overrideQty : generatedQty;
@@ -113,41 +117,142 @@ class ListRepository {
     return rows.map(_rowToLineInput).toList();
   }
 
-  /// Current plan fingerprint, to detect divergence (FR-21).
-  Future<String> currentPlanHash(String weekPlanId) async {
-    return planHash(await _gatherLines(weekPlanId));
+  // --- Recurring ingredients (FR-28) ----------------------------------------
+
+  Future<List<ListLineInput>> _gatherRecurringLines(String? listId) async {
+    final recurring = await (_db.select(_db.ingredients)
+          ..where((i) =>
+              i.householdId.equals(_householdId) & i.alwaysInList.equals(true)))
+        .get();
+    if (recurring.isEmpty) return const [];
+
+    final excluded = <String>{};
+    if (listId != null) {
+      final exclusions = await (_db.select(_db.listRecurringExclusions)
+            ..where((e) => e.shoppingListId.equals(listId)))
+          .get();
+      excluded.addAll(exclusions.map((e) => e.ingredientId));
+    }
+
+    return recurring
+        .where((i) => !excluded.contains(i.id))
+        .map((i) => ListLineInput(
+              ingredientId: i.id,
+              unit: i.unit,
+              roundingKind: i.roundingKind ?? 'weight',
+              isQb: i.isQb,
+              qtyBase4: i.isQb ? null : i.defaultQty,
+              guests: 4,
+            ))
+        .toList();
   }
 
-  /// Reactive plan fingerprint: re-emits whenever the plan tables that feed
-  /// shopping list generation change (plan_day, plan_day_dish,
-  /// dish_ingredient, ingredient). Used by the list screen to trigger
-  /// automatic regeneration (FR-21 v0.6).
-  Stream<String> watchPlanHash(String weekPlanId) {
-    return _db
+  String _combinedHash(
+      List<ListLineInput> planLines, List<ListLineInput> recurringLines) {
+    final p = planHash(planLines);
+    final r = planHash(recurringLines);
+    return _fnv1a64Pair(p, r);
+  }
+
+  static String _fnv1a64Pair(String a, String b) {
+    final s = '$a|$b';
+    final mask = (BigInt.one << 64) - BigInt.one;
+    var hash = BigInt.parse('14695981039346656037');
+    final prime = BigInt.parse('1099511628211');
+    for (final unit in s.codeUnits) {
+      hash = (hash ^ BigInt.from(unit)) & mask;
+      hash = (hash * prime) & mask;
+    }
+    return hash.toRadixString(16).padLeft(16, '0');
+  }
+
+  /// Current plan fingerprint, to detect divergence (FR-21).
+  /// Includes both plan-derived and recurring ingredient lines.
+  Future<String> currentPlanHash(String weekPlanId,
+      {String? listId}) async {
+    final planLines = await _gatherLines(weekPlanId);
+    final recurringLines = await _gatherRecurringLines(listId);
+    return _combinedHash(planLines, recurringLines);
+  }
+
+  /// Reactive plan fingerprint: re-emits whenever the plan tables or
+  /// recurring ingredient configuration changes. Used by the list screen
+  /// to trigger automatic regeneration (FR-21 v0.6, FR-28).
+  Stream<String> watchPlanHash(String weekPlanId, {String? listId}) {
+    final planStream = _db
         .customSelect(
           _gatherLinesSql,
           variables: [Variable.withString(weekPlanId)],
           readsFrom: _gatherLinesReadsFrom,
         )
         .watch()
-        .map((rows) => planHash(rows.map(_rowToLineInput).toList()));
+        .map((rows) => rows.map(_rowToLineInput).toList());
+
+    final recurringStream = (_db.select(_db.ingredients)
+          ..where((i) =>
+              i.householdId.equals(_householdId) &
+              i.alwaysInList.equals(true)))
+        .watch();
+
+    List<ListLineInput>? lastPlanLines;
+    List<Ingredient>? lastRecurring;
+
+    String computeHash() {
+      final pl = lastPlanLines ?? const [];
+      final rl = (lastRecurring ?? const [])
+          .map((i) => ListLineInput(
+                ingredientId: i.id,
+                unit: i.unit,
+                roundingKind: i.roundingKind ?? 'weight',
+                isQb: i.isQb,
+                qtyBase4: i.isQb ? null : i.defaultQty,
+                guests: 4,
+              ))
+          .toList();
+      return _combinedHash(pl, rl);
+    }
+
+    late StreamController<String> controller;
+    StreamSubscription<List<ListLineInput>>? planSub;
+    StreamSubscription<List<Ingredient>>? recurringSub;
+
+    controller = StreamController<String>(
+      onListen: () {
+        planSub = planStream.listen((lines) {
+          lastPlanLines = lines;
+          if (lastRecurring != null) controller.add(computeHash());
+        }, onError: controller.addError);
+        recurringSub = recurringStream.listen((ingredients) {
+          lastRecurring = ingredients;
+          if (lastPlanLines != null) controller.add(computeHash());
+        }, onError: controller.addError);
+      },
+      onCancel: () {
+        planSub?.cancel();
+        recurringSub?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   /// Generates (or regenerates) the snapshot on an explicit user action,
   /// saving the plan hash. Replaces the generated rows; overrides, manual
-  /// items and checks remain (FR-21).
+  /// items and checks remain (FR-21). Recurring ingredients (FR-28) are
+  /// included automatically and aggregated with plan-derived quantities.
   Future<String> generate(String weekPlanId) async {
-    final lines = await _gatherLines(weekPlanId);
-    final rows = aggregateList(lines);
-    final hash = planHash(lines);
-    final now = DateTime.now().toUtc();
-
     final existing = await (_db.select(_db.shoppingLists)
           ..where((s) =>
               s.householdId.equals(_householdId) &
               s.weekPlanId.equals(weekPlanId)))
         .getSingleOrNull();
     final listId = existing?.id ?? _uuid.v4();
+
+    final planLines = await _gatherLines(weekPlanId);
+    final recurringLines = await _gatherRecurringLines(existing?.id);
+    final allLines = [...planLines, ...recurringLines];
+    final rows = aggregateList(allLines);
+    final hash = _combinedHash(planLines, recurringLines);
+    final now = DateTime.now().toUtc();
 
     await _db.transaction(() async {
       if (existing == null) {
@@ -205,6 +310,7 @@ class ListRepository {
       'SELECT g.ingredient_id AS ingredient_id, i.name AS name, '
       'g.unit AS unit, i.category AS category, g.qty AS qty, g.is_qb AS is_qb, '
       'i.seed_key AS seed_key, i.name_modified AS name_modified, '
+      'i.always_in_list AS always_in_list, '
       'o.qty_override AS qty_override, o.removed AS removed, '
       'o.id AS override_id, c.checked AS checked '
       'FROM list_generated_row g '
@@ -238,6 +344,7 @@ class ListRepository {
           checked: (r.readNullable<int>('checked') ?? 0) != 0,
           seedKey: r.readNullable<String>('seed_key'),
           nameModified: (r.readNullable<int>('name_modified') ?? 0) != 0,
+          isRecurring: (r.readNullable<int>('always_in_list') ?? 0) != 0,
         );
       }).toList();
     });
@@ -413,5 +520,40 @@ class ListRepository {
             updatedAt: DateTime.now().toUtc(),
           ),
         );
+  }
+
+  // --- Purchase check reset (FR-31) -----------------------------------------
+
+  /// Clears all purchase checks for the given shopping list, preserving
+  /// generated rows, overrides, and manual items.
+  Future<void> resetChecks(String listId) {
+    return (_db.delete(_db.listChecks)
+          ..where((c) => c.shoppingListId.equals(listId)))
+        .go();
+  }
+
+  // --- Recurring exclusions (FR-29) ------------------------------------------
+
+  /// Excludes a recurring ingredient from the current week's list.
+  Future<void> excludeRecurring(String listId, String ingredientId) async {
+    final now = DateTime.now().toUtc();
+    await _db.into(_db.listRecurringExclusions).insert(
+          ListRecurringExclusionsCompanion.insert(
+            id: _uuid.v4(),
+            shoppingListId: listId,
+            ingredientId: ingredientId,
+            householdId: _householdId,
+            createdAt: now,
+          ),
+        );
+  }
+
+  /// Re-includes a previously excluded recurring ingredient.
+  Future<void> includeRecurring(String listId, String ingredientId) {
+    return (_db.delete(_db.listRecurringExclusions)
+          ..where((e) =>
+              e.shoppingListId.equals(listId) &
+              e.ingredientId.equals(ingredientId)))
+        .go();
   }
 }

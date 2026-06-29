@@ -228,5 +228,41 @@
   "ingredientsViewGrouped": "Per reparto",
   "ingredientsViewFlat": "Lista piatta",
   "ingredientsUsageCountLabel": "{count, plural, =0{non usato} =1{1 piatto} other{{count} piatti}}",
-  "@ingredientsUsageCountLabel": { "placeholders": { "count": { "type": "int" } } }
+  "@ingredientsUsageCountLabel": { "placeholders": { "count": { "type": "int" } } },
+
+  "ingredientAlwaysInList": "Sempre in lista",
+  "ingredientAlwaysInListSubtitle": "Aggiunto automaticamente alla lista della spesa",
+  "ingredientDefaultQty": "Quantità predefinita",
+  "ingredientsFilterRecurring": "Ricorrenti",
+  "ingredientsFilterRecurringOnly": "Solo ricorrenti",
+  "ingredientsFilterNonRecurring": "Non ricorrenti",
+
+  "listResetChecks": "Azzera spunte",
+  "listResetConfirm": "Vuoi cancellare tutti i segni di spunta? Piano, righe, override e voci manuali restano invariati.",
+  "listResetDone": "Spunte azzerate.",
+  "listExcludeThisWeek": "Escludi questa settimana",
+  "listIncludeAgain": "Includi di nuovo",
+  "listRecurringLabel": "ricorrente",
+
+  "historyTitle": "Settimane passate",
+  "historyEmpty": "Nessuna settimana passata.",
+
+  "dishNeverPlanned": "mai",
+  "dishThisWeek": "questa settimana",
+  "dishOneWeekAgo": "1 settimana fa",
+  "dishWeeksAgo": "{count} settimane fa",
+  "@dishWeeksAgo": { "placeholders": { "count": { "type": "int" } } },
+  "dishSortLeastRecent": "Meno recenti",
+  "dishFilterNotMadeSince": "Non fatto da oltre",
+  "dishFilterWeeks": "{count, plural, =1{1 settimana} other{{count} settimane}}",
+  "@dishFilterWeeks": { "placeholders": { "count": { "type": "int" } } },
+  "dishLastPlannedLabel": "Da quanto",
+
+  "surpriseMe": "Sorprendimi",
+  "surpriseMePartial": "Riempiti {filled} su {total} giorni. Non ci sono abbastanza piatti disponibili.",
+  "@surpriseMePartial": { "placeholders": { "filled": { "type": "int" }, "total": { "type": "int" } } },
+  "surpriseMeRegenerate": "Rigenera",
+  "surpriseMeUndo": "Annulla",
+  "surpriseMeNoDishes": "Nessun piatto disponibile per i giorni vuoti.",
+  "surpriseMeSuccess": "Piano completato!"
 }

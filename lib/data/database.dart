@@ -19,6 +19,7 @@ import 'tables/list_generated_row.dart';
 import 'tables/list_override.dart';
 import 'tables/list_manual_item.dart';
 import 'tables/list_check.dart';
+import 'tables/list_recurring_exclusion.dart';
 
 part 'database.g.dart';
 
@@ -38,6 +39,7 @@ part 'database.g.dart';
   ListOverrides,
   ListManualItems,
   ListChecks,
+  ListRecurringExclusions,
 ])
 class AppDatabase extends _$AppDatabase {
   /// drift operates on top of the database managed by PowerSync: same SQLite

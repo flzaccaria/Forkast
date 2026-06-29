@@ -24,11 +24,13 @@ void main() {
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
       is_qb INTEGER, category TEXT, rounding_kind TEXT,
       seed_key TEXT, name_modified INTEGER DEFAULT 0,
+      always_in_list INTEGER DEFAULT 0, default_qty REAL,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish (
       id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
       difficulty TEXT, time_estimate TEXT, recipe_url TEXT,
       seed_key TEXT, name_modified INTEGER DEFAULT 0,
+      always_in_list INTEGER DEFAULT 0, default_qty REAL,
       created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE dish_ingredient (
       id TEXT PRIMARY KEY, dish_id TEXT, ingredient_id TEXT, household_id TEXT,
@@ -41,7 +43,7 @@ void main() {
       day_of_week INTEGER, guests INTEGER, created_at TEXT, updated_at TEXT)''');
     await exec('''CREATE TABLE plan_day_dish (
       id TEXT PRIMARY KEY, plan_day_id TEXT, dish_id TEXT, household_id TEXT,
-      sort_order INTEGER, created_at TEXT)''');
+      sort_order INTEGER, auto_assigned INTEGER DEFAULT 0, created_at TEXT)''');
     await exec('''CREATE TABLE shopping_list (
       id TEXT PRIMARY KEY, household_id TEXT, week_plan_id TEXT,
       generated_at TEXT, plan_hash TEXT, created_at TEXT, updated_at TEXT)''');
@@ -58,6 +60,9 @@ void main() {
     await exec('''CREATE TABLE list_check (
       id TEXT PRIMARY KEY, shopping_list_id TEXT, ingredient_id TEXT,
       manual_item_id TEXT, household_id TEXT, checked INTEGER, updated_at TEXT)''');
+    await exec('''CREATE TABLE list_recurring_exclusion (
+      id TEXT PRIMARY KEY, shopping_list_id TEXT, ingredient_id TEXT,
+      household_id TEXT, created_at TEXT)''');
 
     final now = DateTime.now().toUtc();
     await db.into(db.households).insert(HouseholdsCompanion.insert(

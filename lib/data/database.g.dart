@@ -803,6 +803,22 @@ class $IngredientsTable extends Ingredients
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("name_modified" IN (0, 1))'));
+  static const VerificationMeta _alwaysInListMeta =
+      const VerificationMeta('alwaysInList');
+  @override
+  late final GeneratedColumn<bool> alwaysInList = GeneratedColumn<bool>(
+      'always_in_list', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("always_in_list" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _defaultQtyMeta =
+      const VerificationMeta('defaultQty');
+  @override
+  late final GeneratedColumn<double> defaultQty = GeneratedColumn<double>(
+      'default_qty', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -826,6 +842,8 @@ class $IngredientsTable extends Ingredients
         roundingKind,
         seedKey,
         nameModified,
+        alwaysInList,
+        defaultQty,
         createdAt,
         updatedAt
       ];
@@ -888,6 +906,18 @@ class $IngredientsTable extends Ingredients
           nameModified.isAcceptableOrUnknown(
               data['name_modified']!, _nameModifiedMeta));
     }
+    if (data.containsKey('always_in_list')) {
+      context.handle(
+          _alwaysInListMeta,
+          alwaysInList.isAcceptableOrUnknown(
+              data['always_in_list']!, _alwaysInListMeta));
+    }
+    if (data.containsKey('default_qty')) {
+      context.handle(
+          _defaultQtyMeta,
+          defaultQty.isAcceptableOrUnknown(
+              data['default_qty']!, _defaultQtyMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -931,6 +961,10 @@ class $IngredientsTable extends Ingredients
           .read(DriftSqlType.string, data['${effectivePrefix}seed_key']),
       nameModified: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}name_modified']),
+      alwaysInList: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}always_in_list'])!,
+      defaultQty: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}default_qty']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -954,6 +988,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   final String? roundingKind;
   final String? seedKey;
   final bool? nameModified;
+  final bool alwaysInList;
+  final double? defaultQty;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Ingredient(
@@ -966,6 +1002,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       this.roundingKind,
       this.seedKey,
       this.nameModified,
+      required this.alwaysInList,
+      this.defaultQty,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -987,6 +1025,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
     }
     if (!nullToAbsent || nameModified != null) {
       map['name_modified'] = Variable<bool>(nameModified);
+    }
+    map['always_in_list'] = Variable<bool>(alwaysInList);
+    if (!nullToAbsent || defaultQty != null) {
+      map['default_qty'] = Variable<double>(defaultQty);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -1012,6 +1054,10 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       nameModified: nameModified == null && nullToAbsent
           ? const Value.absent()
           : Value(nameModified),
+      alwaysInList: Value(alwaysInList),
+      defaultQty: defaultQty == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultQty),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1030,6 +1076,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       roundingKind: serializer.fromJson<String?>(json['roundingKind']),
       seedKey: serializer.fromJson<String?>(json['seedKey']),
       nameModified: serializer.fromJson<bool?>(json['nameModified']),
+      alwaysInList: serializer.fromJson<bool>(json['alwaysInList']),
+      defaultQty: serializer.fromJson<double?>(json['defaultQty']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1047,6 +1095,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       'roundingKind': serializer.toJson<String?>(roundingKind),
       'seedKey': serializer.toJson<String?>(seedKey),
       'nameModified': serializer.toJson<bool?>(nameModified),
+      'alwaysInList': serializer.toJson<bool>(alwaysInList),
+      'defaultQty': serializer.toJson<double?>(defaultQty),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1062,6 +1112,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           Value<String?> roundingKind = const Value.absent(),
           Value<String?> seedKey = const Value.absent(),
           Value<bool?> nameModified = const Value.absent(),
+          bool? alwaysInList,
+          Value<double?> defaultQty = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       Ingredient(
@@ -1076,6 +1128,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
         seedKey: seedKey.present ? seedKey.value : this.seedKey,
         nameModified:
             nameModified.present ? nameModified.value : this.nameModified,
+        alwaysInList: alwaysInList ?? this.alwaysInList,
+        defaultQty: defaultQty.present ? defaultQty.value : this.defaultQty,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -1095,6 +1149,11 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
       nameModified: data.nameModified.present
           ? data.nameModified.value
           : this.nameModified,
+      alwaysInList: data.alwaysInList.present
+          ? data.alwaysInList.value
+          : this.alwaysInList,
+      defaultQty:
+          data.defaultQty.present ? data.defaultQty.value : this.defaultQty,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1112,6 +1171,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           ..write('roundingKind: $roundingKind, ')
           ..write('seedKey: $seedKey, ')
           ..write('nameModified: $nameModified, ')
+          ..write('alwaysInList: $alwaysInList, ')
+          ..write('defaultQty: $defaultQty, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1119,8 +1180,20 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
   }
 
   @override
-  int get hashCode => Object.hash(id, householdId, name, unit, isQb, category,
-      roundingKind, seedKey, nameModified, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id,
+      householdId,
+      name,
+      unit,
+      isQb,
+      category,
+      roundingKind,
+      seedKey,
+      nameModified,
+      alwaysInList,
+      defaultQty,
+      createdAt,
+      updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1134,6 +1207,8 @@ class Ingredient extends DataClass implements Insertable<Ingredient> {
           other.roundingKind == this.roundingKind &&
           other.seedKey == this.seedKey &&
           other.nameModified == this.nameModified &&
+          other.alwaysInList == this.alwaysInList &&
+          other.defaultQty == this.defaultQty &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1148,6 +1223,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
   final Value<String?> roundingKind;
   final Value<String?> seedKey;
   final Value<bool?> nameModified;
+  final Value<bool> alwaysInList;
+  final Value<double?> defaultQty;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -1161,6 +1238,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.roundingKind = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.nameModified = const Value.absent(),
+    this.alwaysInList = const Value.absent(),
+    this.defaultQty = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1175,6 +1254,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     this.roundingKind = const Value.absent(),
     this.seedKey = const Value.absent(),
     this.nameModified = const Value.absent(),
+    this.alwaysInList = const Value.absent(),
+    this.defaultQty = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -1194,6 +1275,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     Expression<String>? roundingKind,
     Expression<String>? seedKey,
     Expression<bool>? nameModified,
+    Expression<bool>? alwaysInList,
+    Expression<double>? defaultQty,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1208,6 +1291,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       if (roundingKind != null) 'rounding_kind': roundingKind,
       if (seedKey != null) 'seed_key': seedKey,
       if (nameModified != null) 'name_modified': nameModified,
+      if (alwaysInList != null) 'always_in_list': alwaysInList,
+      if (defaultQty != null) 'default_qty': defaultQty,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1224,6 +1309,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       Value<String?>? roundingKind,
       Value<String?>? seedKey,
       Value<bool?>? nameModified,
+      Value<bool>? alwaysInList,
+      Value<double?>? defaultQty,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -1237,6 +1324,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
       roundingKind: roundingKind ?? this.roundingKind,
       seedKey: seedKey ?? this.seedKey,
       nameModified: nameModified ?? this.nameModified,
+      alwaysInList: alwaysInList ?? this.alwaysInList,
+      defaultQty: defaultQty ?? this.defaultQty,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1273,6 +1362,12 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
     if (nameModified.present) {
       map['name_modified'] = Variable<bool>(nameModified.value);
     }
+    if (alwaysInList.present) {
+      map['always_in_list'] = Variable<bool>(alwaysInList.value);
+    }
+    if (defaultQty.present) {
+      map['default_qty'] = Variable<double>(defaultQty.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1297,6 +1392,8 @@ class IngredientsCompanion extends UpdateCompanion<Ingredient> {
           ..write('roundingKind: $roundingKind, ')
           ..write('seedKey: $seedKey, ')
           ..write('nameModified: $nameModified, ')
+          ..write('alwaysInList: $alwaysInList, ')
+          ..write('defaultQty: $defaultQty, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -3746,6 +3843,16 @@ class $PlanDayDishesTable extends PlanDayDishes
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _autoAssignedMeta =
+      const VerificationMeta('autoAssigned');
+  @override
+  late final GeneratedColumn<bool> autoAssigned = GeneratedColumn<bool>(
+      'auto_assigned', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("auto_assigned" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -3754,7 +3861,7 @@ class $PlanDayDishesTable extends PlanDayDishes
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, planDayId, dishId, householdId, sortOrder, createdAt];
+      [id, planDayId, dishId, householdId, sortOrder, autoAssigned, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3796,6 +3903,12 @@ class $PlanDayDishesTable extends PlanDayDishes
       context.handle(_sortOrderMeta,
           sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
     }
+    if (data.containsKey('auto_assigned')) {
+      context.handle(
+          _autoAssignedMeta,
+          autoAssigned.isAcceptableOrUnknown(
+              data['auto_assigned']!, _autoAssignedMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -3821,6 +3934,8 @@ class $PlanDayDishesTable extends PlanDayDishes
           .read(DriftSqlType.string, data['${effectivePrefix}household_id'])!,
       sortOrder: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+      autoAssigned: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}auto_assigned'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -3838,6 +3953,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
   final String dishId;
   final String householdId;
   final int sortOrder;
+  final bool autoAssigned;
   final DateTime createdAt;
   const PlanDayDish(
       {required this.id,
@@ -3845,6 +3961,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
       required this.dishId,
       required this.householdId,
       required this.sortOrder,
+      required this.autoAssigned,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3854,6 +3971,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
     map['dish_id'] = Variable<String>(dishId);
     map['household_id'] = Variable<String>(householdId);
     map['sort_order'] = Variable<int>(sortOrder);
+    map['auto_assigned'] = Variable<bool>(autoAssigned);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3865,6 +3983,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
       dishId: Value(dishId),
       householdId: Value(householdId),
       sortOrder: Value(sortOrder),
+      autoAssigned: Value(autoAssigned),
       createdAt: Value(createdAt),
     );
   }
@@ -3878,6 +3997,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
       dishId: serializer.fromJson<String>(json['dishId']),
       householdId: serializer.fromJson<String>(json['householdId']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      autoAssigned: serializer.fromJson<bool>(json['autoAssigned']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3890,6 +4010,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
       'dishId': serializer.toJson<String>(dishId),
       'householdId': serializer.toJson<String>(householdId),
       'sortOrder': serializer.toJson<int>(sortOrder),
+      'autoAssigned': serializer.toJson<bool>(autoAssigned),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3900,6 +4021,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
           String? dishId,
           String? householdId,
           int? sortOrder,
+          bool? autoAssigned,
           DateTime? createdAt}) =>
       PlanDayDish(
         id: id ?? this.id,
@@ -3907,6 +4029,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
         dishId: dishId ?? this.dishId,
         householdId: householdId ?? this.householdId,
         sortOrder: sortOrder ?? this.sortOrder,
+        autoAssigned: autoAssigned ?? this.autoAssigned,
         createdAt: createdAt ?? this.createdAt,
       );
   PlanDayDish copyWithCompanion(PlanDayDishesCompanion data) {
@@ -3917,6 +4040,9 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
       householdId:
           data.householdId.present ? data.householdId.value : this.householdId,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      autoAssigned: data.autoAssigned.present
+          ? data.autoAssigned.value
+          : this.autoAssigned,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3929,14 +4055,15 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
           ..write('dishId: $dishId, ')
           ..write('householdId: $householdId, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('autoAssigned: $autoAssigned, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, planDayId, dishId, householdId, sortOrder, createdAt);
+  int get hashCode => Object.hash(
+      id, planDayId, dishId, householdId, sortOrder, autoAssigned, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3946,6 +4073,7 @@ class PlanDayDish extends DataClass implements Insertable<PlanDayDish> {
           other.dishId == this.dishId &&
           other.householdId == this.householdId &&
           other.sortOrder == this.sortOrder &&
+          other.autoAssigned == this.autoAssigned &&
           other.createdAt == this.createdAt);
 }
 
@@ -3955,6 +4083,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
   final Value<String> dishId;
   final Value<String> householdId;
   final Value<int> sortOrder;
+  final Value<bool> autoAssigned;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const PlanDayDishesCompanion({
@@ -3963,6 +4092,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
     this.dishId = const Value.absent(),
     this.householdId = const Value.absent(),
     this.sortOrder = const Value.absent(),
+    this.autoAssigned = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3972,6 +4102,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
     required String dishId,
     required String householdId,
     this.sortOrder = const Value.absent(),
+    this.autoAssigned = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -3985,6 +4116,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
     Expression<String>? dishId,
     Expression<String>? householdId,
     Expression<int>? sortOrder,
+    Expression<bool>? autoAssigned,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3994,6 +4126,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
       if (dishId != null) 'dish_id': dishId,
       if (householdId != null) 'household_id': householdId,
       if (sortOrder != null) 'sort_order': sortOrder,
+      if (autoAssigned != null) 'auto_assigned': autoAssigned,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4005,6 +4138,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
       Value<String>? dishId,
       Value<String>? householdId,
       Value<int>? sortOrder,
+      Value<bool>? autoAssigned,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
     return PlanDayDishesCompanion(
@@ -4013,6 +4147,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
       dishId: dishId ?? this.dishId,
       householdId: householdId ?? this.householdId,
       sortOrder: sortOrder ?? this.sortOrder,
+      autoAssigned: autoAssigned ?? this.autoAssigned,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -4036,6 +4171,9 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
+    if (autoAssigned.present) {
+      map['auto_assigned'] = Variable<bool>(autoAssigned.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4053,6 +4191,7 @@ class PlanDayDishesCompanion extends UpdateCompanion<PlanDayDish> {
           ..write('dishId: $dishId, ')
           ..write('householdId: $householdId, ')
           ..write('sortOrder: $sortOrder, ')
+          ..write('autoAssigned: $autoAssigned, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6181,6 +6320,335 @@ class ListChecksCompanion extends UpdateCompanion<ListCheck> {
   }
 }
 
+class $ListRecurringExclusionsTable extends ListRecurringExclusions
+    with TableInfo<$ListRecurringExclusionsTable, ListRecurringExclusion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ListRecurringExclusionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _shoppingListIdMeta =
+      const VerificationMeta('shoppingListId');
+  @override
+  late final GeneratedColumn<String> shoppingListId = GeneratedColumn<String>(
+      'shopping_list_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ingredientIdMeta =
+      const VerificationMeta('ingredientId');
+  @override
+  late final GeneratedColumn<String> ingredientId = GeneratedColumn<String>(
+      'ingredient_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _householdIdMeta =
+      const VerificationMeta('householdId');
+  @override
+  late final GeneratedColumn<String> householdId = GeneratedColumn<String>(
+      'household_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, shoppingListId, ingredientId, householdId, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'list_recurring_exclusion';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<ListRecurringExclusion> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('shopping_list_id')) {
+      context.handle(
+          _shoppingListIdMeta,
+          shoppingListId.isAcceptableOrUnknown(
+              data['shopping_list_id']!, _shoppingListIdMeta));
+    } else if (isInserting) {
+      context.missing(_shoppingListIdMeta);
+    }
+    if (data.containsKey('ingredient_id')) {
+      context.handle(
+          _ingredientIdMeta,
+          ingredientId.isAcceptableOrUnknown(
+              data['ingredient_id']!, _ingredientIdMeta));
+    } else if (isInserting) {
+      context.missing(_ingredientIdMeta);
+    }
+    if (data.containsKey('household_id')) {
+      context.handle(
+          _householdIdMeta,
+          householdId.isAcceptableOrUnknown(
+              data['household_id']!, _householdIdMeta));
+    } else if (isInserting) {
+      context.missing(_householdIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {shoppingListId, ingredientId},
+      ];
+  @override
+  ListRecurringExclusion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ListRecurringExclusion(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      shoppingListId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}shopping_list_id'])!,
+      ingredientId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ingredient_id'])!,
+      householdId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}household_id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $ListRecurringExclusionsTable createAlias(String alias) {
+    return $ListRecurringExclusionsTable(attachedDatabase, alias);
+  }
+}
+
+class ListRecurringExclusion extends DataClass
+    implements Insertable<ListRecurringExclusion> {
+  final String id;
+  final String shoppingListId;
+  final String ingredientId;
+  final String householdId;
+  final DateTime createdAt;
+  const ListRecurringExclusion(
+      {required this.id,
+      required this.shoppingListId,
+      required this.ingredientId,
+      required this.householdId,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['shopping_list_id'] = Variable<String>(shoppingListId);
+    map['ingredient_id'] = Variable<String>(ingredientId);
+    map['household_id'] = Variable<String>(householdId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ListRecurringExclusionsCompanion toCompanion(bool nullToAbsent) {
+    return ListRecurringExclusionsCompanion(
+      id: Value(id),
+      shoppingListId: Value(shoppingListId),
+      ingredientId: Value(ingredientId),
+      householdId: Value(householdId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ListRecurringExclusion.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ListRecurringExclusion(
+      id: serializer.fromJson<String>(json['id']),
+      shoppingListId: serializer.fromJson<String>(json['shoppingListId']),
+      ingredientId: serializer.fromJson<String>(json['ingredientId']),
+      householdId: serializer.fromJson<String>(json['householdId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'shoppingListId': serializer.toJson<String>(shoppingListId),
+      'ingredientId': serializer.toJson<String>(ingredientId),
+      'householdId': serializer.toJson<String>(householdId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ListRecurringExclusion copyWith(
+          {String? id,
+          String? shoppingListId,
+          String? ingredientId,
+          String? householdId,
+          DateTime? createdAt}) =>
+      ListRecurringExclusion(
+        id: id ?? this.id,
+        shoppingListId: shoppingListId ?? this.shoppingListId,
+        ingredientId: ingredientId ?? this.ingredientId,
+        householdId: householdId ?? this.householdId,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  ListRecurringExclusion copyWithCompanion(
+      ListRecurringExclusionsCompanion data) {
+    return ListRecurringExclusion(
+      id: data.id.present ? data.id.value : this.id,
+      shoppingListId: data.shoppingListId.present
+          ? data.shoppingListId.value
+          : this.shoppingListId,
+      ingredientId: data.ingredientId.present
+          ? data.ingredientId.value
+          : this.ingredientId,
+      householdId:
+          data.householdId.present ? data.householdId.value : this.householdId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListRecurringExclusion(')
+          ..write('id: $id, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('ingredientId: $ingredientId, ')
+          ..write('householdId: $householdId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, shoppingListId, ingredientId, householdId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ListRecurringExclusion &&
+          other.id == this.id &&
+          other.shoppingListId == this.shoppingListId &&
+          other.ingredientId == this.ingredientId &&
+          other.householdId == this.householdId &&
+          other.createdAt == this.createdAt);
+}
+
+class ListRecurringExclusionsCompanion
+    extends UpdateCompanion<ListRecurringExclusion> {
+  final Value<String> id;
+  final Value<String> shoppingListId;
+  final Value<String> ingredientId;
+  final Value<String> householdId;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ListRecurringExclusionsCompanion({
+    this.id = const Value.absent(),
+    this.shoppingListId = const Value.absent(),
+    this.ingredientId = const Value.absent(),
+    this.householdId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ListRecurringExclusionsCompanion.insert({
+    required String id,
+    required String shoppingListId,
+    required String ingredientId,
+    required String householdId,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        shoppingListId = Value(shoppingListId),
+        ingredientId = Value(ingredientId),
+        householdId = Value(householdId),
+        createdAt = Value(createdAt);
+  static Insertable<ListRecurringExclusion> custom({
+    Expression<String>? id,
+    Expression<String>? shoppingListId,
+    Expression<String>? ingredientId,
+    Expression<String>? householdId,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (shoppingListId != null) 'shopping_list_id': shoppingListId,
+      if (ingredientId != null) 'ingredient_id': ingredientId,
+      if (householdId != null) 'household_id': householdId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ListRecurringExclusionsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? shoppingListId,
+      Value<String>? ingredientId,
+      Value<String>? householdId,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return ListRecurringExclusionsCompanion(
+      id: id ?? this.id,
+      shoppingListId: shoppingListId ?? this.shoppingListId,
+      ingredientId: ingredientId ?? this.ingredientId,
+      householdId: householdId ?? this.householdId,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (shoppingListId.present) {
+      map['shopping_list_id'] = Variable<String>(shoppingListId.value);
+    }
+    if (ingredientId.present) {
+      map['ingredient_id'] = Variable<String>(ingredientId.value);
+    }
+    if (householdId.present) {
+      map['household_id'] = Variable<String>(householdId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListRecurringExclusionsCompanion(')
+          ..write('id: $id, ')
+          ..write('shoppingListId: $shoppingListId, ')
+          ..write('ingredientId: $ingredientId, ')
+          ..write('householdId: $householdId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6202,6 +6670,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ListManualItemsTable listManualItems =
       $ListManualItemsTable(this);
   late final $ListChecksTable listChecks = $ListChecksTable(this);
+  late final $ListRecurringExclusionsTable listRecurringExclusions =
+      $ListRecurringExclusionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6221,7 +6691,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         listGeneratedRows,
         listOverrides,
         listManualItems,
-        listChecks
+        listChecks,
+        listRecurringExclusions
       ];
   @override
   DriftDatabaseOptions get options =>
@@ -6618,6 +7089,8 @@ typedef $$IngredientsTableCreateCompanionBuilder = IngredientsCompanion
   Value<String?> roundingKind,
   Value<String?> seedKey,
   Value<bool?> nameModified,
+  Value<bool> alwaysInList,
+  Value<double?> defaultQty,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -6633,6 +7106,8 @@ typedef $$IngredientsTableUpdateCompanionBuilder = IngredientsCompanion
   Value<String?> roundingKind,
   Value<String?> seedKey,
   Value<bool?> nameModified,
+  Value<bool> alwaysInList,
+  Value<double?> defaultQty,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -6673,6 +7148,12 @@ class $$IngredientsTableFilterComposer
 
   ColumnFilters<bool> get nameModified => $composableBuilder(
       column: $table.nameModified, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get alwaysInList => $composableBuilder(
+      column: $table.alwaysInList, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get defaultQty => $composableBuilder(
+      column: $table.defaultQty, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -6719,6 +7200,13 @@ class $$IngredientsTableOrderingComposer
       column: $table.nameModified,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get alwaysInList => $composableBuilder(
+      column: $table.alwaysInList,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get defaultQty => $composableBuilder(
+      column: $table.defaultQty, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -6762,6 +7250,12 @@ class $$IngredientsTableAnnotationComposer
   GeneratedColumn<bool> get nameModified => $composableBuilder(
       column: $table.nameModified, builder: (column) => column);
 
+  GeneratedColumn<bool> get alwaysInList => $composableBuilder(
+      column: $table.alwaysInList, builder: (column) => column);
+
+  GeneratedColumn<double> get defaultQty => $composableBuilder(
+      column: $table.defaultQty, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -6801,6 +7295,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
+            Value<bool> alwaysInList = const Value.absent(),
+            Value<double?> defaultQty = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -6815,6 +7311,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             roundingKind: roundingKind,
             seedKey: seedKey,
             nameModified: nameModified,
+            alwaysInList: alwaysInList,
+            defaultQty: defaultQty,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -6829,6 +7327,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             Value<String?> roundingKind = const Value.absent(),
             Value<String?> seedKey = const Value.absent(),
             Value<bool?> nameModified = const Value.absent(),
+            Value<bool> alwaysInList = const Value.absent(),
+            Value<double?> defaultQty = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -6843,6 +7343,8 @@ class $$IngredientsTableTableManager extends RootTableManager<
             roundingKind: roundingKind,
             seedKey: seedKey,
             nameModified: nameModified,
+            alwaysInList: alwaysInList,
+            defaultQty: defaultQty,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -8068,6 +8570,7 @@ typedef $$PlanDayDishesTableCreateCompanionBuilder = PlanDayDishesCompanion
   required String dishId,
   required String householdId,
   Value<int> sortOrder,
+  Value<bool> autoAssigned,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -8078,6 +8581,7 @@ typedef $$PlanDayDishesTableUpdateCompanionBuilder = PlanDayDishesCompanion
   Value<String> dishId,
   Value<String> householdId,
   Value<int> sortOrder,
+  Value<bool> autoAssigned,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -8105,6 +8609,9 @@ class $$PlanDayDishesTableFilterComposer
 
   ColumnFilters<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get autoAssigned => $composableBuilder(
+      column: $table.autoAssigned, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -8134,6 +8641,10 @@ class $$PlanDayDishesTableOrderingComposer
   ColumnOrderings<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get autoAssigned => $composableBuilder(
+      column: $table.autoAssigned,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -8161,6 +8672,9 @@ class $$PlanDayDishesTableAnnotationComposer
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoAssigned => $composableBuilder(
+      column: $table.autoAssigned, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -8197,6 +8711,7 @@ class $$PlanDayDishesTableTableManager extends RootTableManager<
             Value<String> dishId = const Value.absent(),
             Value<String> householdId = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
+            Value<bool> autoAssigned = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8206,6 +8721,7 @@ class $$PlanDayDishesTableTableManager extends RootTableManager<
             dishId: dishId,
             householdId: householdId,
             sortOrder: sortOrder,
+            autoAssigned: autoAssigned,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -8215,6 +8731,7 @@ class $$PlanDayDishesTableTableManager extends RootTableManager<
             required String dishId,
             required String householdId,
             Value<int> sortOrder = const Value.absent(),
+            Value<bool> autoAssigned = const Value.absent(),
             required DateTime createdAt,
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -8224,6 +8741,7 @@ class $$PlanDayDishesTableTableManager extends RootTableManager<
             dishId: dishId,
             householdId: householdId,
             sortOrder: sortOrder,
+            autoAssigned: autoAssigned,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -9316,6 +9834,189 @@ typedef $$ListChecksTableProcessedTableManager = ProcessedTableManager<
     (ListCheck, BaseReferences<_$AppDatabase, $ListChecksTable, ListCheck>),
     ListCheck,
     PrefetchHooks Function()>;
+typedef $$ListRecurringExclusionsTableCreateCompanionBuilder
+    = ListRecurringExclusionsCompanion Function({
+  required String id,
+  required String shoppingListId,
+  required String ingredientId,
+  required String householdId,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$ListRecurringExclusionsTableUpdateCompanionBuilder
+    = ListRecurringExclusionsCompanion Function({
+  Value<String> id,
+  Value<String> shoppingListId,
+  Value<String> ingredientId,
+  Value<String> householdId,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$ListRecurringExclusionsTableFilterComposer
+    extends Composer<_$AppDatabase, $ListRecurringExclusionsTable> {
+  $$ListRecurringExclusionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ingredientId => $composableBuilder(
+      column: $table.ingredientId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get householdId => $composableBuilder(
+      column: $table.householdId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ListRecurringExclusionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ListRecurringExclusionsTable> {
+  $$ListRecurringExclusionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ingredientId => $composableBuilder(
+      column: $table.ingredientId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get householdId => $composableBuilder(
+      column: $table.householdId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ListRecurringExclusionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ListRecurringExclusionsTable> {
+  $$ListRecurringExclusionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get shoppingListId => $composableBuilder(
+      column: $table.shoppingListId, builder: (column) => column);
+
+  GeneratedColumn<String> get ingredientId => $composableBuilder(
+      column: $table.ingredientId, builder: (column) => column);
+
+  GeneratedColumn<String> get householdId => $composableBuilder(
+      column: $table.householdId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ListRecurringExclusionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ListRecurringExclusionsTable,
+    ListRecurringExclusion,
+    $$ListRecurringExclusionsTableFilterComposer,
+    $$ListRecurringExclusionsTableOrderingComposer,
+    $$ListRecurringExclusionsTableAnnotationComposer,
+    $$ListRecurringExclusionsTableCreateCompanionBuilder,
+    $$ListRecurringExclusionsTableUpdateCompanionBuilder,
+    (
+      ListRecurringExclusion,
+      BaseReferences<_$AppDatabase, $ListRecurringExclusionsTable,
+          ListRecurringExclusion>
+    ),
+    ListRecurringExclusion,
+    PrefetchHooks Function()> {
+  $$ListRecurringExclusionsTableTableManager(
+      _$AppDatabase db, $ListRecurringExclusionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ListRecurringExclusionsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ListRecurringExclusionsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ListRecurringExclusionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> shoppingListId = const Value.absent(),
+            Value<String> ingredientId = const Value.absent(),
+            Value<String> householdId = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ListRecurringExclusionsCompanion(
+            id: id,
+            shoppingListId: shoppingListId,
+            ingredientId: ingredientId,
+            householdId: householdId,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String shoppingListId,
+            required String ingredientId,
+            required String householdId,
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ListRecurringExclusionsCompanion.insert(
+            id: id,
+            shoppingListId: shoppingListId,
+            ingredientId: ingredientId,
+            householdId: householdId,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ListRecurringExclusionsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $ListRecurringExclusionsTable,
+        ListRecurringExclusion,
+        $$ListRecurringExclusionsTableFilterComposer,
+        $$ListRecurringExclusionsTableOrderingComposer,
+        $$ListRecurringExclusionsTableAnnotationComposer,
+        $$ListRecurringExclusionsTableCreateCompanionBuilder,
+        $$ListRecurringExclusionsTableUpdateCompanionBuilder,
+        (
+          ListRecurringExclusion,
+          BaseReferences<_$AppDatabase, $ListRecurringExclusionsTable,
+              ListRecurringExclusion>
+        ),
+        ListRecurringExclusion,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9349,4 +10050,7 @@ class $AppDatabaseManager {
       $$ListManualItemsTableTableManager(_db, _db.listManualItems);
   $$ListChecksTableTableManager get listChecks =>
       $$ListChecksTableTableManager(_db, _db.listChecks);
+  $$ListRecurringExclusionsTableTableManager get listRecurringExclusions =>
+      $$ListRecurringExclusionsTableTableManager(
+          _db, _db.listRecurringExclusions);
 }

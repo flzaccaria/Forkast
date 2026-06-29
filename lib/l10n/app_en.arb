@@ -213,5 +213,41 @@
   "ingredientsSortDesc": "Z → A",
   "ingredientsViewGrouped": "By department",
   "ingredientsViewFlat": "Flat list",
-  "ingredientsUsageCountLabel": "{count, plural, =0{not used} =1{1 dish} other{{count} dishes}}"
+  "ingredientsUsageCountLabel": "{count, plural, =0{not used} =1{1 dish} other{{count} dishes}}",
+
+  "ingredientAlwaysInList": "Always in list",
+  "ingredientAlwaysInListSubtitle": "Automatically added to the shopping list",
+  "ingredientDefaultQty": "Default quantity",
+  "ingredientsFilterRecurring": "Recurring",
+  "ingredientsFilterRecurringOnly": "Recurring only",
+  "ingredientsFilterNonRecurring": "Non-recurring",
+
+  "listResetChecks": "Reset checks",
+  "listResetConfirm": "Clear all check marks? Plan, rows, overrides and manual items stay untouched.",
+  "listResetDone": "Checks reset.",
+  "listExcludeThisWeek": "Exclude this week",
+  "listIncludeAgain": "Include again",
+  "listRecurringLabel": "recurring",
+
+  "historyTitle": "Past weeks",
+  "historyEmpty": "No past weeks.",
+
+  "dishNeverPlanned": "never",
+  "dishThisWeek": "this week",
+  "dishOneWeekAgo": "1 week ago",
+  "dishWeeksAgo": "{count} weeks ago",
+  "@dishWeeksAgo": { "placeholders": { "count": { "type": "int" } } },
+  "dishSortLeastRecent": "Least recent",
+  "dishFilterNotMadeSince": "Not made for over",
+  "dishFilterWeeks": "{count, plural, =1{1 week} other{{count} weeks}}",
+  "@dishFilterWeeks": { "placeholders": { "count": { "type": "int" } } },
+  "dishLastPlannedLabel": "Last made",
+
+  "surpriseMe": "Surprise me",
+  "surpriseMePartial": "Filled {filled} of {total} days. Not enough dishes available.",
+  "@surpriseMePartial": { "placeholders": { "filled": { "type": "int" }, "total": { "type": "int" } } },
+  "surpriseMeRegenerate": "Regenerate",
+  "surpriseMeUndo": "Undo",
+  "surpriseMeNoDishes": "No dishes available for the empty days.",
+  "surpriseMeSuccess": "Plan completed!"
 }

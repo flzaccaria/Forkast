@@ -660,4 +660,103 @@ class AppLocalizationsDa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ingredientAlwaysInList => 'Altid på listen';
+
+  @override
+  String get ingredientAlwaysInListSubtitle =>
+      'Tilføjes automatisk til indkøbslisten';
+
+  @override
+  String get ingredientDefaultQty => 'Standardmængde';
+
+  @override
+  String get ingredientsFilterRecurring => 'Tilbagevendende';
+
+  @override
+  String get ingredientsFilterRecurringOnly => 'Kun tilbagevendende';
+
+  @override
+  String get ingredientsFilterNonRecurring => 'Ikke tilbagevendende';
+
+  @override
+  String get listResetChecks => 'Nulstil flueben';
+
+  @override
+  String get listResetConfirm =>
+      'Fjern alle flueben? Plan, rækker, tilpasninger og manuelle poster forbliver uændrede.';
+
+  @override
+  String get listResetDone => 'Flueben nulstillet.';
+
+  @override
+  String get listExcludeThisWeek => 'Ekskluder denne uge';
+
+  @override
+  String get listIncludeAgain => 'Inkluder igen';
+
+  @override
+  String get listRecurringLabel => 'tilbagevendende';
+
+  @override
+  String get historyTitle => 'Tidligere uger';
+
+  @override
+  String get historyEmpty => 'Ingen tidligere uger.';
+
+  @override
+  String get dishNeverPlanned => 'aldrig';
+
+  @override
+  String get dishThisWeek => 'denne uge';
+
+  @override
+  String get dishOneWeekAgo => '1 uge siden';
+
+  @override
+  String dishWeeksAgo(int count) {
+    return '$count uger siden';
+  }
+
+  @override
+  String get dishSortLeastRecent => 'Mindst nylige';
+
+  @override
+  String get dishFilterNotMadeSince => 'Ikke lavet i over';
+
+  @override
+  String dishFilterWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count uger',
+      one: '1 uge',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dishLastPlannedLabel => 'Sidst lavet';
+
+  @override
+  String get surpriseMe => 'Overrask mig';
+
+  @override
+  String surpriseMePartial(int filled, int total) {
+    return 'Fyldt $filled af $total dage. Ikke nok retter tilgængelige.';
+  }
+
+  @override
+  String get surpriseMeRegenerate => 'Regenerer';
+
+  @override
+  String get surpriseMeUndo => 'Fortryd';
+
+  @override
+  String get surpriseMeNoDishes =>
+      'Ingen retter tilgængelige til de tomme dage.';
+
+  @override
+  String get surpriseMeSuccess => 'Plan fuldført!';
 }

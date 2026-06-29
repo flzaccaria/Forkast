@@ -24,6 +24,8 @@ enum _QbFilter { any, qbOnly, qtyOnly }
 
 enum _UsageFilter { any, used, unused }
 
+enum _RecurringFilter { any, recurringOnly, nonRecurring }
+
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -48,6 +50,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   Unit? _filterUnit;
   _QbFilter _qbFilter = _QbFilter.any;
   _UsageFilter _usageFilter = _UsageFilter.any;
+  _RecurringFilter _recurringFilter = _RecurringFilter.any;
 
   // Sort & view
   _SortField _sortField = _SortField.name;
@@ -72,7 +75,8 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       _filterDepartments.isNotEmpty ||
       _filterUnit != null ||
       _qbFilter != _QbFilter.any ||
-      _usageFilter != _UsageFilter.any;
+      _usageFilter != _UsageFilter.any ||
+      _recurringFilter != _RecurringFilter.any;
 
   void _resetFilters() {
     setState(() {
@@ -80,6 +84,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       _filterUnit = null;
       _qbFilter = _QbFilter.any;
       _usageFilter = _UsageFilter.any;
+      _recurringFilter = _RecurringFilter.any;
     });
   }
 
@@ -111,6 +116,14 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       if (_qbFilter == _QbFilter.qtyOnly && item.ingredient.isQb) return false;
       if (_usageFilter == _UsageFilter.used && item.usageCount == 0) return false;
       if (_usageFilter == _UsageFilter.unused && item.usageCount > 0) return false;
+      if (_recurringFilter == _RecurringFilter.recurringOnly &&
+          !item.ingredient.alwaysInList) {
+        return false;
+      }
+      if (_recurringFilter == _RecurringFilter.nonRecurring &&
+          item.ingredient.alwaysInList) {
+        return false;
+      }
       return true;
     }).toList();
   }
@@ -270,7 +283,8 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
         filterUnit: _filterUnit,
         qbFilter: _qbFilter,
         usageFilter: _usageFilter,
-        onApply: (departments, unit, qb, usage) {
+        recurringFilter: _recurringFilter,
+        onApply: (departments, unit, qb, usage, recurring) {
           setState(() {
             _filterDepartments
               ..clear()
@@ -278,6 +292,7 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             _filterUnit = unit;
             _qbFilter = qb;
             _usageFilter = usage;
+            _recurringFilter = recurring;
           });
         },
       ),
@@ -617,6 +632,7 @@ class _FilterSheet extends StatefulWidget {
     required this.filterUnit,
     required this.qbFilter,
     required this.usageFilter,
+    required this.recurringFilter,
     required this.onApply,
   });
 
@@ -624,7 +640,8 @@ class _FilterSheet extends StatefulWidget {
   final Unit? filterUnit;
   final _QbFilter qbFilter;
   final _UsageFilter usageFilter;
-  final void Function(Set<String?>, Unit?, _QbFilter, _UsageFilter) onApply;
+  final _RecurringFilter recurringFilter;
+  final void Function(Set<String?>, Unit?, _QbFilter, _UsageFilter, _RecurringFilter) onApply;
 
   @override
   State<_FilterSheet> createState() => _FilterSheetState();
@@ -635,9 +652,10 @@ class _FilterSheetState extends State<_FilterSheet> {
   late Unit? _unit = widget.filterUnit;
   late _QbFilter _qb = widget.qbFilter;
   late _UsageFilter _usage = widget.usageFilter;
+  late _RecurringFilter _recurring = widget.recurringFilter;
 
   void _apply() {
-    widget.onApply(_departments, _unit, _qb, _usage);
+    widget.onApply(_departments, _unit, _qb, _usage, _recurring);
     Navigator.of(context).pop();
   }
 
@@ -647,6 +665,7 @@ class _FilterSheetState extends State<_FilterSheet> {
       _unit = null;
       _qb = _QbFilter.any;
       _usage = _UsageFilter.any;
+      _recurring = _RecurringFilter.any;
     });
   }
 
@@ -752,6 +771,29 @@ class _FilterSheetState extends State<_FilterSheet> {
                   selected: _usage == _UsageFilter.unused,
                   onSelected: (sel) => setState(
                       () => _usage = sel ? _UsageFilter.unused : _UsageFilter.any),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Recurring
+            Text(l.ingredientsFilterRecurring,
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text(l.ingredientsFilterRecurringOnly),
+                  selected: _recurring == _RecurringFilter.recurringOnly,
+                  onSelected: (sel) => setState(() => _recurring =
+                      sel ? _RecurringFilter.recurringOnly : _RecurringFilter.any),
+                ),
+                ChoiceChip(
+                  label: Text(l.ingredientsFilterNonRecurring),
+                  selected: _recurring == _RecurringFilter.nonRecurring,
+                  onSelected: (sel) => setState(() => _recurring =
+                      sel ? _RecurringFilter.nonRecurring : _RecurringFilter.any),
                 ),
               ],
             ),

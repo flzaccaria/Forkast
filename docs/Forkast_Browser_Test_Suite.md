@@ -212,6 +212,44 @@ aggiorna il caso BT corrispondente in quel file, con la colonna "Previene" che c
 introduce una regressione critica, marca il caso 🔴 (smoke set). Non rimuovere casi BT senza motivo esplicito.
 ```
 
+## Storico piani e reset spesa (P12, FR-30/31)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-150 | 🟡 | Pianifica piatti in settimana 25, avanza a settimana 26, torna a 25 via freccia sinistra | I piatti della settimana 25 sono ancora visibili | FR-30: ritenzione storico |
+| BT-151 | 🟡 | Piano → icona storico (orologio) | Si apre la vista storico con le settimane passate in ordine decrescente | FR-30: navigazione storico |
+| BT-152 | 🟡 | Storico: tocca una settimana passata | Si espande mostrando piatti e commensali per giorno (sola lettura) | FR-30: dettaglio storico |
+| BT-153 | 🟡 | Lista → menu ⋮ → "Azzera spunte", conferma | Tutte le spunte spariscono; righe generate, override e voci manuali restano | FR-31: reset spunte |
+
+## Da quanto non lo facciamo (P13, FR-24/25)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-160 | 🟡 | Crea un piatto, pianificalo 3 settimane fa, apri catalogo Piatti | Sotto il piatto appare "3 settimane fa" | FR-24: da quanto |
+| BT-161 | 🟡 | Crea un piatto senza pianificarlo, apri catalogo | Sotto il piatto appare "mai" | FR-24: mai pianificato |
+| BT-162 | 🟡 | Attiva filtro "Non fatto da oltre 2 settimane" | Solo piatti con ≥2 settimane o mai appaiono | FR-25: filtro settimane |
+| BT-163 | 🟡 | Attiva ordinamento "Meno recenti" | Piatti ordinati per data crescente, mai-pianificati in cima | FR-25: ordinamento |
+
+## Sorprendimi (P14, FR-26/27)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-170 | 🟡 | Piano con 2 giorni pieni e 5 vuoti → tocca "Sorprendimi" | Solo i 5 giorni vuoti vengono riempiti; i 2 pieni restano invariati | FR-26: non sovrascrive |
+| BT-171 | 🟡 | Dopo Sorprendimi, verifica che non ci siano piatti ripetuti nella settimana | Ogni piatto appare al massimo una volta | FR-26: no ripetizioni |
+| BT-172 | 🟡 | Dopo Sorprendimi, tocca "Annulla" | I piatti auto-assegnati spariscono; quelli manuali restano | FR-27: annulla |
+| BT-173 | 🟡 | Con pochi piatti nel catalogo (meno dei giorni vuoti), tocca "Sorprendimi" | Riempimento parziale + snackbar di avviso | FR-26: riempimento parziale |
+
+## Ricorrenti / Sempre in lista (P15, FR-28/29)
+
+| ID | Pri | Passi | Atteso | Previene |
+| --- | --- | --- | --- | --- |
+| BT-180 | 🔴 | Ingredienti → modifica → attiva "Sempre in lista" con qty 500g, genera lista | L'ingrediente appare nella lista con almeno 500g (sommato se anche in un piatto) | FR-28: ricorrente in lista |
+| BT-181 | 🟡 | Ingrediente ricorrente q.b., genera lista | Appare come promemoria senza quantità | FR-28: ricorrente q.b. |
+| BT-182 | 🟡 | Stesso ingrediente ricorrente (200g) + in un piatto (300g per 4, 4 commensali) → genera | Una sola riga con 500g | FR-28: aggregazione |
+| BT-183 | 🟡 | Lista → tocca riga ricorrente → "Escludi questa settimana" | L'ingrediente scompare dalla lista corrente | FR-29: esclusione |
+| BT-184 | 🟡 | Dopo esclusione, avanza alla settimana dopo, genera lista | L'ingrediente ricorrente riappare (esclusione non persiste) | FR-29: esclusione non persiste |
+| BT-185 | 🟡 | Ingredienti → filtro "Ricorrenti" | Mostra solo gli ingredienti con "Sempre in lista" attivo | FR-28: filtro ricorrenti |
+
 ## Storico esecuzioni (compila a ogni giro)
 
 | Data | Build / Version ID | Smoke | Note / fail |

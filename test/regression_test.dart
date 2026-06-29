@@ -29,7 +29,9 @@ Future<void> _createSchema(AppDatabase db) async {
   await exec('''CREATE TABLE ingredient (
     id TEXT PRIMARY KEY, household_id TEXT, name TEXT, unit TEXT,
     is_qb INTEGER, category TEXT, rounding_kind TEXT,
-    seed_key TEXT, name_modified INTEGER, created_at TEXT, updated_at TEXT)''');
+    seed_key TEXT, name_modified INTEGER,
+    always_in_list INTEGER DEFAULT 0, default_qty REAL,
+    created_at TEXT, updated_at TEXT)''');
   await exec('''CREATE TABLE tag (
     id TEXT PRIMARY KEY, household_id TEXT, name TEXT,
     tag_group TEXT, color TEXT, sort_order INTEGER,
@@ -53,7 +55,8 @@ Future<void> _createSchema(AppDatabase db) async {
     day_of_week INTEGER, guests INTEGER, created_at TEXT, updated_at TEXT)''');
   await exec('''CREATE TABLE plan_day_dish (
     id TEXT PRIMARY KEY, plan_day_id TEXT, dish_id TEXT,
-    household_id TEXT, sort_order INTEGER, created_at TEXT)''');
+    household_id TEXT, sort_order INTEGER, auto_assigned INTEGER DEFAULT 0,
+    created_at TEXT)''');
   await exec('''CREATE TABLE shopping_list (
     id TEXT PRIMARY KEY, household_id TEXT, week_plan_id TEXT,
     generated_at TEXT, plan_hash TEXT, created_at TEXT, updated_at TEXT)''');

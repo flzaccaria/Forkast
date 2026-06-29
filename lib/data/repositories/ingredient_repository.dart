@@ -61,6 +61,8 @@ class IngredientRepository {
     bool isQb = false,
     String? category,
     String roundingKind = 'weight',
+    bool alwaysInList = false,
+    double? defaultQty,
   }) async {
     final now = DateTime.now().toUtc();
     final id = _uuid.v4();
@@ -74,6 +76,8 @@ class IngredientRepository {
             category: Value(category),
             roundingKind: Value(roundingKind),
             nameModified: const Value(false),
+            alwaysInList: Value(alwaysInList),
+            defaultQty: Value(defaultQty),
             createdAt: now,
             updatedAt: now,
           ),
@@ -88,6 +92,8 @@ class IngredientRepository {
       roundingKind: roundingKind,
       seedKey: null,
       nameModified: false,
+      alwaysInList: alwaysInList,
+      defaultQty: defaultQty,
       createdAt: now,
       updatedAt: now,
     );
@@ -125,6 +131,8 @@ class IngredientRepository {
     bool? isQb,
     String? roundingKind,
     Value<String?> category = const Value.absent(),
+    Value<bool> alwaysInList = const Value.absent(),
+    Value<double?> defaultQty = const Value.absent(),
   }) async {
     final locked = await usageCount(ingredientId) > 0;
 
@@ -146,11 +154,37 @@ class IngredientRepository {
           : Value(roundingKind),
       category: category,
       nameModified: nameModifiedPatch,
+      alwaysInList: alwaysInList,
+      defaultQty: defaultQty,
       updatedAt: Value(DateTime.now().toUtc()),
     );
     await (_db.update(_db.ingredients)
           ..where((i) => i.id.equals(ingredientId)))
         .write(patch);
+  }
+
+  /// Updates the "always in list" flag and optional default quantity (FR-28).
+  Future<void> setAlwaysInList(
+    String ingredientId, {
+    required bool alwaysInList,
+    double? defaultQty,
+  }) async {
+    await (_db.update(_db.ingredients)
+          ..where((i) => i.id.equals(ingredientId)))
+        .write(IngredientsCompanion(
+      alwaysInList: Value(alwaysInList),
+      defaultQty: Value(alwaysInList ? defaultQty : null),
+      updatedAt: Value(DateTime.now().toUtc()),
+    ));
+  }
+
+  /// Stream of recurring ingredients (always_in_list = true).
+  Stream<List<Ingredient>> watchRecurring() {
+    return (_db.select(_db.ingredients)
+          ..where((i) =>
+              i.householdId.equals(_householdId) & i.alwaysInList.equals(true))
+          ..orderBy([(i) => OrderingTerm(expression: i.name)]))
+        .watch();
   }
 
   /// The unit is locked when the ingredient is used (FR-16).

@@ -96,6 +96,8 @@ void main() {
         rounding_kind TEXT,
         seed_key TEXT,
         name_modified INTEGER DEFAULT 0,
+        always_in_list INTEGER DEFAULT 0,
+        default_qty REAL,
         created_at TEXT,
         updated_at TEXT
       )''');
@@ -109,6 +111,8 @@ void main() {
         recipe_url TEXT,
         seed_key TEXT,
         name_modified INTEGER DEFAULT 0,
+        always_in_list INTEGER DEFAULT 0,
+        default_qty REAL,
         created_at TEXT,
         updated_at TEXT
       )''');

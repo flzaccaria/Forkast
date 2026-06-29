@@ -10,6 +10,7 @@ import '../app_scope.dart';
 import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 import 'day_screen.dart';
+import 'history_screen.dart';
 
 class PlanScreen extends StatefulWidget {
   const PlanScreen({super.key});
@@ -123,6 +124,31 @@ class _PlanScreenState extends State<PlanScreen> {
     }
   }
 
+  Future<void> _surpriseMe() async {
+    final l = AppLocalizations.of(context);
+    final result = await _repo.surpriseMe(_year, _week);
+    if (!mounted) return;
+    if (result.filledCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.surpriseMeNoDishes)),
+      );
+    } else if (result.isPartial) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(l.surpriseMePartial(result.filledCount, result.requestedCount))),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.surpriseMeSuccess)),
+      );
+    }
+  }
+
+  Future<void> _undoSurpriseMe() async {
+    await _repo.undoSurpriseMe(_year, _week);
+  }
+
   Future<void> _openDay(int dayOfWeek) async {
     final date = dateOfIsoWeek(_year, _week, dayOfWeek);
     await Navigator.of(context).push(
@@ -158,6 +184,9 @@ class _PlanScreenState extends State<PlanScreen> {
             onPrev: () => _shiftWeek(-1),
             onNext: () => _shiftWeek(1),
             onToday: _goToday,
+            onHistory: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HistoryScreen()),
+            ),
           ),
           Divider(
             height: 0.5,
@@ -243,22 +272,48 @@ class _PlanScreenState extends State<PlanScreen> {
             },
           ),
         ),
-        if (!weekEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _copyPreviousWeek,
-                icon: const Icon(Icons.copy_all_outlined, size: 16),
-                label: Text(l.planCopyPrevWeek),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              StreamBuilder<bool>(
+                stream: _repo.watchHasAutoAssigned(_year, _week),
+                builder: (context, snap) {
+                  if (snap.data != true) return const SizedBox.shrink();
+                  return TextButton.icon(
+                    onPressed: _undoSurpriseMe,
+                    icon: const Icon(Icons.undo_outlined, size: 16),
+                    label: Text(l.surpriseMeUndo),
+                    style: TextButton.styleFrom(
+                      foregroundColor: tokens.inkMuted,
+                      textStyle: const TextStyle(fontSize: 13),
+                    ),
+                  );
+                },
+              ),
+              TextButton.icon(
+                onPressed: _surpriseMe,
+                icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                label: Text(l.surpriseMe),
                 style: TextButton.styleFrom(
                   foregroundColor: tokens.inkMuted,
                   textStyle: const TextStyle(fontSize: 13),
                 ),
               ),
-            ),
+              if (!weekEmpty)
+                TextButton.icon(
+                  onPressed: _copyPreviousWeek,
+                  icon: const Icon(Icons.copy_all_outlined, size: 16),
+                  label: Text(l.planCopyPrevWeek),
+                  style: TextButton.styleFrom(
+                    foregroundColor: tokens.inkMuted,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
+                ),
+            ],
           ),
+        ),
       ],
     );
   }
@@ -389,6 +444,7 @@ class _WeekHeader extends StatelessWidget {
     required this.onPrev,
     required this.onNext,
     required this.onToday,
+    required this.onHistory,
   });
 
   final String label;
@@ -396,6 +452,7 @@ class _WeekHeader extends StatelessWidget {
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onToday;
+  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -427,6 +484,11 @@ class _WeekHeader extends StatelessWidget {
             onPressed: onNext,
           ),
           TextButton(onPressed: onToday, child: Text(l.planToday)),
+          IconButton(
+            icon: const Icon(Icons.history_outlined, size: 20),
+            tooltip: l.historyTitle,
+            onPressed: onHistory,
+          ),
         ],
       ),
     );

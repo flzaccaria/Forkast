@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/dish_enums.dart';
 import '../../core/display_name.dart';
 import '../../core/l10n_enums.dart';
+import '../../core/last_planned.dart';
 import '../../data/database.dart';
 import '../../data/repositories/dish_repository.dart';
 import '../../data/repositories/tag_repository.dart';
@@ -12,6 +13,8 @@ import '../theme.dart';
 import '../widgets/forkast_app_bar.dart';
 import 'confirm_delete_dish.dart';
 import 'dish_editor_screen.dart';
+
+enum _DishSort { name, leastRecent }
 
 class DishesScreen extends StatefulWidget {
   const DishesScreen({super.key});
@@ -23,12 +26,14 @@ class DishesScreen extends StatefulWidget {
 class _DishesScreenState extends State<DishesScreen> {
   late DishRepository _repo;
   late TagRepository _tagRepo;
-  late Stream<List<DishWithTags>> _stream;
+  late Stream<List<DishWithLastPlanned>> _stream;
   final _searchController = TextEditingController();
   String _query = '';
   String? _filterTagId;
   Difficulty? _filterDifficulty;
   TimeEstimate? _filterTime;
+  _DishSort _sort = _DishSort.name;
+  int? _notMadeSinceWeeks;
 
   @override
   void didChangeDependencies() {
@@ -40,12 +45,30 @@ class _DishesScreenState extends State<DishesScreen> {
   }
 
   void _refreshStream() {
-    _stream = _repo.watchAllWithTags(
+    _stream = _repo.watchAllWithTagsAndLastPlanned(
       query: _query,
       tagId: _filterTagId,
       difficulty: _filterDifficulty?.dbValue,
       timeEstimate: _filterTime?.dbValue,
     );
+  }
+
+  List<DishWithLastPlanned> _applySortAndFilter(List<DishWithLastPlanned> items) {
+    var result = items;
+    if (_notMadeSinceWeeks != null) {
+      result = result.where((d) {
+        final w = weeksAgo(d.lastPlannedDate);
+        return w < 0 || w >= _notMadeSinceWeeks!;
+      }).toList();
+    }
+    if (_sort == _DishSort.leastRecent) {
+      result = [...result]..sort((a, b) {
+        final aw = a.lastPlannedDate?.millisecondsSinceEpoch ?? 0;
+        final bw = b.lastPlannedDate?.millisecondsSinceEpoch ?? 0;
+        return aw.compareTo(bw);
+      });
+    }
+    return result;
   }
 
   @override
@@ -86,6 +109,8 @@ class _DishesScreenState extends State<DishesScreen> {
             selectedTagId: _filterTagId,
             selectedDifficulty: _filterDifficulty,
             selectedTime: _filterTime,
+            sort: _sort,
+            notMadeSinceWeeks: _notMadeSinceWeeks,
             onTagSelected: (id) {
               _filterTagId = id;
               _refreshStream();
@@ -101,16 +126,18 @@ class _DishesScreenState extends State<DishesScreen> {
               _refreshStream();
               setState(() {});
             },
+            onSortChanged: (s) => setState(() => _sort = s),
+            onNotMadeSinceChanged: (w) => setState(() => _notMadeSinceWeeks = w),
           ),
           Expanded(
-            child: StreamBuilder<List<DishWithTags>>(
+            child: StreamBuilder<List<DishWithLastPlanned>>(
               stream: _stream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final dishes = snapshot.data!;
-                if (dishes.isEmpty) {
+                final raw = snapshot.data!;
+                if (raw.isEmpty) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -124,6 +151,7 @@ class _DishesScreenState extends State<DishesScreen> {
                     ),
                   );
                 }
+                final dishes = _applySortAndFilter(raw);
                 return ListView.separated(
                   padding: const EdgeInsets.only(bottom: 80),
                   itemCount: dishes.length,
@@ -138,6 +166,7 @@ class _DishesScreenState extends State<DishesScreen> {
                     return _DishRow(
                       dish: item.dish,
                       tags: item.tags,
+                      lastPlannedDate: item.lastPlannedDate,
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) =>
@@ -169,12 +198,14 @@ class _DishRow extends StatelessWidget {
   const _DishRow({
     required this.dish,
     required this.tags,
+    this.lastPlannedDate,
     required this.onTap,
     required this.onDismiss,
   });
 
   final Dish dish;
   final List<Tag> tags;
+  final DateTime? lastPlannedDate;
   final VoidCallback onTap;
   final Future<bool?> Function() onDismiss;
 
@@ -227,6 +258,14 @@ class _DishRow extends StatelessWidget {
                       const SizedBox(height: 6),
                       Wrap(spacing: 6, runSpacing: 4, children: chips),
                     ],
+                    const SizedBox(height: 2),
+                    Text(
+                      formatLastPlanned(lastPlannedDate, l),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: tokens.inkMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -301,18 +340,26 @@ class _FilterBar extends StatelessWidget {
     required this.selectedTagId,
     required this.selectedDifficulty,
     required this.selectedTime,
+    required this.sort,
+    required this.notMadeSinceWeeks,
     required this.onTagSelected,
     required this.onDifficultySelected,
     required this.onTimeSelected,
+    required this.onSortChanged,
+    required this.onNotMadeSinceChanged,
   });
 
   final TagRepository tagRepo;
   final String? selectedTagId;
   final Difficulty? selectedDifficulty;
   final TimeEstimate? selectedTime;
+  final _DishSort sort;
+  final int? notMadeSinceWeeks;
   final ValueChanged<String?> onTagSelected;
   final ValueChanged<Difficulty?> onDifficultySelected;
   final ValueChanged<TimeEstimate?> onTimeSelected;
+  final ValueChanged<_DishSort> onSortChanged;
+  final ValueChanged<int?> onNotMadeSinceChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -373,6 +420,25 @@ class _FilterBar extends StatelessWidget {
                     label: Text(t.localizedLabel(l)),
                     selected: selectedTime == t,
                     onSelected: (sel) => onTimeSelected(sel ? t : null),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(l.dishSortLeastRecent),
+                  selected: sort == _DishSort.leastRecent,
+                  onSelected: (sel) => onSortChanged(
+                      sel ? _DishSort.leastRecent : _DishSort.name),
+                ),
+              ),
+              for (final w in [2, 4, 8])
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text('${l.dishFilterNotMadeSince} ${l.dishFilterWeeks(w)}'),
+                    selected: notMadeSinceWeeks == w,
+                    onSelected: (sel) =>
+                        onNotMadeSinceChanged(sel ? w : null),
                   ),
                 ),
             ],

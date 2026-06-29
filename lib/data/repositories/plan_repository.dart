@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/surprise_me.dart';
+import '../../core/week.dart';
 import '../database.dart';
 
 /// Seed-translatable dish name carried by plan DTOs.
@@ -71,6 +73,24 @@ class PlanRepository {
   /// Configured week start day (FR-20), `DateTime.weekday` convention
   /// (1 = Monday … 7 = Sunday).
   Future<int> weekStartDay() async => (await _getHousehold()).weekStartDay;
+
+  /// All past week plans (year/week < current), ordered descending.
+  Stream<List<WeekPlan>> watchPastWeekPlans() {
+    final now = DateTime.now();
+    final currentYear = isoWeekYear(now);
+    final currentWeek = isoWeekNumber(now);
+    return (_db.select(_db.weekPlans)
+          ..where((w) =>
+              w.householdId.equals(_householdId) &
+              (w.year.isSmallerThanValue(currentYear) |
+                  (w.year.equals(currentYear) &
+                      w.week.isSmallerThanValue(currentWeek))))
+          ..orderBy([
+            (w) => OrderingTerm.desc(w.year),
+            (w) => OrderingTerm.desc(w.week),
+          ]))
+        .watch();
+  }
 
   Stream<WeekPlan?> watchWeekPlan(int year, int week) {
     return (_db.select(_db.weekPlans)
@@ -227,7 +247,8 @@ class PlanRepository {
 
   /// Assigns the selected dishes to the evening, avoiding already-present
   /// duplicates. The same dish can appear on different days (FR-9).
-  Future<void> addDishes(String planDayId, List<String> dishIds) async {
+  Future<void> addDishes(String planDayId, List<String> dishIds,
+      {bool autoAssigned = false}) async {
     if (dishIds.isEmpty) return;
     final now = DateTime.now().toUtc();
     final existing = await (_db.select(_db.planDayDishes)
@@ -247,6 +268,7 @@ class PlanRepository {
             dishId: dishId,
             householdId: _householdId,
             sortOrder: Value(nextSort++),
+            autoAssigned: Value(autoAssigned),
             createdAt: now,
           ),
         );
@@ -322,6 +344,135 @@ class PlanRepository {
       }
       await addDishes(target.id, dishes.map((d) => d.dishId).toList());
     }
+  }
+  // --- Sorprendimi (FR-26/27) ------------------------------------------------
+
+  /// Fills empty days of the week with dishes (FR-26). Returns the result
+  /// with fill counts. Uses the "least recently planned" heuristic (P13).
+  Future<SurpriseMeResult> surpriseMe(int year, int week) async {
+    final weekPlanId = await _ensureWeekPlan(year, week);
+    final allDays = await (_db.select(_db.planDays)
+          ..where((d) => d.weekPlanId.equals(weekPlanId)))
+        .get();
+    final dayMap = {for (final d in allDays) d.dayOfWeek: d};
+
+    final allDishes = await (_db.select(_db.planDayDishes)
+          ..where((p) => p.planDayId
+              .isIn(allDays.map((d) => d.id).toList())))
+        .get();
+    final dishesPerDay = <int, List<String>>{};
+    for (final pdd in allDishes) {
+      final day = allDays.firstWhere((d) => d.id == pdd.planDayId);
+      (dishesPerDay[day.dayOfWeek] ??= []).add(pdd.dishId);
+    }
+
+    final emptyDays = <int>[];
+    final assigned = <String>{};
+    for (var dow = DateTime.monday; dow <= DateTime.sunday; dow++) {
+      final dishes = dishesPerDay[dow] ?? [];
+      if (dishes.isEmpty) {
+        emptyDays.add(dow);
+      } else {
+        assigned.addAll(dishes);
+      }
+    }
+
+    if (emptyDays.isEmpty) {
+      return SurpriseMeResult(
+          assignments: {}, requestedCount: 0, filledCount: 0);
+    }
+
+    final now = DateTime.now();
+    final cy = isoWeekYear(now);
+    final cw = isoWeekNumber(now);
+    final catalog = await (_db.select(_db.dishes)
+          ..where((d) => d.householdId.equals(_householdId)))
+        .get();
+
+    final lastPlannedRows = await _db.customSelect(
+      'SELECT pdd.dish_id AS dish_id, '
+      'MAX(wp.year * 100 + wp.week) AS last_yw '
+      'FROM plan_day_dish pdd '
+      'JOIN plan_day pd ON pd.id = pdd.plan_day_id '
+      'JOIN week_plan wp ON wp.id = pd.week_plan_id '
+      'WHERE wp.household_id = ? '
+      'AND (wp.year < ? OR (wp.year = ? AND wp.week <= ?)) '
+      'GROUP BY pdd.dish_id',
+      variables: [
+        Variable.withString(_householdId),
+        Variable.withInt(cy),
+        Variable.withInt(cy),
+        Variable.withInt(cw),
+      ],
+    ).get();
+    final lastPlanned = <String, DateTime>{};
+    for (final r in lastPlannedRows) {
+      final yw = r.read<int>('last_yw');
+      lastPlanned[r.read<String>('dish_id')] =
+          dateOfIsoWeek(yw ~/ 100, yw % 100, DateTime.monday);
+    }
+
+    final candidates = catalog
+        .map((d) => SurpriseMeCandidate(
+              dishId: d.id,
+              difficulty: d.difficulty,
+              timeEstimate: d.timeEstimate,
+              lastPlannedDate: lastPlanned[d.id],
+            ))
+        .toList();
+
+    final result = selectSurpriseDishes(
+      emptyDays: emptyDays,
+      alreadyAssignedThisWeek: assigned,
+      candidates: candidates,
+    );
+
+    for (final entry in result.assignments.entries) {
+      final day =
+          dayMap[entry.key] ?? await ensurePlanDay(year, week, entry.key);
+      await addDishes(day.id, [entry.value], autoAssigned: true);
+    }
+
+    return result;
+  }
+
+  /// Removes all auto-assigned dishes from the week (FR-27 "Annulla").
+  Future<void> undoSurpriseMe(int year, int week) async {
+    final plan = await (_db.select(_db.weekPlans)
+          ..where((w) =>
+              w.householdId.equals(_householdId) &
+              w.year.equals(year) &
+              w.week.equals(week)))
+        .getSingleOrNull();
+    if (plan == null) return;
+    final days = await (_db.select(_db.planDays)
+          ..where((d) => d.weekPlanId.equals(plan.id)))
+        .get();
+    if (days.isEmpty) return;
+    await (_db.delete(_db.planDayDishes)
+          ..where((p) =>
+              p.planDayId.isIn(days.map((d) => d.id).toList()) &
+              p.autoAssigned.equals(true)))
+        .go();
+  }
+
+  /// Whether the week has auto-assigned dishes (for showing undo UI).
+  Stream<bool> watchHasAutoAssigned(int year, int week) {
+    return watchWeekPlan(year, week).asyncMap((wp) async {
+      if (wp == null) return false;
+      final days = await (_db.select(_db.planDays)
+            ..where((d) => d.weekPlanId.equals(wp.id)))
+          .get();
+      if (days.isEmpty) return false;
+      final count = _db.planDayDishes.id.count();
+      final query = _db.selectOnly(_db.planDayDishes)
+        ..addColumns([count])
+        ..where(_db.planDayDishes.planDayId
+                .isIn(days.map((d) => d.id).toList()) &
+            _db.planDayDishes.autoAssigned.equals(true));
+      final row = await query.getSingle();
+      return (row.read(count) ?? 0) > 0;
+    });
   }
 }
 

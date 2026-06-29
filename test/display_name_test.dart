@@ -25,6 +25,8 @@ void main() {
       isQb: false,
       seedKey: seedKey,
       nameModified: nameModified,
+      alwaysInList: false,
+      defaultQty: null,
       createdAt: now,
       updatedAt: now,
     );

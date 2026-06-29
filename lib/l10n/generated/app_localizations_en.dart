@@ -660,4 +660,102 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get ingredientAlwaysInList => 'Always in list';
+
+  @override
+  String get ingredientAlwaysInListSubtitle =>
+      'Automatically added to the shopping list';
+
+  @override
+  String get ingredientDefaultQty => 'Default quantity';
+
+  @override
+  String get ingredientsFilterRecurring => 'Recurring';
+
+  @override
+  String get ingredientsFilterRecurringOnly => 'Recurring only';
+
+  @override
+  String get ingredientsFilterNonRecurring => 'Non-recurring';
+
+  @override
+  String get listResetChecks => 'Reset checks';
+
+  @override
+  String get listResetConfirm =>
+      'Clear all check marks? Plan, rows, overrides and manual items stay untouched.';
+
+  @override
+  String get listResetDone => 'Checks reset.';
+
+  @override
+  String get listExcludeThisWeek => 'Exclude this week';
+
+  @override
+  String get listIncludeAgain => 'Include again';
+
+  @override
+  String get listRecurringLabel => 'recurring';
+
+  @override
+  String get historyTitle => 'Past weeks';
+
+  @override
+  String get historyEmpty => 'No past weeks.';
+
+  @override
+  String get dishNeverPlanned => 'never';
+
+  @override
+  String get dishThisWeek => 'this week';
+
+  @override
+  String get dishOneWeekAgo => '1 week ago';
+
+  @override
+  String dishWeeksAgo(int count) {
+    return '$count weeks ago';
+  }
+
+  @override
+  String get dishSortLeastRecent => 'Least recent';
+
+  @override
+  String get dishFilterNotMadeSince => 'Not made for over';
+
+  @override
+  String dishFilterWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weeks',
+      one: '1 week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dishLastPlannedLabel => 'Last made';
+
+  @override
+  String get surpriseMe => 'Surprise me';
+
+  @override
+  String surpriseMePartial(int filled, int total) {
+    return 'Filled $filled of $total days. Not enough dishes available.';
+  }
+
+  @override
+  String get surpriseMeRegenerate => 'Regenerate';
+
+  @override
+  String get surpriseMeUndo => 'Undo';
+
+  @override
+  String get surpriseMeNoDishes => 'No dishes available for the empty days.';
+
+  @override
+  String get surpriseMeSuccess => 'Plan completed!';
 }

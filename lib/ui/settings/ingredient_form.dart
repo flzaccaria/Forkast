@@ -43,6 +43,12 @@ class _IngredientFormState extends State<_IngredientForm> {
   late bool _isQb = widget.existing?.isQb ?? false;
   late String? _category = widget.existing?.category;
   late Unit _selectedUnit = _resolveInitialUnit();
+  late bool _alwaysInList = widget.existing?.alwaysInList ?? false;
+  late final _defaultQtyController = TextEditingController(
+    text: widget.existing?.defaultQty != null
+        ? widget.existing!.defaultQty.toString()
+        : '',
+  );
   bool _saving = false;
 
   bool _unitLocked = false;
@@ -70,6 +76,7 @@ class _IngredientFormState extends State<_IngredientForm> {
   @override
   void dispose() {
     _nameController.dispose();
+    _defaultQtyController.dispose();
     super.dispose();
   }
 
@@ -81,6 +88,8 @@ class _IngredientFormState extends State<_IngredientForm> {
       final name = _nameController.text.trim();
       final unit = _isQb ? 'q.b.' : _selectedUnit.dbValue;
       final roundingKind = _isQb ? null : _selectedUnit.roundingKind;
+      final defaultQty = double.tryParse(
+          _defaultQtyController.text.replaceAll(',', '.'));
       if (_isEditing) {
         await widget.repo.update(
           widget.existing!.id,
@@ -89,6 +98,8 @@ class _IngredientFormState extends State<_IngredientForm> {
           isQb: _unitLocked ? null : _isQb,
           roundingKind: _unitLocked ? null : roundingKind,
           category: Value(_category),
+          alwaysInList: Value(_alwaysInList),
+          defaultQty: Value(_alwaysInList ? defaultQty : null),
         );
         if (mounted) Navigator.of(context).pop(widget.existing);
       } else {
@@ -98,6 +109,8 @@ class _IngredientFormState extends State<_IngredientForm> {
           isQb: _isQb,
           category: _category,
           roundingKind: roundingKind ?? 'weight',
+          alwaysInList: _alwaysInList,
+          defaultQty: _alwaysInList ? defaultQty : null,
         );
         if (mounted) Navigator.of(context).pop(created);
       }
@@ -175,6 +188,27 @@ class _IngredientFormState extends State<_IngredientForm> {
               ],
               onChanged: (v) => setState(() => _category = v),
             ),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.ingredientAlwaysInList),
+              subtitle: Text(l.ingredientAlwaysInListSubtitle),
+              value: _alwaysInList,
+              onChanged: (v) => setState(() => _alwaysInList = v),
+            ),
+            if (_alwaysInList && !_isQb)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: TextFormField(
+                  controller: _defaultQtyController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: l.ingredientDefaultQty,
+                    suffixText: _selectedUnit.dbValue,
+                  ),
+                ),
+              ),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _saving ? null : _save,
