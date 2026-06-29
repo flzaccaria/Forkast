@@ -117,11 +117,11 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       if (_usageFilter == _UsageFilter.used && item.usageCount == 0) return false;
       if (_usageFilter == _UsageFilter.unused && item.usageCount > 0) return false;
       if (_recurringFilter == _RecurringFilter.recurringOnly &&
-          !item.ingredient.alwaysInList) {
+          !(item.ingredient.alwaysInList ?? false)) {
         return false;
       }
       if (_recurringFilter == _RecurringFilter.nonRecurring &&
-          item.ingredient.alwaysInList) {
+          (item.ingredient.alwaysInList ?? false)) {
         return false;
       }
       return true;
