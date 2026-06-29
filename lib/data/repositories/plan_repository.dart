@@ -61,22 +61,16 @@ class PlanRepository {
 
   static const _uuid = Uuid();
 
+  Future<Household> _getHousehold() =>
+      (_db.select(_db.households)..where((h) => h.id.equals(_householdId)))
+          .getSingle();
+
   /// Default guests for the household (FR-8).
-  Future<int> defaultGuests() async {
-    final household = await (_db.select(_db.households)
-          ..where((h) => h.id.equals(_householdId)))
-        .getSingle();
-    return household.defaultGuests;
-  }
+  Future<int> defaultGuests() async => (await _getHousehold()).defaultGuests;
 
   /// Configured week start day (FR-20), `DateTime.weekday` convention
   /// (1 = Monday … 7 = Sunday).
-  Future<int> weekStartDay() async {
-    final household = await (_db.select(_db.households)
-          ..where((h) => h.id.equals(_householdId)))
-        .getSingle();
-    return household.weekStartDay;
-  }
+  Future<int> weekStartDay() async => (await _getHousehold()).weekStartDay;
 
   Stream<WeekPlan?> watchWeekPlan(int year, int week) {
     return (_db.select(_db.weekPlans)

@@ -12,6 +12,10 @@ String removeDiacritics(String input) {
   return buf.toString();
 }
 
+/// Normalizes [input] for accent- and case-insensitive comparison.
+String normalizeForSearch(String input) =>
+    removeDiacritics(input).toLowerCase();
+
 const _map = <String, String>{
   // Uppercase accented vowels
   'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A',
