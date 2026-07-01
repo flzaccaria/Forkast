@@ -68,7 +68,7 @@ Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima 
 | BT-10 | 🔴 | Crea un piatto | Compare nel catalogo Piatti entro ~2s | watch() che non riemette |
 | BT-11 | 🔴 | Aggiungi un piatto al piano → vai su Lista | La lista si aggiorna da sola entro ~2s | rigenerazione non reattiva |
 | BT-12 | 🟡 | Override/spunta su una riga della Lista | Cambio visibile subito, persiste | stream Lista incompleto |
-| BT-13 | 🔴 | Cambia lingua (Impostazioni) | Etichette UI **e** nomi seed cambiano subito | rebuild su locale mancante |
+| BT-13 | 🔴 | Apri Impostazioni → cambia lingua → osserva la schermata montata | Tutte le etichette (titolo, intestazioni sezione, voci) si traducono **in-place** senza navigare via; nessun LateInitializationError in console; verifica IT↔EN↔DA in entrambe le direzioni | LateInitializationError su rebuild da cambio locale → schermata montata non ri-localizzata |
 
 ## 3. Calcolo (l'oracolo)
 
@@ -180,6 +180,7 @@ Se SM-1/2/3/4 falliscono: è **infrastruttura**, fermati e sistema quella prima 
 | BT-140 | 🟡 | Nell'editor piatto, tap "Aggiungi" ingrediente → digita "pomo" | La lista filtra mostrando solo ingredienti con "pomo" nel nome | D3: filtro non attivo |
 | BT-141 | 🟡 | Digita "pomodroi" (typo) → tap "Crea nuovo ingrediente" | Dialog avviso "Ingredienti simili: Pomodori" → l'utente può annullare o creare comunque | D3: anti-doppioni assente |
 | BT-142 | 🟡 | Seleziona un ingrediente esistente dal catalogo | La riga eredita unità/q.b. dal catalogo; non viene creata una nuova voce | D3: selezione crea duplicato |
+| BT-143 | 🔴 | Crea un piatto con 2 ingredienti (A e B) → riaprilo in "Modifica piatto" → aggiungi un 3° ingrediente C, impostane la quantità → salva → riapri il piatto | Tutti e 3 gli ingredienti (A, B, C) sono presenti con le rispettive quantità | perdita ingredienti in editor piatto: batch() dopo DELETE nella stessa transazione su web PowerSync |
 
 ## 15. Reparti e raggruppamento (FR-22/23)
 

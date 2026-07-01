@@ -345,34 +345,33 @@ class DishRepository {
           .go();
       await (_db.delete(_db.dishTags)..where((dt) => dt.dishId.equals(dishId)))
           .go();
-      await _db.batch((b) {
-        for (final ing in ingredients) {
-          b.insert(
-            _db.dishIngredients,
-            DishIngredientsCompanion.insert(
-              id: _uuid.v4(),
-              dishId: dishId,
-              ingredientId: ing.ingredientId,
-              householdId: _householdId,
-              qtyBase4: Value(ing.qtyBase4),
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-        }
-        for (final tagId in tagIds) {
-          b.insert(
-            _db.dishTags,
-            DishTagsCompanion.insert(
-              id: _uuid.v4(),
-              dishId: dishId,
-              tagId: tagId,
-              householdId: _householdId,
-              createdAt: now,
-            ),
-          );
-        }
-      });
+      // Individual inserts instead of batch: on the PowerSync web backend,
+      // batch() inside a transaction after DELETE on the same table only
+      // commits the last statement, silently dropping earlier inserts.
+      for (final ing in ingredients) {
+        await _db.into(_db.dishIngredients).insert(
+              DishIngredientsCompanion.insert(
+                id: _uuid.v4(),
+                dishId: dishId,
+                ingredientId: ing.ingredientId,
+                householdId: _householdId,
+                qtyBase4: Value(ing.qtyBase4),
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+      }
+      for (final tagId in tagIds) {
+        await _db.into(_db.dishTags).insert(
+              DishTagsCompanion.insert(
+                id: _uuid.v4(),
+                dishId: dishId,
+                tagId: tagId,
+                householdId: _householdId,
+                createdAt: now,
+              ),
+            );
+      }
     });
   }
 

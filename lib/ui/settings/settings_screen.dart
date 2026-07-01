@@ -19,7 +19,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late final HouseholdRepository _repo;
+  late HouseholdRepository _repo;
 
   @override
   void didChangeDependencies() {

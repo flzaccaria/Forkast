@@ -170,6 +170,38 @@ void main() {
     expect(await db.select(db.planDayDishes).get(), isEmpty);
   });
 
+  test('update preserves all ingredients when editing an existing dish', () async {
+    // Regression: on web PowerSync, batch() inside transaction() after DELETE
+    // on the same table only committed the last insert, so editing a dish with
+    // N ingredients resulted in only 1 surviving.
+    await seedIngredient('carne');
+    await seedIngredient('cipolla');
+    await seedIngredient('pomodoro');
+    final id = await repo.create(
+      name: 'Sugo',
+      ingredients: [
+        DishIngredientDraft(ingredientId: 'carne', qtyBase4: 300),
+        DishIngredientDraft(ingredientId: 'cipolla', qtyBase4: 100),
+      ],
+    );
+
+    // Simulate the edit-dish flow: keep original ingredients + add a new one.
+    await repo.update(
+      id,
+      name: 'Sugo',
+      ingredients: [
+        DishIngredientDraft(ingredientId: 'carne', qtyBase4: 300),
+        DishIngredientDraft(ingredientId: 'cipolla', qtyBase4: 100),
+        DishIngredientDraft(ingredientId: 'pomodoro', qtyBase4: 400),
+      ],
+    );
+
+    final ings = await repo.getIngredients(id);
+    expect(ings.length, 3, reason: 'all three ingredients must survive the update');
+    expect(ings.map((i) => i.ingredientId).toSet(),
+        containsAll(['carne', 'cipolla', 'pomodoro']));
+  });
+
   test('recipe_url is saved and retrieved', () async {
     await seedIngredient('carne');
     final id = await repo.create(
